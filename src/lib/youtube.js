@@ -1,35 +1,65 @@
 /**
- * YouTube Data API v3 - Education Trends Service
- * Fetches trending education videos and extracts topic data
+ * YouTube Data API v3 - Global Trends Service
+ * Fetches trending videos across multiple categories & regions
  */
 
 const YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3";
-const EDUCATION_CATEGORY_ID = "27";
+
+// Category IDs: Education(27), Entertainment(24), Science & Tech(28), People & Blogs(22), Howto & Style(26)
+const CATEGORY_IDS = ["27", "24", "28", "22", "26"];
+const GLOBAL_REGIONS = ["IN", "US", "GB"];
 
 /**
- * Fetch trending education videos from YouTube
- * @param {string} apiKey - YouTube Data API key
- * @param {string} regionCode - Country code (default: IN)
- * @param {number} maxResults - Number of results (default: 20)
+ * Fetch GLOBAL trending videos across multiple categories & regions.
+ * Merges, deduplicates, and ranks by views.
  */
 export async function fetchTrendingEducation(apiKey, regionCode = "IN", maxResults = 20) {
+  const regions = regionCode === "IN" ? GLOBAL_REGIONS : [regionCode, ...GLOBAL_REGIONS.filter(r => r !== regionCode)];
+  const allVideos = [];
+  const seenIds = new Set();
+
+  // Fetch from multiple categories × regions in parallel
+  const fetches = [];
+  for (const region of regions) {
+    for (const catId of CATEGORY_IDS) {
+      fetches.push(
+        fetchCategory(apiKey, region, catId, 10).catch(() => [])
+      );
+    }
+  }
+
+  const results = await Promise.all(fetches);
+  for (const videos of results) {
+    for (const v of videos) {
+      if (!seenIds.has(v.id)) {
+        seenIds.add(v.id);
+        allVideos.push(v);
+      }
+    }
+  }
+
+  // Sort by views descending, return top N
+  allVideos.sort((a, b) => b.viewCount - a.viewCount);
+  return allVideos.slice(0, maxResults);
+}
+
+/**
+ * Fetch trending from a single category + region.
+ */
+async function fetchCategory(apiKey, regionCode, categoryId, maxResults) {
   const url = new URL(`${YOUTUBE_API_BASE}/videos`);
   url.searchParams.set("part", "snippet,statistics,contentDetails");
   url.searchParams.set("chart", "mostPopular");
-  url.searchParams.set("videoCategoryId", EDUCATION_CATEGORY_ID);
+  url.searchParams.set("videoCategoryId", categoryId);
   url.searchParams.set("regionCode", regionCode);
   url.searchParams.set("maxResults", maxResults.toString());
   url.searchParams.set("key", apiKey);
 
   const response = await fetch(url.toString());
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(`YouTube API error: ${response.status} - ${error?.error?.message || "Unknown error"}`);
-  }
+  if (!response.ok) return [];
 
   const data = await response.json();
-  return parseVideos(data.items || []);
+  return parseVideos(data.items || [], regionCode);
 }
 
 /**
@@ -68,7 +98,7 @@ export async function searchEducationVideos(apiKey, query, maxResults = 10) {
   return parseVideos(detailsData.items || []);
 }
 
-function parseVideos(items) {
+function parseVideos(items, region = "IN") {
   return items.map((item) => {
     const snippet = item.snippet;
     const stats = item.statistics || {};
@@ -81,6 +111,8 @@ function parseVideos(items) {
       publishedAt: snippet.publishedAt,
       thumbnailUrl: snippet.thumbnails?.high?.url || snippet.thumbnails?.medium?.url || "",
       tags: snippet.tags || [],
+      categoryId: snippet.categoryId || "",
+      region,
       viewCount: parseInt(stats.viewCount || "0"),
       likeCount: parseInt(stats.likeCount || "0"),
       commentCount: parseInt(stats.commentCount || "0"),

@@ -199,6 +199,55 @@ export async function seedKnowledgeBase(apiKey) {
       text: "Quantum computing uses qubits instead of classical bits. While a bit is 0 or 1, a qubit can be both simultaneously (superposition). Quantum entanglement allows qubits to be correlated. Google's Sycamore processor achieved quantum supremacy in 2019.",
       metadata: { category: "technology", topic: "quantum-computing" },
     },
+    // === MYTHOLOGICAL & SCRIPTURAL SEEDS ===
+    {
+      text: "Bhagavad Gita Chapter 2, Verse 47: 'Karmanye vadhikaraste ma phaleshu kadachana' — You have the right to perform your duty, but you are not entitled to the fruits of your actions. This teaches detachment from outcomes while maintaining excellence in effort. Modern psychology calls this 'process orientation' — focusing on the journey, not the destination.",
+      metadata: { category: "mythology", topic: "bhagavad-gita-karma" },
+    },
+    {
+      text: "Chanakya Niti on Education: 'Vidya dadati vinayam' — Knowledge gives humility. Chanakya's Arthashastra (4th century BCE) described a complete education system covering economics, warfare, governance, and ethics. He believed education without character is dangerous. His spy network and statecraft principles are still studied in modern management.",
+      metadata: { category: "mythology", topic: "chanakya-niti" },
+    },
+    {
+      text: "Vedic Mathematics: Ancient Indian mathematicians contributed zero (Aryabhata), the decimal system, algebra (Bhaskaracharya), trigonometry, and the concept of infinity. The Sulba Sutras (800 BCE) contained geometric principles predating Pythagoras. Brahmagupta's formula and Ramanujan's infinite series are foundational to modern mathematics.",
+      metadata: { category: "mythology", topic: "vedic-mathematics" },
+    },
+    {
+      text: "Ramayana's Leadership Lessons: Ram's leadership style — leading by example, keeping promises at personal cost, treating all citizens equally. Hanuman teaches devotion and servant leadership. Vibhishana teaches the courage to leave a wrong path. Ravana's 10 heads symbolize 10 types of ego that destroy even the most brilliant minds.",
+      metadata: { category: "mythology", topic: "ramayana-leadership" },
+    },
+    {
+      text: "Mahabharata's Strategy & Ethics: Krishna's strategic brilliance in the Kurukshetra war — choosing the right time, adapting to circumstances, and understanding dharma vs adharma. The Mahabharata teaches that silence is consent, that neutrality in injustice is wrong, and that knowledge without action is futile. Vidura Niti contains 500+ management principles.",
+      metadata: { category: "mythology", topic: "mahabharata-strategy" },
+    },
+    {
+      text: "Yoga Sutras of Patanjali: 'Yogas chitta vritti nirodhah' — Yoga is the cessation of mental fluctuations. The 8 limbs of yoga (Ashtanga) provide a complete framework for mental wellness: Yama (ethics), Niyama (self-discipline), Asana (postures), Pranayama (breathing), Pratyahara (withdrawal), Dharana (focus), Dhyana (meditation), Samadhi (absorption).",
+      metadata: { category: "mythology", topic: "yoga-sutras" },
+    },
+    {
+      text: "Arthashastra Economics: Kautilya's Arthashastra (300 BCE) described taxation, trade regulation, labor laws, infrastructure, and espionage — 1800 years before Adam Smith. It covers GDP calculation principles, market regulation, and even consumer protection. Modern economists recognize it as the world's first comprehensive economics textbook.",
+      metadata: { category: "mythology", topic: "arthashastra-economics" },
+    },
+    {
+      text: "Upanishads on Knowledge: 'Tamaso ma jyotirgamaya' — Lead me from darkness to light. The Upanishads distinguish between Para Vidya (spiritual knowledge) and Apara Vidya (material knowledge). The Mundaka Upanishad teaches that true education transforms the learner, not just informs them. 'Satyameva Jayate' (Truth alone triumphs) is India's national motto from the Mundaka Upanishad.",
+      metadata: { category: "mythology", topic: "upanishads-knowledge" },
+    },
+    {
+      text: "Panchatantra Storytelling: Written by Vishnu Sharma around 300 BCE to teach statecraft to princes through animal fables. The 5 tantras cover: Mitra Bheda (losing friends), Mitra Labha (gaining friends), Kakolukiyam (war & peace), Labdhapranasam (loss of gains), Aparikshitakarakam (hasty actions). These stories are the foundation of modern storytelling techniques used in content creation.",
+      metadata: { category: "mythology", topic: "panchatantra-storytelling" },
+    },
+    {
+      text: "Ayurveda Wellness Principles: The 5000-year-old science identifies 3 doshas (Vata, Pitta, Kapha), recommends eating according to body type, emphasizes circadian rhythm alignment (Dinacharya), and seasonal routines (Ritucharya). Modern science is validating Ayurvedic concepts: turmeric's anti-inflammatory properties, intermittent fasting benefits, and meditation's effect on cortisol.",
+      metadata: { category: "mythology", topic: "ayurveda-wellness" },
+    },
+    {
+      text: "Ancient Indian Universities: Nalanda (5th century CE) had 10,000+ students from across Asia studying mathematics, astronomy, medicine, and philosophy. Takshashila (700 BCE) taught 68 subjects including archery, law, and medicine. These were world's first residential universities, predating Oxford by 1500+ years. Their destruction represents one of history's greatest knowledge losses.",
+      metadata: { category: "mythology", topic: "ancient-universities" },
+    },
+    {
+      text: "Thirukkural by Thiruvalluvar: 1330 couplets covering virtue, wealth, and love. 'Learn well what should be learnt, then live accordingly' — emphasizing applied knowledge. 'The learned are said to have eyes, but the unlearned have only two sores on their face' — on the transformative power of education. Translated into 40+ languages, considered universal wisdom.",
+      metadata: { category: "mythology", topic: "thirukkural-wisdom" },
+    },
   ];
 
   for (const seed of seeds) {
