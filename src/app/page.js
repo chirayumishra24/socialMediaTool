@@ -11,6 +11,11 @@ import ScriptViewer from "@/components/ScriptViewer";
 import SeoPanel from "@/components/SeoPanel";
 import QualityScore from "@/components/QualityScore";
 import ScheduleModal from "@/components/ScheduleModal";
+import AnalyticsDashboard from "@/components/AnalyticsDashboard";
+import ContentHistory from "@/components/ContentHistory";
+import FeedbackPanel from "@/components/FeedbackPanel";
+import { saveContent } from "@/lib/storage";
+import { getCalibrationFactors } from "@/lib/feedback";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -120,7 +125,28 @@ export default function Dashboard() {
       }
 
       const data = await res.json();
+
+      // Apply calibration factors from feedback history to predictions
+      try {
+        const cal = getCalibrationFactors();
+        if (data.quality?.predictions?.views && cal.confidence !== "low") {
+          const viewRange = data.quality.predictions.views.replace(/,/g, "").match(/(\d+)\s*-\s*(\d+)/);
+          if (viewRange) {
+            const calMin = Math.round(parseInt(viewRange[1]) * cal.viewMultiplier);
+            const calMax = Math.round(parseInt(viewRange[2]) * cal.viewMultiplier);
+            data.quality.predictions.views = `${calMin.toLocaleString()} - ${calMax.toLocaleString()}`;
+          }
+          const engRate = parseFloat(data.quality.predictions.engagementRate);
+          if (!isNaN(engRate)) {
+            data.quality.predictions.engagementRate = `${(engRate * cal.engMultiplier).toFixed(1)}%`;
+          }
+        }
+      } catch (e) { console.warn("Calibration skipped:", e); }
+
       setResult(data);
+
+      // Auto-save to content history
+      try { saveContent(data); } catch (e) { console.error("Auto-save failed:", e); }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -264,6 +290,11 @@ export default function Dashboard() {
 
                   {/* Quality Score */}
                   {result?.quality && <QualityScore quality={result.quality} />}
+
+                  {/* Feedback Loop */}
+                  {result?.quality && (
+                    <FeedbackPanel quality={result.quality} contentId={result.metadata?.generatedAt} />
+                  )}
                 </div>
 
                 {/* Right: Results */}
@@ -353,6 +384,24 @@ export default function Dashboard() {
                 onUseNews={handleUseNews}
               />
             </div>
+          )}
+
+          {/* ═══════ ANALYTICS VIEW ═══════ */}
+          {activeTab === "analytics" && <AnalyticsDashboard />}
+
+          {/* ═══════ HISTORY VIEW ═══════ */}
+          {activeTab === "history" && (
+            <ContentHistory
+              onRegenerate={(item) => {
+                setPrefill({
+                  niche: item.niche,
+                  audience: item.audience,
+                  platform: item.platform,
+                  format: item.format,
+                });
+                setActiveTab("generate");
+              }}
+            />
           )}
         </main>
       </div>

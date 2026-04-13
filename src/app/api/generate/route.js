@@ -1,4 +1,5 @@
 import { generateContent } from "@/lib/agents";
+import { seedKnowledgeBase, search } from "@/lib/rag";
 import { NextResponse } from "next/server";
 
 export async function POST(request) {
@@ -19,13 +20,26 @@ export async function POST(request) {
       return NextResponse.json({ error: "Niche/subject is required" }, { status: 400 });
     }
 
+    // RAG: Seed knowledge base on first use, then retrieve relevant context
+    let ragContext = "";
+    try {
+      await seedKnowledgeBase(apiKey);
+      const ragResults = await search(apiKey, niche, 3);
+      if (ragResults.length > 0) {
+        ragContext = "\n\nKNOWLEDGE BASE CONTEXT:\n" +
+          ragResults.map((r) => `[Relevance: ${r.relevanceScore}] ${r.text}`).join("\n");
+      }
+    } catch (ragErr) {
+      console.warn("RAG retrieval skipped:", ragErr.message);
+    }
+
     const result = await generateContent(apiKey, {
       niche,
       audience: audience || "students and curious learners",
       platform: platform || "youtube",
       format: format || "youtube_longform",
       style: style || "engaging and conversational",
-      trendData: trendData || "",
+      trendData: (trendData || "") + ragContext,
       newsData: newsData || "",
       keywords: keywords || "",
     });
