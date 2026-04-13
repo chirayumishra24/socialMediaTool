@@ -20,6 +20,7 @@ const FORMATS = {
 
 const STYLES = [
   "Engaging & Conversational",
+  "Hinglish & Ancient Wisdom",
   "Myth vs. Fact",
   "Story-based",
   "Explainer / Educational",
