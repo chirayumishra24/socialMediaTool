@@ -1,55 +1,43 @@
-import { generateContent } from "@/lib/agents";
-import { seedKnowledgeBase, search } from "@/lib/rag";
 import { NextResponse } from "next/server";
+import { generateScript } from "@/lib/ai/writer-agent";
+import { editContent } from "@/lib/ai/editor-agent";
+import { generateSEO } from "@/lib/ai/seo-agent";
 
 export async function POST(request) {
-  const apiKey = process.env.GEMINI_API_KEY;
-
-  if (!apiKey || apiKey === "YOUR_GEMINI_API_KEY_HERE") {
-    return NextResponse.json(
-      { error: "Gemini API key not configured. Add GEMINI_API_KEY to .env.local" },
-      { status: 400 }
-    );
-  }
-
   try {
     const body = await request.json();
-    const { niche, audience, platform, format, style, trendData, newsData, keywords } = body;
+    const { keyword, format = "youtube_long", style = "professional", audience = "general audience", research = null, approvedAngles = [], location = "IN", language = "en", platforms = ["youtube"] } = body;
 
-    if (!niche) {
-      return NextResponse.json({ error: "Niche/subject is required" }, { status: 400 });
-    }
+    if (!keyword) return NextResponse.json({ error: "Missing keyword" }, { status: 400 });
 
-    // RAG: Seed knowledge base on first use, then retrieve relevant context
-    let ragContext = "";
-    try {
-      await seedKnowledgeBase(apiKey);
-      const ragResults = await search(apiKey, niche, 3);
-      if (ragResults.length > 0) {
-        ragContext = "\n\nKNOWLEDGE BASE CONTEXT:\n" +
-          ragResults.map((r) => `[Relevance: ${r.relevanceScore}] ${r.text}`).join("\n");
-      }
-    } catch (ragErr) {
-      console.warn("RAG retrieval skipped:", ragErr.message);
-    }
+    // Step 1: Writer Agent → generate raw script
+    const rawScript = await generateScript({ keyword, format, style, audience, research, approvedAngles, location, language });
 
-    const result = await generateContent(apiKey, {
-      niche,
-      audience: audience || "students and curious learners",
-      platform: platform || "youtube",
-      format: format || "youtube_longform",
-      style: style || "engaging and conversational",
-      trendData: (trendData || "") + ragContext,
-      newsData: newsData || "",
-      keywords: keywords || "",
+    // Step 2: Editor Agent → polish and score
+    const edited = await editContent(rawScript, { format, audience });
+
+    // Step 3: SEO Agent → precision tags and metadata
+    const seo = await generateSEO({ keyword, script: edited.editedScript || rawScript, format, location, language, platforms });
+
+    return NextResponse.json({
+      script: edited.editedScript || rawScript,
+      rawScript,
+      editing: {
+        hookScore: edited.hookScore,
+        ctaStrength: edited.ctaStrength,
+        readabilityScore: edited.readabilityScore,
+        overallScore: edited.overallScore,
+        retentionLoops: edited.retentionLoops,
+        changes: edited.changes,
+      },
+      seo,
+      metadata: {
+        keyword, format, style, audience, location, language,
+        generatedAt: new Date().toISOString(),
+      },
     });
-
-    return NextResponse.json(result);
   } catch (error) {
-    console.error("Generation error:", error);
-    return NextResponse.json(
-      { error: `Content generation failed: ${error.message}` },
-      { status: 500 }
-    );
+    console.error("Generate API error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
