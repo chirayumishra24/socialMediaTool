@@ -6,12 +6,12 @@ import { generateSEO } from "@/lib/ai/seo-agent";
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { keyword, format = "youtube_long", style = "professional", audience = "general audience", research = null, approvedAngles = [], location = "IN", language = "en", platforms = ["youtube"] } = body;
+    const { keyword, format = "youtube_long", style = "professional", audience = "general audience", research = null, approvedAngles = [], location = "IN", language = "en", platforms = ["youtube"], brandVoice = null } = body;
 
     if (!keyword) return NextResponse.json({ error: "Missing keyword" }, { status: 400 });
 
     // Step 1: Writer Agent → generate raw script
-    const rawScript = await generateScript({ keyword, format, style, audience, research, approvedAngles, location, language });
+    const rawScript = await generateScript({ keyword, format, style, audience, research, approvedAngles, location, language, brandVoice });
 
     // Step 2: Editor Agent → polish and score
     const edited = await editContent(rawScript, { format, audience });

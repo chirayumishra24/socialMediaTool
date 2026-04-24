@@ -72,6 +72,7 @@ export async function generateScript({
   approvedAngles = [],
   location = "IN",
   language = "en",
+  brandVoice = null,
 } = {}) {
   const spec = FORMAT_SPECS[format] || FORMAT_SPECS.youtube_long;
   const styleDesc = STYLES[style] || STYLES.professional;
@@ -87,6 +88,17 @@ ${approvedAngles.length ? `- APPROVED ANGLES: ${approvedAngles.map((a) => a.angl
 `
     : "";
 
+  const brandVoiceContext = brandVoice 
+    ? `
+=== BRAND VOICE & GUIDELINES ===
+- Tone: ${brandVoice.tone || "N/A"}
+- Target Audience: ${brandVoice.audience || "N/A"}
+- Core Values: ${brandVoice.values || "N/A"}
+- WORDS TO AVOID: ${brandVoice.avoidWords || "None"}
+================================
+`
+    : "";
+
   const prompt = `You are an elite content creator with 10M+ combined followers. You specialize in creating viral, high-retention content.
 
 TASK: Write a complete ${spec.name} script.
@@ -98,6 +110,7 @@ AUDIENCE: ${audience}
 LOCATION: ${location}
 LANGUAGE: ${language === "hi" ? "Hindi" : language === "hinglish" ? "Hinglish" : "English"}
 ${researchContext}
+${brandVoiceContext}
 
 FORMAT STRUCTURE: ${spec.structure}
 FORMAT NOTES: ${spec.notes}
@@ -110,6 +123,7 @@ REQUIREMENTS:
 5. If text format: include formatting (bold, bullets, line breaks)
 6. Reference real data, studies, or examples where possible
 7. Tailor cultural references to ${location} audience
+8. EXACTLY MATCH THE BRAND VOICE TONE AND NEVER USE THE "WORDS TO AVOID".
 
 Write the COMPLETE script now. Be specific, not generic. Every line should earn its place.`;
 

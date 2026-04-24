@@ -17,6 +17,10 @@ export default function Settings() {
     defaultLocation: "IN", defaultLanguage: "en",
     defaultFormat: "youtube_long", defaultStyle: "professional",
     aiModel: "pro", geminiKey: "", youtubeKey: "",
+    brandTone: "Professional, authoritative, yet approachable.",
+    brandAvoidWords: "synergy, paradigm shift, guru",
+    brandTargetAudience: "Marketing professionals and agency owners aged 25-45.",
+    brandCoreValues: "Data-driven, actionable, no-fluff.",
   });
   const [saved, setSaved] = useState(false);
 
@@ -58,6 +62,41 @@ export default function Settings() {
           <input type="password" value={settings.youtubeKey} onChange={(e) => update("youtubeKey", e.target.value)}
             placeholder="Set in .env.local — YOUTUBE_API_KEY"
             className="w-full px-3 py-2.5 rounded-lg bg-bg-elevated border border-border text-sm text-txt placeholder:text-txt-muted transition-all" />
+        </div>
+      </div>
+
+      {/* Brand Voice Memory */}
+      <div className="rounded-xl bg-bg-card border border-border p-5 space-y-4">
+        <h4 className="text-xs font-bold text-txt-secondary uppercase tracking-wider">🧠 Brand Voice Memory</h4>
+        <p className="text-[11px] text-txt-muted mb-2">The AI Writer Agent uses this to ensure all generated content matches your unique brand.</p>
+        
+        <div>
+          <label className="block text-[11px] font-semibold text-txt-secondary mb-1">Brand Tone</label>
+          <input type="text" value={settings.brandTone || ""} onChange={(e) => update("brandTone", e.target.value)}
+            placeholder="e.g. Professional, authoritative, yet approachable."
+            className="w-full px-3 py-2 rounded-lg bg-bg-elevated border border-border text-sm text-txt placeholder:text-txt-muted transition-all" />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-[11px] font-semibold text-txt-secondary mb-1">Target Audience</label>
+            <input type="text" value={settings.brandTargetAudience || ""} onChange={(e) => update("brandTargetAudience", e.target.value)}
+              placeholder="e.g. Marketing professionals aged 25-45."
+              className="w-full px-3 py-2 rounded-lg bg-bg-elevated border border-border text-sm text-txt transition-all" />
+          </div>
+          <div>
+            <label className="block text-[11px] font-semibold text-txt-secondary mb-1">Core Values</label>
+            <input type="text" value={settings.brandCoreValues || ""} onChange={(e) => update("brandCoreValues", e.target.value)}
+              placeholder="e.g. Data-driven, actionable, no-fluff."
+              className="w-full px-3 py-2 rounded-lg bg-bg-elevated border border-border text-sm text-txt transition-all" />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-[11px] font-semibold text-txt-secondary mb-1">Words/Phrases to Avoid</label>
+          <input type="text" value={settings.brandAvoidWords || ""} onChange={(e) => update("brandAvoidWords", e.target.value)}
+            placeholder="e.g. synergy, paradigm shift, guru (comma separated)"
+            className="w-full px-3 py-2 rounded-lg bg-bg-elevated border border-border text-sm text-txt placeholder:text-txt-muted transition-all" />
         </div>
       </div>
 

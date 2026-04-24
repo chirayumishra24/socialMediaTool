@@ -10,6 +10,7 @@ import ContentStudio from "@/components/ContentStudio";
 import DiscoverHub from "@/components/DiscoverHub";
 import Analytics from "@/components/Analytics";
 import Settings from "@/components/Settings";
+import ContentCalendar from "@/components/ContentCalendar";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -28,6 +29,7 @@ export default function App() {
           {activeTab === "dashboard" && <Dashboard onNavigate={setActiveTab} />}
           {activeTab === "research" && <ResearchLab />}
           {activeTab === "approval" && <ApprovalBoard />}
+          {activeTab === "calendar" && <ContentCalendar />}
           {activeTab === "studio" && <ContentStudio />}
           {activeTab === "discover" && <DiscoverHub />}
           {activeTab === "analytics" && <Analytics />}

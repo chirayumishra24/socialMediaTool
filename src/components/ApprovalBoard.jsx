@@ -27,6 +27,14 @@ export default function ApprovalBoard() {
     } catch {}
   };
 
+  const updateDate = (id, date) => {
+    try {
+      const { updateResearchDate, getResearchHistory } = require("@/lib/storage");
+      updateResearchDate(id, date);
+      setItems(getResearchHistory());
+    } catch {}
+  };
+
   const getItemsByStage = (stage) => items.filter((i) => (i.status || "pending") === stage);
 
   return (
@@ -58,8 +66,12 @@ export default function ApprovalBoard() {
                 {getItemsByStage(stage.id).map((item) => (
                   <div key={item.id} className="kanban-card p-3 rounded-xl bg-bg-card border border-border">
                     <p className="text-xs font-semibold text-txt mb-1 line-clamp-2">{item.keyword}</p>
-                    <p className="text-[10px] text-txt-muted mb-2">
-                      {item.location || "IN"} • {item.depth || "deep"} • {new Date(item.savedAt).toLocaleDateString()}
+                    <p className="text-[10px] text-txt-muted mb-2 flex items-center justify-between">
+                      <span>{item.location || "IN"} • {item.depth || "deep"} • {new Date(item.savedAt).toLocaleDateString()}</span>
+                      {(stage.id === "approved" || stage.id === "in_production") && (
+                        <input type="date" value={item.scheduledDate || ""} onChange={(e) => updateDate(item.id, e.target.value)}
+                          className="bg-bg-elevated border border-border rounded px-1.5 py-0.5 text-[9px] text-txt-secondary cursor-pointer" title="Schedule Date" />
+                      )}
                     </p>
 
                     {item.research?.recommendedStrategy && (

@@ -89,6 +89,13 @@
 - [x] 8.4 **Vague Input Validation** — AI detection for broad keywords with suggestion system
 - [x] 8.5 **Strategy Blueprint UI** — Modern card-based strategy visualization in `ResearchLab.jsx`
 
+## Phase 9 — Agency-Grade Operations (P0) ✅
+
+- [x] 9.1 **Brand Voice Memory (RAG)** — Settings UI to define Tone, Audience, Values, and Avoid Words
+- [x] 9.2 **Voice Injection** — Integrated Brand Voice parameters into `Writer Agent` and API pipeline
+- [x] 9.3 **Scheduling System** — Added date picker to `ApprovalBoard.jsx` and updated storage schemas
+- [x] 9.4 **Visual Content Calendar** — New `ContentCalendar.jsx` to map scheduled posts onto a visual month grid
+
 ---
 
 ## ✅ ALL PHASES COMPLETE — Platform Live at localhost:3001

@@ -29,6 +29,13 @@ export function updateResearchStatus(id, status) {
   localStorage.setItem(KEYS.research, JSON.stringify(all));
 }
 
+export function updateResearchDate(id, scheduledDate) {
+  const all = getResearchHistory();
+  const item = all.find((r) => r.id === id);
+  if (item) { item.scheduledDate = scheduledDate; item.updatedAt = new Date().toISOString(); }
+  localStorage.setItem(KEYS.research, JSON.stringify(all));
+}
+
 export function getApprovedResearch() {
   return getResearchHistory().filter((r) => r.status === "approved");
 }

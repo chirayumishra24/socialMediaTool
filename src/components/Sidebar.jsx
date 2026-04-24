@@ -4,6 +4,7 @@ const TABS = [
   { id: "dashboard", label: "Command Center", icon: "🏠" },
   { id: "research", label: "R&D Lab", icon: "🔬" },
   { id: "approval", label: "Approval Board", icon: "✅" },
+  { id: "calendar", label: "Content Calendar", icon: "🗓️" },
   { id: "studio", label: "Content Studio", icon: "🎬" },
   { id: "discover", label: "Discover", icon: "🔍" },
   { id: "analytics", label: "Analytics", icon: "📊" },

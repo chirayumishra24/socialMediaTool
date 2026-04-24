@@ -30,9 +30,18 @@ export default function ContentStudio() {
     if (!keyword.trim()) return;
     setLoading(true); setError(null); setResult(null);
     try {
+      const { getSettings } = require("@/lib/storage");
+      const s = getSettings();
+      const brandVoice = {
+        tone: s.brandTone,
+        audience: s.brandTargetAudience,
+        values: s.brandCoreValues,
+        avoidWords: s.brandAvoidWords,
+      };
+
       const res = await fetch("/api/generate", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ keyword, format, style, audience, location }),
+        body: JSON.stringify({ keyword, format, style, audience, location, brandVoice }),
       });
       if (!res.ok) { const e = await res.json(); throw new Error(e.error || "Failed"); }
       setResult(await res.json());
