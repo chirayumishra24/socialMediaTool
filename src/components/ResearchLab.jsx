@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 
 const PLATFORMS_LIST = [
   { id: "youtube", label: "YouTube", icon: "🎬" },
-  { id: "reddit", label: "Reddit", icon: "📡" },
+  { id: "instagram", label: "Instagram", icon: "📸" },
   { id: "x", label: "X / Twitter", icon: "𝕏" },
+  { id: "reddit", label: "Reddit", icon: "📡" },
   { id: "news", label: "News", icon: "📰" },
 ];
 
@@ -24,7 +25,7 @@ const LOCATIONS = [
 
 export default function ResearchLab() {
   const [keyword, setKeyword] = useState("");
-  const [platforms, setPlatforms] = useState(["youtube", "reddit", "x", "news"]);
+  const [platforms, setPlatforms] = useState(["youtube", "instagram", "x", "reddit", "news"]);
   const [depth, setDepth] = useState("deep");
   const [location, setLocation] = useState("IN");
   const [loading, setLoading] = useState(false);
@@ -32,6 +33,15 @@ export default function ResearchLab() {
   const [platformData, setPlatformData] = useState(null);
   const [topKeywords, setTopKeywords] = useState(null);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      setKeyword(e.detail);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+    window.addEventListener('skilizee-set-keyword', handler);
+    return () => window.removeEventListener('skilizee-set-keyword', handler);
+  }, []);
 
   const togglePlatform = (id) => {
     setPlatforms((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
@@ -181,7 +191,75 @@ function ResearchResults({ research, platformData, topKeywords }) {
 
   return (
     <div className="space-y-4 animate-fade-in">
-      {/* ═══ TRENDING VIDEOS ═══ */}
+      {/* ═══ VAGUE INPUT CHECK ═══ */}
+      {r.isVague && (
+        <div className="rounded-2xl p-8 bg-primary/10 border border-primary/20 backdrop-blur-xl text-center">
+          <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-3xl mx-auto mb-4 animate-bounce">🤔</div>
+          <h3 className="text-xl font-bold text-txt mb-2">{r.message || "Topic is too broad"}</h3>
+          <p className="text-sm text-txt-secondary mb-6">To create a high-impact strategy, I need a more specific focus. Try one of these:</p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {r.suggestions?.map((s, i) => (
+              <button key={i} onClick={() => window.dispatchEvent(new CustomEvent('skilizee-set-keyword', { detail: s }))}
+                className="px-4 py-2 rounded-xl bg-bg-elevated border border-border text-sm font-semibold text-primary-hover hover:bg-primary-muted transition-all cursor-pointer">
+                🔍 {s}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!r.isVague && (
+        <>
+          {/* ═══ STRATEGY BLUEPRINT ═══ */}
+          {r.strategyBlueprint && (
+            <div className="rounded-2xl grad-primary p-[1px] shadow-2xl shadow-primary/20 overflow-hidden">
+              <div className="bg-bg-card p-6 rounded-[15px]">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-primary-muted flex items-center justify-center text-xl">💡</div>
+                  <div>
+                    <h3 className="text-lg font-bold text-txt">Strategy Blueprint</h3>
+                    <p className="text-[11px] text-txt-muted">Modern Informative Approach for 2025</p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="text-xs font-bold text-primary uppercase tracking-widest mb-2">Core Concept</h4>
+                    <p className="text-sm text-txt-secondary leading-relaxed">{r.strategyBlueprint.concept}</p>
+                    
+                    <div className="mt-4 p-4 rounded-xl bg-bg-elevated border border-border">
+                      <h4 className="text-[11px] font-bold text-txt mb-2 flex items-center gap-2">🛠️ Recommended Stack</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {r.strategyBlueprint.recommendedTools?.map(t => (
+                          <span key={t} className="px-2 py-1 rounded-lg bg-bg-card text-[10px] font-medium border border-border text-txt-muted">{t}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="text-xs font-bold text-accent uppercase tracking-widest mb-2">Execution Phases</h4>
+                      <div className="space-y-2">
+                        {r.strategyBlueprint.executionPhases?.map((p, i) => (
+                          <div key={i} className="flex gap-3 items-start">
+                            <span className="shrink-0 w-5 h-5 rounded-full bg-accent/20 text-accent-hover text-[10px] font-bold flex items-center justify-center">{i+1}</span>
+                            <p className="text-xs text-txt-secondary">{p}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div className="p-3 rounded-xl bg-success/5 border border-success/20">
+                      <p className="text-[10px] font-bold text-success uppercase mb-1">Modern Competitive Edge</p>
+                      <p className="text-[11px] text-txt-secondary italic">"{r.strategyBlueprint.modernApproach}"</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
       {ytVideos.length > 0 && (
         <div className="rounded-xl bg-bg-card border border-border p-5">
           <div className="flex items-center justify-between mb-3">
@@ -235,6 +313,31 @@ function ResearchResults({ research, platformData, topKeywords }) {
           </div>
         </div>
       )}
+
+      {/* ═══ INSTAGRAM STRATEGY ═══ */}
+      {platformData?.instagram?.length > 0 && (
+        <div className="rounded-xl bg-bg-card border border-border p-5">
+          <h4 className="text-sm font-bold text-txt flex items-center gap-2 mb-3">📸 Instagram Content Strategy — {platformData.instagram.length} Formats</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {platformData.instagram.map((ig, i) => (
+              <div key={i} className="p-4 rounded-xl bg-bg-elevated border border-border hover:border-accent/30 transition-all">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="px-2 py-0.5 rounded-lg bg-accent/10 text-accent-hover text-[10px] font-bold">{ig.metrics?.engagement || "High"} Engagement</span>
+                  <span className="text-xs font-bold text-txt">{ig.contentFormat || "Post"}</span>
+                </div>
+                <p className="text-xs font-bold text-txt mb-1.5">{ig.title?.split(":")[0]}</p>
+                <p className="text-[11px] text-txt-secondary leading-relaxed mb-3">{ig.tip || ig.description}</p>
+                <div className="flex gap-1 flex-wrap">
+                  {ig.tags?.slice(0, 3).map(t => (
+                    <span key={t} className="text-[9px] text-txt-muted">{t}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
 
       {/* ═══ TOP KEYWORDS ═══ */}
       {topKeywords?.length > 0 && (
@@ -415,7 +518,9 @@ function ResearchResults({ research, platformData, topKeywords }) {
           </div>
         </div>
       )}
-    </div>
+    </>
+  )}
+</div>
   );
 }
 

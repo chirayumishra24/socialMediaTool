@@ -14,9 +14,17 @@ import { generateJSON } from "./ai-client";
 export async function runResearch(keyword, { location = "IN", language = "en", platformData = {}, depth = "deep" } = {}) {
   const platformSummary = formatPlatformData(platformData);
 
-  const prompt = `You are an elite social media research analyst at a top marketing agency.
+  const prompt = `You are the Lead Strategy Director at SkilizeeAI, an elite digital marketing intelligence firm.
+Your goal is to transform a simple keyword into a high-impact, INFORMATIVE, and data-backed content strategy.
 
-TASK: Conduct a ${depth.toUpperCase()}-level research analysis on the topic: "${keyword}"
+TASK: Conduct a ${depth.toUpperCase()}-level research and strategy plan for: "${keyword}"
+
+STEP 0: VAGUE CHECK
+If the keyword is too broad (e.g., "AI", "Marketing", "Money") and impossible to create a precise strategy for, you MUST return ONLY this JSON:
+{ "isVague": true, "message": "The topic is too broad for a precise strategy.", "suggestions": ["suggest a more specific version 1", "suggest a more specific version 2"] }
+
+STEP 1: ANALYSIS & STRATEGY
+If not vague, analyze the data and provide a comprehensive strategy. Prioritize INFORMATIVE and educational content over shallow or rubbish content.
 
 CONTEXT:
 - Target Location: ${location}
@@ -24,71 +32,60 @@ CONTEXT:
 - Date: ${new Date().toISOString().split("T")[0]}
 
 REAL-TIME PLATFORM DATA:
-${platformSummary || "No platform data provided — use your knowledge."}
+${platformSummary || "No platform data provided — use your deep training data for the latest 2024-2025 trends."}
 
 Analyze and return a JSON object with this EXACT structure:
 {
   "keyword": "${keyword}",
+  "isVague": false,
   "marketLandscape": {
     "saturationLevel": "low|medium|high|oversaturated",
     "saturationScore": 0-100,
     "totalEstimatedContent": "e.g. 50K+ videos",
     "growthTrend": "rising|stable|declining",
-    "summary": "2-3 sentence market overview"
+    "summary": "2-3 sentence market overview focusing on INFORMATIVE value"
   },
   "audienceSentiment": {
     "overall": "positive|negative|mixed|neutral",
     "score": 0-100,
-    "painPoints": ["list of 3-5 audience pain points"],
+    "painPoints": ["list of 3-5 deep audience pain points"],
     "desires": ["list of 3-5 audience desires"],
     "demographics": "primary audience description"
   },
   "contentGaps": [
     {
       "gap": "description of content gap",
-      "opportunity": "why this is a golden opportunity",
+      "opportunity": "why this is a golden opportunity for informative content",
       "difficulty": "easy|medium|hard",
       "estimatedDemand": "high|medium|low"
     }
   ],
   "trendingAngles": [
     {
-      "angle": "specific sub-angle title",
-      "description": "why this angle is trending",
+      "angle": "specific informative sub-angle title",
+      "description": "why this angle is trending and its value",
       "platforms": ["youtube", "instagram", "x"],
       "viralPotential": 0-100,
       "suggestedFormat": "youtube_long|youtube_short|reel|carousel|thread|blog",
-      "hookIdea": "compelling hook for this angle"
+      "hookIdea": "educational/informative hook"
     }
   ],
-  "competitors": [
-    {
-      "name": "channel/account name",
-      "platform": "youtube|instagram|x",
-      "contentType": "what they do",
-      "strength": "why they succeed",
-      "weakness": "exploitable gap",
-      "estimatedReach": "e.g. 500K-1M"
-    }
-  ],
-  "newsjacking": [
-    {
-      "event": "recent event or news",
-      "angle": "how to tie it to the keyword",
-      "urgency": "high|medium|low",
-      "windowHours": 24
-    }
-  ],
+  "strategyBlueprint": {
+    "concept": "The high-level informative content pillar",
+    "executionPhases": ["Phase 1: ...", "Phase 2: ...", "Phase 3: ..."],
+    "modernApproach": "Why this works in the current 2025 landscape",
+    "recommendedTools": ["Tool 1", "Tool 2"]
+  },
   "recommendedStrategy": {
     "bestPlatform": "youtube|instagram|x|linkedin|blog",
     "bestFormat": "format name",
-    "bestAngle": "the single best angle to pursue",
+    "bestAngle": "the single best informative angle to pursue",
     "estimatedViralPotential": 0-100,
-    "keyMessage": "core message in 1 sentence"
+    "keyMessage": "core informative message in 1 sentence"
   }
 }
 
-Return ONLY valid JSON. Be specific, data-driven, and actionable. Include real creator names, real trends, real numbers where possible.`;
+Return ONLY valid JSON. Be specific, data-driven, and prioritize depth and informative value.`;
 
   return generateJSON(prompt, depth === "quick" ? "flash" : "pro");
 }
@@ -97,22 +94,27 @@ function formatPlatformData(data) {
   const parts = [];
   if (data.youtube?.length) {
     parts.push("YOUTUBE TRENDING:\n" + data.youtube.slice(0, 8).map((v) =>
-      `- "${v.title}" by ${v.author || v.channelTitle} (${formatNum(v.metrics?.views || v.viewCount)} views)`
+      `- "${v.title}" (${formatNum(v.metrics?.views)} views). Tags: ${v.tags?.join(", ")}`
+    ).join("\n"));
+  }
+  if (data.instagram?.length) {
+    parts.push("INSTAGRAM STRATEGY:\n" + data.instagram.slice(0, 5).map((i) =>
+      `- ${i.title}: ${i.tip}`
     ).join("\n"));
   }
   if (data.reddit?.length) {
     parts.push("REDDIT HOT:\n" + data.reddit.slice(0, 5).map((r) =>
-      `- "${r.title}" r/${r.subreddit} (${formatNum(r.metrics?.likes || r.score)} upvotes, ${r.metrics?.comments || r.numComments} comments)`
-    ).join("\n"));
-  }
-  if (data.news?.length) {
-    parts.push("NEWS:\n" + data.news.slice(0, 5).map((n) =>
-      `- "${n.title}" — ${n.author || n.source}`
+      `- "${r.title}" (${formatNum(r.metrics?.likes)} upvotes)`
     ).join("\n"));
   }
   if (data.x?.length) {
     parts.push("X/TWITTER:\n" + data.x.slice(0, 5).map((t) =>
-      `- "${t.title}" by ${t.author}`
+      `- "${t.title}" (Engagement: ${t.metrics?.likes} likes)`
+    ).join("\n"));
+  }
+  if (data.news?.length) {
+    parts.push("NEWS:\n" + data.news.slice(0, 5).map((n) =>
+      `- "${n.title}"`
     ).join("\n"));
   }
   return parts.join("\n\n");

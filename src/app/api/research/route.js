@@ -4,11 +4,12 @@ import { searchYouTube } from "@/lib/crawlers/youtube";
 import { searchReddit } from "@/lib/crawlers/reddit";
 import { searchX } from "@/lib/crawlers/twitter";
 import { searchNews } from "@/lib/crawlers/news";
+import { searchInstagram } from "@/lib/crawlers/instagram";
 
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { keyword, platforms = ["youtube", "reddit", "x", "news"], location = "IN", language = "en", depth = "deep" } = body;
+    const { keyword, platforms = ["youtube", "reddit", "x", "news", "instagram"], location = "IN", language = "en", depth = "deep" } = body;
 
     if (!keyword) return NextResponse.json({ error: "Missing keyword" }, { status: 400 });
 
@@ -18,6 +19,7 @@ export async function POST(request) {
     if (platforms.includes("reddit")) crawlTasks.push(searchReddit(keyword, 8).then((d) => ({ reddit: d })));
     if (platforms.includes("x")) crawlTasks.push(searchX(keyword).then((d) => ({ x: d })));
     if (platforms.includes("news")) crawlTasks.push(searchNews(keyword).then((d) => ({ news: d })));
+    if (platforms.includes("instagram")) crawlTasks.push(searchInstagram(keyword).then((d) => ({ instagram: d })));
 
     const crawlResults = await Promise.allSettled(crawlTasks);
     const platformData = {};
