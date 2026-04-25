@@ -155,4 +155,19 @@ Write the COMPLETE script now. Be specific, not generic. Every line should earn 
   return generate(prompt, { tier: "pro" });
 }
 
+/**
+ * Generate a bundle of scripts for different platforms.
+ */
+export async function generateBundle(options) {
+  const formats = options.formats || ["instagram_reel", "x_thread", "linkedin_post"];
+  
+  const bundlePromises = formats.map(format => 
+    generateScript({ ...options, format })
+      .then(script => ({ format, script }))
+  );
+  
+  const results = await Promise.all(bundlePromises);
+  return results.reduce((acc, curr) => ({ ...acc, [curr.format]: curr.script }), {});
+}
+
 export { FORMAT_SPECS, STYLES };

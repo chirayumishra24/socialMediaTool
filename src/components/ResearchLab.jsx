@@ -201,6 +201,44 @@ export default function ResearchLab({ onResearchComplete, onGoToStudio, initialK
                     <Sparkles className="w-5 h-5" /> Start Content Studio
                   </button>
                </div>
+               
+               {/* ═══ RECOMMENDED STRATEGY BUNDLE ═══ */}
+               <div className="relative mt-20 p-12 rounded-[3.5rem] bg-bg-card border border-primary/20 shadow-2xl overflow-hidden group">
+                  <div className="absolute inset-0 grad-primary opacity-[0.03]" />
+                  <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-all duration-1000" />
+                  
+                  <div className="relative flex flex-col lg:flex-row items-center justify-between gap-10">
+                     <div className="flex-1 space-y-4">
+                        <div className="flex items-center gap-3">
+                           <div className="w-10 h-10 rounded-2xl grad-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                              <Sparkles className="w-5 h-5 animate-pulse" />
+                           </div>
+                           <h4 className="text-sm font-black text-txt uppercase tracking-widest">Recommended Execution Bundle</h4>
+                        </div>
+                        <h3 className="text-3xl font-black text-txt tracking-tight leading-tight">
+                           Convert this research into a <span className="text-primary italic">High-Impact Bundle</span>
+                        </h3>
+                        <p className="text-sm text-txt-secondary leading-relaxed max-w-xl font-medium">
+                           Our AI has analyzed the signals and recommends a **triple-threat** strategy: One long-form YouTube insight, two trending IG Reels, and an X Thread for community engagement.
+                        </p>
+                        <div className="flex flex-wrap gap-4 pt-2">
+                           {["IG Reel", "X Thread", "LinkedIn Post"].map((type, i) => (
+                             <div key={i} className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-border text-[10px] font-black text-txt-muted uppercase tracking-widest">
+                                <div className="w-1.5 h-1.5 rounded-full bg-success" />
+                                {type}
+                             </div>
+                           ))}
+                        </div>
+                     </div>
+                     
+                     <button 
+                       onClick={() => onGoToStudio({ keyword, research: result, platformData, topKeywords, location, depth, researchedAt: new Date().toISOString() })}
+                       className="shrink-0 px-10 py-5 rounded-[2rem] grad-primary text-white font-black text-sm uppercase tracking-widest shadow-2xl shadow-primary/30 hover:opacity-90 hover:scale-[1.02] transition-all flex items-center gap-4 cursor-pointer"
+                     >
+                        Initialize Content Bundle <Wand2 className="w-5 h-5" />
+                     </button>
+                  </div>
+               </div>
             </div>
           )}
         </div>

@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { Microscope, Clock, CheckCircle2, Video, FileText, Send, Search, Settings, ArrowRight, BarChart, Zap, Globe, TrendingUp, Sparkles, BrainCircuit, ShieldCheck, Newspaper, ExternalLink, Activity, Trophy, Users, Star } from "lucide-react";
+import MorningBriefing from "./MorningBriefing";
 
-export default function Dashboard({ onNavigate }) {
+export default function Dashboard({ onNavigate, onStartResearch, onGoToStudio }) {
   const [stats, setStats] = useState({ totalResearch: 0, pendingApproval: 0, approved: 0, totalContent: 0, drafts: 0, published: 0 });
   const [activeSignal, setActiveSignal] = useState(0);
   const [recentResearch, setRecentResearch] = useState([]);
@@ -153,24 +154,11 @@ export default function Dashboard({ onNavigate }) {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-10 pb-20">
         
         {/* The Briefing */}
-        <div className="p-10 rounded-[3.5rem] bg-white border border-border space-y-8 shadow-premium relative overflow-hidden group">
-           <div className="absolute top-0 right-0 p-10 opacity-[0.02] pointer-events-none group-hover:rotate-12 transition-transform duration-700"><Star className="w-48 h-48" /></div>
-           <div className="flex items-center justify-between">
-             <div className="flex items-center gap-4">
-               <div className="p-3 rounded-2xl bg-accent/10 text-accent"><Newspaper className="w-6 h-6" /></div>
-               <h4 className="text-[14px] font-black text-txt uppercase tracking-widest">Director's Briefing</h4>
-             </div>
-             <span className="text-[10px] font-black text-accent bg-accent/5 px-3 py-1.5 rounded-full border border-accent/10 animate-pulse-glow">Priority One</span>
-           </div>
-           
-           <div className="space-y-6">
-              <p className="text-lg font-medium text-txt-secondary leading-relaxed italic border-l-4 border-accent/20 pl-6 py-2">
-                "Based on latest 24h signals, parents are prioritizing **holistic wellness** over exam results. We recommend shifting your content R&D towards 'Well-being and Mental Safety' for next week's campaign."
-              </p>
-              <div onClick={() => onNavigate("research")} className="flex items-center gap-3 text-xs font-black text-primary cursor-pointer hover:gap-5 transition-all group/btn">
-                Run Targeted Analysis <ArrowRight className="w-4 h-4 group-hover/btn:text-accent" />
-              </div>
-           </div>
+        <div className="xl:col-span-1">
+          <MorningBriefing 
+            onStartResearch={onStartResearch} 
+            onGoToStudio={onGoToStudio} 
+          />
         </div>
 
         {/* Pipeline Analytics */}

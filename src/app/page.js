@@ -38,7 +38,13 @@ export default function App() {
         <div className="grad-glow absolute top-0 left-0 right-0 h-[300px] pointer-events-none" />
 
         <main className="flex-1 overflow-y-auto relative custom-scroll">
-          {activeTab === "dashboard" && <Dashboard onNavigate={setActiveTab} />}
+          {activeTab === "dashboard" && (
+            <Dashboard 
+              onNavigate={setActiveTab} 
+              onStartResearch={handleStartResearch} 
+              onGoToStudio={handleNavigateToStudio} 
+            />
+          )}
           {activeTab === "research" && <ResearchLab initialKeyword={prefilledResearchKeyword} onResearchComplete={setResearchContext} onGoToStudio={handleNavigateToStudio} />}
           {activeTab === "approval" && <ApprovalBoard />}
           {activeTab === "calendar" && <ContentCalendar />}

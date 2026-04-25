@@ -24,6 +24,7 @@ export default function ContentStudio({ researchContext, onClearContext }) {
   const [location, setLocation] = useState("IN");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
+  const [bundleResult, setBundleResult] = useState(null); // NEW: For multi-format results
   const [error, setError] = useState(null);
   const [tab, setTab] = useState("script");
   const [isSaved, setIsSaved] = useState(false);
@@ -42,9 +43,9 @@ export default function ContentStudio({ researchContext, onClearContext }) {
     }
   }, [researchContext]);
 
-  const handleGenerate = useCallback(async () => {
+  const handleGenerate = useCallback(async (isBundle = false) => {
     if (!keyword.trim()) return;
-    setLoading(true); setError(null); setResult(null); setIsSaved(false);
+    setLoading(true); setError(null); setResult(null); setBundleResult(null); setIsSaved(false);
     try {
       const { getSettings } = require("@/lib/storage");
       const s = getSettings();
@@ -61,8 +62,9 @@ export default function ContentStudio({ researchContext, onClearContext }) {
         body: JSON.stringify({ 
           keyword, format, style, audience, location, 
           research: researchSummary,
+          bundle: isBundle,
           directorPersona: s.directorPersona || "visionary",
-          schoolContext: s.schoolContext || "", // PASS RAG CONTEXT
+          schoolContext: s.schoolContext || "",
           brandVoice: {
             tone: s.brandTone,
             audience: s.brandTargetAudience,
@@ -72,7 +74,16 @@ export default function ContentStudio({ researchContext, onClearContext }) {
         }),
       });
       if (!res.ok) throw new Error("Generation failed");
-      setResult(await res.json());
+      const data = await res.json();
+      if (data.bundle) {
+        setBundleResult(data.scripts);
+        // Set first script as primary result to keep UI working
+        const firstFormat = Object.keys(data.scripts)[0];
+        setFormat(firstFormat);
+        setResult({ script: data.scripts[firstFormat], metadata: data.metadata });
+      } else {
+        setResult(data);
+      }
     } catch (e) { setError(e.message); }
     finally { setLoading(false); }
   }, [keyword, format, style, audience, location, researchContext]);
@@ -85,8 +96,8 @@ export default function ContentStudio({ researchContext, onClearContext }) {
         keyword,
         format,
         script: result.script,
-        seo: result.seo,
-        editing: result.editing,
+        seo: result.seo || {},
+        editing: result.editing || {},
         metadata: { 
           keyword, format, style, audience, location, 
           researchId: researchContext?.id,
@@ -152,10 +163,19 @@ export default function ContentStudio({ researchContext, onClearContext }) {
               </Field>
             </div>
 
-            <button onClick={handleGenerate} disabled={loading || !keyword.trim()}
-              className={`w-full py-4 rounded-2xl text-sm font-bold transition-all flex items-center justify-center gap-3 ${loading ? "bg-primary/20 text-primary-hover cursor-wait" : "grad-primary text-white cursor-pointer shadow-xl shadow-primary/20 hover:scale-[0.98] active:scale-95"}`}>
-              {loading ? <><Loader2 className="w-5 h-5 animate-spin" /> Intelligence Processing...</> : <><Sparkles className="w-5 h-5" /> Generate Executive Script</>}
-            </button>
+            <div className="space-y-3">
+              <button onClick={() => handleGenerate(false)} disabled={loading || !keyword.trim()}
+                className={`w-full py-4 rounded-2xl text-sm font-bold transition-all flex items-center justify-center gap-3 ${loading ? "bg-primary/20 text-primary-hover cursor-wait" : "grad-primary text-white cursor-pointer shadow-xl shadow-primary/20 hover:scale-[0.98] active:scale-95"}`}>
+                {loading && !bundleResult ? <><Loader2 className="w-5 h-5 animate-spin" /> Intelligence Processing...</> : <><Sparkles className="w-5 h-5" /> Generate Executive Script</>}
+              </button>
+
+              {researchContext?.research && (
+                <button onClick={() => handleGenerate(true)} disabled={loading || !keyword.trim()}
+                  className={`w-full py-4 rounded-2xl text-[11px] font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-3 border-2 ${loading && bundleResult ? "bg-accent/20 text-accent-hover cursor-wait border-accent/30" : "bg-bg-card border-accent/20 text-accent-hover hover:bg-accent/5 hover:border-accent/40 shadow-lg shadow-accent/5"}`}>
+                  {loading && bundleResult ? <><Loader2 className="w-4 h-4 animate-spin" /> Bundling Intelligence...</> : <><Wand2 className="w-4 h-4" /> Generate Full Strategy Bundle</>}
+                </button>
+              )}
+            </div>
           </div>
 
           {researchContext?.research && (
@@ -210,20 +230,35 @@ export default function ContentStudio({ researchContext, onClearContext }) {
           {result && (
             <div className="space-y-6 animate-fade-in">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex p-1.5 rounded-2xl bg-bg-card border border-border shadow-sm overflow-x-auto custom-scroll no-scrollbar">
-                  {[
-                    { id: "script", l: "Script", icon: FileText }, 
-                    { id: "preview", l: "Visual Mockup", icon: Eye },
-                    { id: "seo", l: "Metadata", icon: Tag }, 
-                    { id: "editing", l: "Audit", icon: Edit3 }
-                  ].map((t) => (
-                    <button key={t.id} onClick={() => setTab(t.id)}
-                      className={`px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider cursor-pointer transition-all flex items-center gap-2.5 whitespace-nowrap ${tab === t.id ? "bg-primary text-white shadow-md shadow-primary/20" : "text-txt-muted hover:text-txt"}`}>
-                      <t.icon className="w-4 h-4" /> {t.l}
-                    </button>
-                  ))}
+                <div className="flex flex-col gap-3">
+                  <div className="flex p-1.5 rounded-2xl bg-bg-card border border-border shadow-sm overflow-x-auto custom-scroll no-scrollbar">
+                    {[
+                      { id: "script", l: "Script", icon: FileText }, 
+                      { id: "preview", l: "Visual Mockup", icon: Eye },
+                      { id: "seo", l: "Metadata", icon: Tag }, 
+                      { id: "editing", l: "Audit", icon: Edit3 }
+                    ].map((t) => (
+                      <button key={t.id} onClick={() => setTab(t.id)}
+                        className={`px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider cursor-pointer transition-all flex items-center gap-2.5 whitespace-nowrap ${tab === t.id ? "bg-primary text-white shadow-md shadow-primary/20" : "text-txt-muted hover:text-txt"}`}>
+                        <t.icon className="w-4 h-4" /> {t.l}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  {bundleResult && (
+                    <div className="flex gap-2 items-center px-2">
+                       <span className="text-[9px] font-black text-txt-muted uppercase tracking-widest mr-2">Switch Format:</span>
+                       {Object.keys(bundleResult).map((f) => (
+                         <button key={f} onClick={() => { setFormat(f); setResult(prev => ({ ...prev, script: bundleResult[f] })); }}
+                           className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-tighter border transition-all ${format === f ? "bg-accent/10 border-accent/20 text-accent-hover" : "bg-bg-card border-border text-txt-muted hover:text-txt"}`}>
+                           {FORMATS.find(x => x.id === f)?.label || f}
+                         </button>
+                       ))}
+                    </div>
+                  )}
                 </div>
-                <div className="flex gap-2">
+
+                <div className="flex gap-2 self-start pt-1">
                   <button onClick={() => navigator.clipboard.writeText(result.script || "")}
                     className="p-3 rounded-xl bg-bg-card border border-border text-txt-muted hover:text-txt transition-all cursor-pointer shadow-sm hover:border-primary/20"><Copy className="w-4.5 h-4.5" /></button>
                   <button onClick={handleSave} disabled={isSaved}
