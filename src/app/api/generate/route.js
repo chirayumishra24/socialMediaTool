@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { generateScript } from "@/lib/ai/writer-agent";
+import { generateBundle, generateScript } from "@/lib/ai/writer-agent";
 import { generateSEO } from "@/lib/ai/seo-agent";
 import { editContent } from "@/lib/ai/editor-agent";
 
@@ -8,13 +8,18 @@ export async function POST(req) {
     const { 
       keyword, format, style, audience, location, research, 
       brandVoice, directorPersona, schoolContext,
+      learningSignals,
       bundle = false, bundleFormats = ["instagram_reel", "x_thread", "linkedin_post"]
     } = await req.json();
+
+    if (!keyword) {
+      return NextResponse.json({ error: "Missing keyword" }, { status: 400 });
+    }
 
     if (bundle) {
       const scripts = await generateBundle({
         keyword, style, audience, research, location, 
-        brandVoice, directorPersona, schoolContext,
+        brandVoice, directorPersona, schoolContext, learningSignals,
         formats: bundleFormats
       });
 
@@ -32,27 +37,31 @@ export async function POST(req) {
     // 1. Generate Single Script
     const script = await generateScript({
       keyword, format, style, audience, research, location, 
-      brandVoice, directorPersona, schoolContext
+      brandVoice, directorPersona, schoolContext, learningSignals
     });
 
     // 2. Generate SEO Bundle
     const seo = await generateSEO({
-      keyword, format, script
+      keyword, format, script, location, learningSignals
     });
 
     // 3. Editorial Review
     const editing = await editContent({
-      script, format, style, brandVoice
+      script, format, audience
     });
 
+    const finalScript = editing?.editedScript || script;
+
     return NextResponse.json({
-      script,
+      script: finalScript,
+      originalScript: script,
       seo,
       editing,
       metadata: {
         keyword, format, style, audience, location, 
         directorPersona,
         hasResearchContext: !!research,
+        usedLearningSignals: !!learningSignals?.publishedPosts,
         timestamp: new Date().toISOString()
       }
     });

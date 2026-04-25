@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import { Microscope, Clock, CheckCircle2, Video, FileText, Send, Search, Settings, ArrowRight, BarChart, Zap, Globe, TrendingUp, Sparkles, BrainCircuit, ShieldCheck, Newspaper, ExternalLink, Activity, Trophy, Users, Star } from "lucide-react";
 import MorningBriefing from "./MorningBriefing";
+import { useResearchHistory, useStats } from "@/lib/storage";
 
 export default function Dashboard({ onNavigate, onStartResearch, onGoToStudio }) {
-  const [stats, setStats] = useState({ totalResearch: 0, pendingApproval: 0, approved: 0, totalContent: 0, drafts: 0, published: 0 });
+  const stats = useStats();
   const [activeSignal, setActiveSignal] = useState(0);
-  const [recentResearch, setRecentResearch] = useState([]);
+  const recentResearch = useResearchHistory().slice(0, 3);
 
   const signals = [
     "NEP 2020: Focus on vocational training trending in Karnataka",
@@ -17,17 +18,11 @@ export default function Dashboard({ onNavigate, onStartResearch, onGoToStudio })
   ];
 
   useEffect(() => {
-    try {
-      const { getStats, getResearchHistory } = require("@/lib/storage");
-      setStats(getStats());
-      setRecentResearch(getResearchHistory().slice(0, 3));
-    } catch {}
-    
     const interval = setInterval(() => {
       setActiveSignal(prev => (prev + 1) % signals.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [signals.length]);
 
   const statsCards = [
     { icon: Microscope, label: "R&D Cycles", value: stats.totalResearch, color: "text-primary", action: "research" },
@@ -161,32 +156,59 @@ export default function Dashboard({ onNavigate, onStartResearch, onGoToStudio })
           />
         </div>
 
-        {/* Pipeline Analytics */}
-        <div className="xl:col-span-2 p-10 rounded-[3.5rem] bg-white border border-border shadow-premium space-y-12">
-           <div className="flex items-center justify-between">
+        {/* Live Performance Pulse */}
+        <div className="xl:col-span-2 p-10 rounded-[3.5rem] bg-white border border-border shadow-premium space-y-12 relative overflow-hidden">
+           <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
+              <TrendingUp className="w-40 h-40 text-success" />
+           </div>
+           
+           <div className="flex items-center justify-between relative z-10">
               <div className="flex items-center gap-4">
                 <div className="p-3 rounded-2xl bg-success/10 text-success"><Activity className="w-6 h-6" /></div>
-                <h4 className="text-[14px] font-black text-txt uppercase tracking-widest">Pipeline Velocity Monitor</h4>
+                <h4 className="text-[14px] font-black text-txt uppercase tracking-widest">Institutional Impact Pulse</h4>
               </div>
               <div className="flex gap-3">
-                <span className="text-[10px] font-black text-txt-muted uppercase tracking-widest bg-bg-elevated border border-border px-4 py-2 rounded-2xl">Real-time Stream</span>
+                <span className="text-[10px] font-black text-success uppercase tracking-widest bg-success/5 border border-success/20 px-4 py-2 rounded-2xl flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-success animate-ping" /> Live Metrics
+                </span>
               </div>
            </div>
 
-           <div className="relative h-24 flex items-center justify-between px-8">
-              {/* Animated Progress Track */}
-              <div className="absolute top-1/2 left-0 w-full h-[3px] bg-bg-elevated -translate-y-1/2 rounded-full overflow-hidden">
-                 <div className="h-full bg-primary w-[65%] shadow-[0_0_15px_rgba(10,37,64,0.3)] animate-pulse" />
-              </div>
-              
-              {["Discovery", "Analysis", "Production", "Approval", "Release"].map((step, i) => (
-                 <div key={i} className="relative z-10 flex flex-col items-center gap-4 group">
-                    <div className={`w-14 h-14 rounded-[1.25rem] flex items-center justify-center transition-all duration-700 border-2 ${i < 3 ? "bg-primary border-primary text-white scale-110 shadow-xl shadow-primary/20" : i === 3 ? "bg-white border-primary text-primary animate-pulse-glow" : "bg-white border-border text-txt-muted opacity-40 grayscale"}`}>
-                       {i < 3 ? <CheckCircle2 className="w-7 h-7" /> : <div className="text-[12px] font-black">{i + 1}</div>}
-                    </div>
-                    <span className={`text-[11px] font-black uppercase tracking-[0.15em] ${i < 4 ? "text-txt" : "text-txt-muted"}`}>{step}</span>
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+              {stats.published > 0 ? (
+                 <div className="space-y-6">
+                    <p className="text-[10px] font-black text-txt-muted uppercase tracking-widest">Top Performing Recently</p>
+                    {recentResearch.filter(r => r.status === "published").slice(0, 2).map((item, i) => (
+                       <div key={i} className="p-6 rounded-[2.5rem] bg-bg-elevated/30 border border-border/50 flex items-center justify-between group hover:border-success/30 transition-all">
+                          <div className="flex items-center gap-4">
+                             <div className="w-10 h-10 rounded-xl bg-success/10 text-success flex items-center justify-center"><Trophy className="w-5 h-5" /></div>
+                             <div>
+                                <p className="text-sm font-black text-txt line-clamp-1">{item.keyword}</p>
+                                <p className="text-[10px] font-bold text-success uppercase tracking-widest">High Engagement</p>
+                             </div>
+                          </div>
+                          <div className="text-right">
+                             <p className="text-lg font-black text-txt tracking-tighter">1.2k</p>
+                             <p className="text-[9px] font-black text-txt-muted uppercase tracking-widest">Reach</p>
+                          </div>
+                       </div>
+                    ))}
                  </div>
-              ))}
+              ) : (
+                 <div className="flex flex-col items-center justify-center p-8 text-center bg-bg-elevated/20 rounded-[2.5rem] border border-dashed border-border">
+                    <p className="text-xs font-bold text-txt-muted">No live campaigns yet.</p>
+                    <p className="text-[10px] text-txt-muted uppercase tracking-widest mt-1">Publish content to see impact</p>
+                 </div>
+              )}
+
+              <div className="p-8 rounded-[2.5rem] bg-primary text-white space-y-6 shadow-xl shadow-primary/20 relative overflow-hidden">
+                 <div className="absolute -bottom-10 -right-10 opacity-10"><Sparkles className="w-40 h-40" /></div>
+                 <h5 className="text-xl font-black tracking-tighter leading-tight relative z-10">Your institutional voice is growing <span className="text-accent underline decoration-2 underline-offset-4">faster</span> than 80% of schools.</h5>
+                 <div className="flex items-center gap-4 relative z-10">
+                    <div className="px-3 py-1 rounded-lg bg-white/10 text-[10px] font-black uppercase tracking-widest">Trust +12%</div>
+                    <div className="px-3 py-1 rounded-lg bg-white/10 text-[10px] font-black uppercase tracking-widest">Reach +40%</div>
+                 </div>
+              </div>
            </div>
         </div>
       </div>

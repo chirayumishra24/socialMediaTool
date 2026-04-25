@@ -82,6 +82,7 @@ export async function generateScript({
   brandVoice = null,
   directorPersona = "visionary",
   schoolContext = "", // NEW: Knowledge Base Context
+  learningSignals = null,
 } = {}) {
   const spec = FORMAT_SPECS[format] || FORMAT_SPECS.youtube_long;
   const styleDesc = STYLES[style] || STYLES.professional;
@@ -124,6 +125,20 @@ ${schoolContext}
 `
     : "";
 
+  const learningContext = learningSignals?.publishedPosts
+    ? `
+=== PERFORMANCE MEMORY FROM PREVIOUS POSTS ===
+- Published Posts Tracked: ${learningSignals.publishedPosts}
+- Total Clicks Tracked: ${learningSignals.totalClicks || 0}
+- Average CTR: ${learningSignals.averageCtr || 0}%
+- Best Tags: ${(learningSignals.topTags || []).slice(0, 6).map((item) => `${item.tag} (${item.totalClicks} clicks across ${item.posts} posts)`).join("; ")}
+- Winning Formats: ${(learningSignals.winningFormats || []).slice(0, 4).map((item) => `${item.format} (${item.avgClicks} avg clicks)`).join("; ")}
+- Lessons: ${(learningSignals.lessons || []).join(" ")}
+- Reuse the patterns that win. Do not copy previous scripts verbatim.
+==============================================
+`
+    : "";
+
   const prompt = `You are a highly respected School Director and Educational Content Strategist. 
 
 TASK: Write a complete ${spec.name} script.
@@ -139,6 +154,7 @@ LANGUAGE: ${language === "hi" ? "Hindi" : language === "hinglish" ? "Hinglish" :
 ${schoolKnowledgeContext}
 ${researchContext}
 ${brandVoiceContext}
+${learningContext}
 
 FORMAT STRUCTURE: ${spec.structure}
 FORMAT NOTES: ${spec.notes}

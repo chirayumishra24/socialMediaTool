@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Settings as SettingsIcon, BrainCircuit, Globe, Zap, CheckCircle2, Save, UserCheck, ShieldCheck, HeartPulse, GraduationCap, Database, FileText, Info } from "lucide-react";
 
 const PERSONAS = [
@@ -16,27 +16,28 @@ const LOCATIONS = [
 ];
 
 export default function Settings() {
-  const [settings, setSettings] = useState({
-    defaultLocation: "IN", defaultLanguage: "en",
-    defaultFormat: "youtube_long", defaultStyle: "professional",
-    aiModel: "pro", geminiKey: "", youtubeKey: "",
-    directorPersona: "visionary",
-    brandTone: "Authoritative, nurturing, informative, and professional.",
-    brandAvoidWords: "viral, smash the like button, clickbait, buy now",
-    brandTargetAudience: "Parents of K-12 students, prospective families, and the local community.",
-    brandCoreValues: "Holistic education, child safety, academic excellence, transparency.",
-    schoolContext: "", // NEW: Knowledge Base
+  const [settings, setSettings] = useState(() => {
+    const defaults = {
+      defaultLocation: "IN", defaultLanguage: "en",
+      defaultFormat: "youtube_long", defaultStyle: "professional",
+      aiModel: "pro", geminiKey: "", youtubeKey: "",
+      directorPersona: "visionary",
+      brandTone: "Authoritative, nurturing, informative, and professional.",
+      brandAvoidWords: "viral, smash the like button, clickbait, buy now",
+      brandTargetAudience: "Parents of K-12 students, prospective families, and the local community.",
+      brandCoreValues: "Holistic education, child safety, academic excellence, transparency.",
+      schoolContext: "",
+    };
+
+    try {
+      const { getSettings } = require("@/lib/storage");
+      return { ...defaults, ...getSettings() };
+    } catch {
+      return defaults;
+    }
   });
   const [saved, setSaved] = useState(false);
   const [activeTab, setActiveTab] = useState("persona");
-
-  useEffect(() => {
-    try {
-      const { getSettings } = require("@/lib/storage");
-      const s = getSettings();
-      if (Object.keys(s).length > 0) setSettings((prev) => ({ ...prev, ...s }));
-    } catch {}
-  }, []);
 
   const handleSave = () => {
     try {

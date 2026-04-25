@@ -5,7 +5,12 @@
 
 import { generateJSON } from "./ai-client";
 
-export async function editContent(script, { format = "youtube_long", audience = "general" } = {}) {
+export async function editContent(scriptOrOptions, options = {}) {
+  const isObjectInput = typeof scriptOrOptions === "object" && scriptOrOptions !== null;
+  const script = isObjectInput ? scriptOrOptions.script || "" : scriptOrOptions || "";
+  const mergedOptions = isObjectInput ? { ...scriptOrOptions, ...options } : options;
+  const { format = "youtube_long", audience = "general" } = mergedOptions;
+
   const prompt = `You are a world-class content editor who has polished scripts for MrBeast, Ali Abdaal, and Kurzgesagt.
 
 TASK: Edit and improve the following ${format} script. Return JSON.

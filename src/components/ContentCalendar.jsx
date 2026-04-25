@@ -1,21 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { useResearchHistory } from "@/lib/storage";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export default function ContentCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [scheduledItems, setScheduledItems] = useState([]);
-
-  useEffect(() => {
-    try {
-      const { getResearchHistory } = require("@/lib/storage");
-      const items = getResearchHistory().filter(item => item.scheduledDate && (item.status === "approved" || item.status === "in_production" || item.status === "published"));
-      setScheduledItems(items);
-    } catch {}
-  }, []);
+  const researchItems = useResearchHistory();
+  const scheduledItems = useMemo(
+    () => researchItems.filter((item) =>
+      item.scheduledDate && (item.status === "approved" || item.status === "in_production" || item.status === "published")
+    ),
+    [researchItems]
+  );
 
   const getDaysInMonth = (date) => {
     const year = date.getFullYear();

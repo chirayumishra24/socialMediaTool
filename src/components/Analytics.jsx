@@ -1,38 +1,34 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { BarChart as BarChartIcon, Search, CheckCircle2, Clapperboard, Rocket, TrendingUp, Users, Clock, Globe } from "lucide-react";
+import { BarChart as BarChartIcon, Search, MousePointerClick, Clapperboard, Rocket, TrendingUp, Users, Clock, Globe, Hash, Eye } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from "recharts";
+import { useContentHistory, usePerformanceInsights, useResearchHistory, useStats } from "@/lib/storage";
 
 export default function Analytics() {
-  const [stats, setStats] = useState(null);
-
-  useEffect(() => {
-    try {
-      const { getStats, getContentHistory, getResearchHistory } = require("@/lib/storage");
-      const s = getStats();
-      const content = getContentHistory();
-      const research = getResearchHistory();
-      setStats({ ...s, content, research });
-    } catch {}
-  }, []);
+  const stats = useStats();
+  const content = useContentHistory();
+  const research = useResearchHistory();
+  const performance = usePerformanceInsights();
 
   if (!stats) return <div className="p-20 text-center text-txt-muted animate-pulse">Initializing Executive Dashboard...</div>;
 
-  // Prepare data for Chart 1: Content by Platform
-  const platformData = [
-    { name: "YouTube", value: stats.content?.filter(c => c.metadata?.platforms?.includes('youtube')).length || 0, color: "#EF4444" },
-    { name: "Instagram", value: stats.content?.filter(c => c.metadata?.platforms?.includes('instagram')).length || 0, color: "#E1306C" },
-    { name: "Twitter/X", value: stats.content?.filter(c => c.metadata?.platforms?.includes('twitter') || c.metadata?.platforms?.includes('x')).length || 0, color: "#1DA1F2" },
-    { name: "LinkedIn", value: stats.content?.filter(c => c.metadata?.platforms?.includes('linkedin')).length || 0, color: "#0A66C2" },
-  ].filter(d => d.value > 0);
+  const colors = ["#EF4444", "#E1306C", "#1DA1F2", "#0A66C2", "#8B5CF6"];
+  const platformData = performance.platformPerformance.map((item, index) => ({
+    name: item.platform,
+    value: item.totalClicks,
+    color: colors[index % colors.length],
+  })).filter((item) => item.value > 0);
 
-  // Prepare data for Chart 2: Pipeline Velocity (Research vs Approved vs Published)
   const velocityData = [
     { stage: "Research", count: stats.totalResearch },
     { stage: "Approved", count: stats.approved },
     { stage: "Published", count: stats.published },
   ];
+  const tagData = performance.topTags.slice(0, 6).map((item) => ({
+    tag: item.tag,
+    clicks: item.totalClicks,
+    posts: item.posts,
+  }));
 
   return (
     <div className="p-6 lg:p-10 max-w-6xl mx-auto space-y-8 animate-fade-in">
@@ -53,9 +49,9 @@ export default function Analytics() {
       {/* Hero Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <AnalyticCard icon={<Search className="w-5 h-5" />} label="R&D Cycles" value={stats.totalResearch} color="text-accent" />
-        <AnalyticCard icon={<CheckCircle2 className="w-5 h-5" />} label="Quality Score" value="94%" color="text-success" />
-        <AnalyticCard icon={<Clapperboard className="w-5 h-5" />} label="Assets Ready" value={stats.totalContent} color="text-warning" />
-        <AnalyticCard icon={<Rocket className="w-5 h-5" />} label="Market Reach" value={`${(stats.published * 1.2).toFixed(1)}k`} color="text-primary" />
+        <AnalyticCard icon={<MousePointerClick className="w-5 h-5" />} label="Tracked Clicks" value={stats.totalClicks || 0} color="text-success" />
+        <AnalyticCard icon={<Eye className="w-5 h-5" />} label="Tracked Views" value={stats.totalViews || 0} color="text-warning" />
+        <AnalyticCard icon={<Rocket className="w-5 h-5" />} label="Avg CTR" value={`${performance.totals.avgCtr || 0}%`} color="text-primary" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -90,9 +86,9 @@ export default function Analytics() {
         <div className="rounded-2xl bg-bg-card border border-border p-6 shadow-sm">
           <div className="flex items-center justify-between mb-8">
             <h4 className="text-sm font-bold text-txt flex items-center gap-2">
-              <Globe className="w-4 h-4 text-primary" /> Platform Distribution
+              <Globe className="w-4 h-4 text-primary" /> Clicks by Platform
             </h4>
-            <span className="text-[10px] font-bold text-txt-muted uppercase tracking-widest">Content Strategy</span>
+            <span className="text-[10px] font-bold text-txt-muted uppercase tracking-widest">Tracked Posts</span>
           </div>
           <div className="h-[240px] w-full flex items-center">
             <div className="flex-1">
@@ -118,10 +114,77 @@ export default function Analytics() {
                 <div key={i} className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full" style={{backgroundColor: d.color}} />
                   <span className="text-xs font-bold text-txt">{d.name}</span>
-                  <span className="text-[10px] font-medium text-txt-muted ml-auto">{Math.round((d.value / stats.totalContent) * 100)}%</span>
+                  <span className="text-[10px] font-medium text-txt-muted ml-auto">{d.value} clicks</span>
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="rounded-2xl bg-bg-card border border-border p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-8">
+            <h4 className="text-sm font-bold text-txt flex items-center gap-2">
+              <Hash className="w-4 h-4 text-accent" /> Tag Lift
+            </h4>
+            <span className="text-[10px] font-bold text-txt-muted uppercase tracking-widest">Posts using each tag</span>
+          </div>
+          <div className="h-[260px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={tagData} layout="vertical" margin={{ left: 10, right: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border)" />
+                <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "var(--txt-muted)" }} />
+                <YAxis type="category" dataKey="tag" width={120} axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "var(--txt-muted)" }} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border)", borderRadius: "12px", fontSize: "12px", fontWeight: "bold" }}
+                  formatter={(value, _name, props) => [`${value} clicks`, `${props.payload.posts} post(s)`]}
+                />
+                <Bar dataKey="clicks" fill="var(--accent)" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="rounded-2xl bg-bg-card border border-border p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-bold text-txt flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-success" /> Top Performing Posts
+            </h4>
+            <span className="text-[10px] font-bold text-txt-muted uppercase tracking-widest">Learning inputs</span>
+          </div>
+          <div className="space-y-3">
+            {performance.topContent.length > 0 ? performance.topContent.map((item) => (
+              <div key={item.id} className="p-4 rounded-xl bg-bg-elevated/30 border border-border">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-bold text-txt">{item.keyword}</p>
+                    <p className="text-[10px] font-bold text-txt-muted uppercase tracking-widest mt-1">{item.format}</p>
+                  </div>
+                  {item.publishedUrl && (
+                    <a href={item.publishedUrl} target="_blank" rel="noreferrer" className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">
+                      Open
+                    </a>
+                  )}
+                </div>
+                <div className="grid grid-cols-3 gap-3 mt-4">
+                  <MiniMetric label="Views" value={item.views} />
+                  <MiniMetric label="Clicks" value={item.clicks} />
+                  <MiniMetric label="CTR" value={`${item.ctr}%`} />
+                </div>
+                <div className="flex flex-wrap gap-2 mt-4">
+                  {item.tags.map((tag) => (
+                    <span key={tag} className="px-2.5 py-1 rounded-lg text-[9px] font-black bg-primary/5 text-primary border border-primary/10">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )) : (
+              <div className="p-6 rounded-xl border border-dashed border-border text-center text-sm text-txt-muted">
+                No tracked published posts yet.
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -143,7 +206,7 @@ export default function Analytics() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
-              {[...stats.research?.slice(0, 5).map((r) => ({ ...r, type: "research" })) || [], ...stats.content?.slice(0, 5).map((c) => ({ ...c, type: "content" })) || []]
+              {[...research.slice(0, 5).map((r) => ({ ...r, type: "research" })), ...content.slice(0, 5).map((c) => ({ ...c, type: "content" }))]
                 .sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt))
                 .slice(0, 8)
                 .map((item, i) => (
@@ -193,6 +256,15 @@ function AnalyticCard({ icon, label, value, color }) {
       <div className={`mb-3 w-10 h-10 rounded-xl bg-bg-elevated flex items-center justify-center ${color} group-hover:scale-110 transition-transform`}>{icon}</div>
       <p className="text-3xl font-bold text-txt tracking-tight">{value}</p>
       <p className="text-[11px] font-bold text-txt-muted uppercase tracking-widest mt-1">{label}</p>
+    </div>
+  );
+}
+
+function MiniMetric({ label, value }) {
+  return (
+    <div className="p-3 rounded-lg bg-white border border-border/60">
+      <p className="text-[9px] font-black text-txt-muted uppercase tracking-wider">{label}</p>
+      <p className="text-sm font-black text-txt mt-1">{value}</p>
     </div>
   );
 }

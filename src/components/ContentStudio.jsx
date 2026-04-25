@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { MonitorPlay, Smartphone, Clapperboard, Layers, Hash, Briefcase, BookOpen, PenTool, Sparkles, Bot, Tag, Edit3, Loader2, Copy, FileText, Globe, Flame, Clock, Wand2, ArrowLeft, Beaker, X, ChevronRight, Save, CheckCircle2, UserCheck, Eye } from "lucide-react";
+import { MonitorPlay, Smartphone, Clapperboard, Layers, Hash, Briefcase, BookOpen, PenTool, Sparkles, Bot, Tag, Edit3, Loader2, Copy, FileText, Globe, Flame, Clock, Wand2, ArrowLeft, Beaker, X, ChevronRight, Save, CheckCircle2, UserCheck, Eye, TrendingUp, MousePointerClick } from "lucide-react";
 import SocialPreview from "./SocialPreview";
+import { saveContent, useLearningSignals, useSettingsSnapshot } from "@/lib/storage";
 
 const FORMATS = [
   { id: "youtube_long", label: "YT Long", icon: MonitorPlay, desc: "8-20min" },
@@ -28,18 +29,15 @@ export default function ContentStudio({ researchContext, onClearContext }) {
   const [error, setError] = useState(null);
   const [tab, setTab] = useState("script");
   const [isSaved, setIsSaved] = useState(false);
-  const [activePersona, setActivePersona] = useState("visionary");
+  const settings = useSettingsSnapshot();
+  const learningSignals = useLearningSignals();
+  const activePersona = settings.directorPersona || "visionary";
 
   useEffect(() => {
-    try {
-      const { getSettings } = require("@/lib/storage");
-      const s = getSettings();
-      if (s.directorPersona) setActivePersona(s.directorPersona);
-    } catch {}
-
     if (researchContext?.keyword) {
       setKeyword(researchContext.keyword);
       if (researchContext.location) setLocation(researchContext.location);
+      if (researchContext.format) setFormat(researchContext.format);
     }
   }, [researchContext]);
 
@@ -47,9 +45,6 @@ export default function ContentStudio({ researchContext, onClearContext }) {
     if (!keyword.trim()) return;
     setLoading(true); setError(null); setResult(null); setBundleResult(null); setIsSaved(false);
     try {
-      const { getSettings } = require("@/lib/storage");
-      const s = getSettings();
-      
       const researchSummary = researchContext?.research ? {
         summary: researchContext.research.executiveSummary || "",
         angles: researchContext.research.suggestedAngles || [],
@@ -63,17 +58,21 @@ export default function ContentStudio({ researchContext, onClearContext }) {
           keyword, format, style, audience, location, 
           research: researchSummary,
           bundle: isBundle,
-          directorPersona: s.directorPersona || "visionary",
-          schoolContext: s.schoolContext || "",
+          directorPersona: settings.directorPersona || "visionary",
+          schoolContext: settings.schoolContext || "",
+          learningSignals,
           brandVoice: {
-            tone: s.brandTone,
-            audience: s.brandTargetAudience,
-            values: s.brandCoreValues,
-            avoidWords: s.brandAvoidWords
+            tone: settings.brandTone,
+            audience: settings.brandTargetAudience,
+            values: settings.brandCoreValues,
+            avoidWords: settings.brandAvoidWords
           }
         }),
       });
-      if (!res.ok) throw new Error("Generation failed");
+      if (!res.ok) {
+        const failure = await res.json().catch(() => ({}));
+        throw new Error(failure.error || "Generation failed");
+      }
       const data = await res.json();
       if (data.bundle) {
         setBundleResult(data.scripts);
@@ -86,23 +85,24 @@ export default function ContentStudio({ researchContext, onClearContext }) {
       }
     } catch (e) { setError(e.message); }
     finally { setLoading(false); }
-  }, [keyword, format, style, audience, location, researchContext]);
+  }, [keyword, format, style, audience, location, researchContext, settings, learningSignals]);
 
   const handleSave = () => {
     if (!result) return;
     try {
-      const { saveContent } = require("@/lib/storage");
       saveContent({
         keyword,
         format,
         script: result.script,
+        originalScript: result.originalScript,
         seo: result.seo || {},
         editing: result.editing || {},
+        research: researchContext?.research || null,
         metadata: { 
           keyword, format, style, audience, location, 
           researchId: researchContext?.id,
-          persona: result.metadata?.directorPersona
-        }
+          persona: result.metadata?.directorPersona,
+        },
       });
       setIsSaved(true);
       setTimeout(() => setIsSaved(false), 3000);
@@ -176,6 +176,57 @@ export default function ContentStudio({ researchContext, onClearContext }) {
                 </button>
               )}
             </div>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-bg-card border border-border space-y-5 shadow-sm">
+            <div className="flex items-center justify-between">
+              <h4 className="text-[10px] font-black text-txt uppercase tracking-widest flex items-center gap-2">
+                <TrendingUp className="w-3.5 h-3.5 text-success" /> Performance Memory
+              </h4>
+              <span className="text-[9px] font-black text-success uppercase tracking-widest">
+                {learningSignals.publishedPosts || 0} tracked posts
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label: "Clicks", value: learningSignals.totalClicks || 0, icon: MousePointerClick },
+                { label: "Views", value: learningSignals.totalViews || 0, icon: Eye },
+                { label: "CTR", value: `${learningSignals.averageCtr || 0}%`, icon: Flame },
+              ].map((item) => (
+                <div key={item.label} className="p-3 rounded-xl bg-bg-elevated/50 border border-border">
+                  <item.icon className="w-4 h-4 text-primary mb-2" />
+                  <p className="text-sm font-black text-txt">{item.value}</p>
+                  <p className="text-[9px] font-black text-txt-muted uppercase tracking-wider mt-1">{item.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {learningSignals.topTags?.length > 0 ? (
+              <>
+                <div>
+                  <p className="text-[10px] font-black text-txt-muted uppercase tracking-widest mb-3">Winning Tags</p>
+                  <div className="flex flex-wrap gap-2">
+                    {learningSignals.topTags.slice(0, 6).map((item) => (
+                      <span key={item.tag} className="px-3 py-1.5 rounded-lg text-[10px] font-black bg-success/5 text-success border border-success/15">
+                        {item.tag} • {item.totalClicks} clicks
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-border">
+                  <p className="text-[10px] font-black text-txt-muted uppercase tracking-widest mb-2">Learning Loop</p>
+                  <p className="text-xs text-txt-secondary font-medium leading-relaxed">
+                    {learningSignals.lessons?.[0]}
+                  </p>
+                </div>
+              </>
+            ) : (
+              <p className="text-xs text-txt-muted font-medium leading-relaxed">
+                Publish a few tracked posts with URLs, clicks, and views. The next generations will then lean on real winning tags and formats.
+              </p>
+            )}
           </div>
 
           {researchContext?.research && (

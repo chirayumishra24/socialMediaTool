@@ -15,7 +15,18 @@ export async function generateSEO({
   location = "IN",
   language = "en",
   platforms = ["youtube"],
+  learningSignals = null,
 } = {}) {
+  const learningContext = learningSignals?.publishedPosts
+    ? `
+PREVIOUS PERFORMANCE MEMORY:
+- Published Posts Tracked: ${learningSignals.publishedPosts}
+- Top Tags By Clicks: ${(learningSignals.topTags || []).slice(0, 8).map((item) => `${item.tag} (${item.totalClicks} clicks)`).join("; ")}
+- Winning Formats: ${(learningSignals.winningFormats || []).slice(0, 4).map((item) => `${item.format} (${item.avgClicks} avg clicks)`).join("; ")}
+- Lessons: ${(learningSignals.lessons || []).join(" ")}
+`
+    : "";
+
   const prompt = `You are an SEO specialist with 500+ #1 ranking videos and posts across YouTube, Instagram, and X.
 
 TASK: Generate precision SEO metadata for content about "${keyword}".
@@ -24,6 +35,7 @@ FORMAT: ${format}
 TARGET LOCATION: ${location}
 LANGUAGE: ${language}
 TARGET PLATFORMS: ${platforms.join(", ")}
+${learningContext}
 
 SCRIPT EXCERPT:
 """
@@ -75,7 +87,8 @@ RULES:
 2. Each tag should have realistic competition and volume estimates
 3. Titles must trigger curiosity gap or bold claim — score honestly
 4. Platform-specific tags should follow each platform's algorithm preferences
-5. Consider ${location} audience timezone for posting time`;
+5. Consider ${location} audience timezone for posting time
+6. If previous tag performance is provided, prefer proven themes while still keeping the set specific to this topic`;
 
   return generateJSON(prompt, "pro");
 }

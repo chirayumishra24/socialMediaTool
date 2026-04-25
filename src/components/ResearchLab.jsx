@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { MonitorPlay, Camera, Hash, MessageSquare, Newspaper, Zap, BarChart2, Search, Globe, Check, Eye, MessageCircle, Heart, ArrowUpRight, Flame, Lightbulb, Target, Copy, Award, Loader2, Sparkles, AlertCircle, Compass, Clock, Activity, ArrowUp, Repeat2, Play, User, ExternalLink } from "lucide-react";
+import { MonitorPlay, Camera, Hash, MessageSquare, Newspaper, Zap, BarChart2, Search, Globe, Check, Eye, MessageCircle, Heart, ArrowRight, ArrowUpRight, Flame, Lightbulb, Target, Copy, Award, Loader2, Sparkles, AlertCircle, Compass, Clock, Activity, ArrowUp, Repeat2, Play, User, ExternalLink, Wand2 } from "lucide-react";
 
 const PLATFORMS_LIST = [
   { id: "youtube", label: "YouTube", icon: MonitorPlay },
@@ -70,8 +70,14 @@ export default function ResearchLab({ onResearchComplete, onGoToStudio, initialK
       setPlatformData(data.platformData);
       setTopKeywords(data.topKeywords || []);
 
-      // Emit context to parent so ContentStudio can use it
+      let savedResearch = null;
+      try {
+        const { saveResearch } = require("@/lib/storage");
+        savedResearch = saveResearch({ keyword, research: data.research, platformData: data.platformData, location, depth });
+      } catch {}
+
       onResearchComplete?.({
+        id: savedResearch?.id,
         keyword,
         research: data.research,
         platformData: data.platformData,
@@ -80,15 +86,9 @@ export default function ResearchLab({ onResearchComplete, onGoToStudio, initialK
         depth,
         researchedAt: new Date().toISOString(),
       });
-
-      // Auto-save to localStorage
-      try {
-        const { saveResearch } = require("@/lib/storage");
-        saveResearch({ keyword, research: data.research, platformData: data.platformData, location, depth });
-      } catch {}
     } catch (e) { setError(e.message); }
     finally { setLoading(false); }
-  }, [keyword, platforms, location, depth]);
+  }, [depth, keyword, location, onResearchComplete, platforms]);
 
   return (
     <div className="p-6 lg:p-10 max-w-7xl mx-auto space-y-8 animate-fade-in">

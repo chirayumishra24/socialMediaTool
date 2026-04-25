@@ -1,18 +1,10 @@
 "use client";
 
-import { Camera, Hash, Globe, MonitorPlay, User, MessageCircle, Heart, Send, Bookmark, MoreHorizontal, Share2, Repeat2 } from "lucide-react";
+import { useSettingsSnapshot } from "@/lib/storage";
+import { Camera, CheckCircle2, Hash, Globe, MonitorPlay, User, MessageCircle, Heart, Send, Bookmark, MoreHorizontal, Share2, Repeat2 } from "lucide-react";
 
 export default function SocialPreview({ format, script, persona }) {
-  const [settings, setSettings] = useState(null);
-
-  useEffect(() => {
-    try {
-      const { getSettings } = require("@/lib/storage");
-      setSettings(getSettings());
-    } catch (e) {
-      console.error("Failed to load settings in Preview", e);
-    }
-  }, []);
+  const settings = useSettingsSnapshot();
 
   const getPreview = () => {
     if (format.includes("instagram_reel") || format.includes("youtube_short")) {
@@ -34,7 +26,7 @@ export default function SocialPreview({ format, script, persona }) {
       </div>
       <div className="mt-10 flex flex-col items-center gap-2">
         <p className="text-[10px] font-black text-txt uppercase tracking-[0.2em] flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-border shadow-sm">
-          <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
           Real-Time Social Simulator
         </p>
         <p className="text-[9px] font-bold text-txt-muted uppercase tracking-widest">Visualizing your institutional voice</p>
@@ -44,8 +36,9 @@ export default function SocialPreview({ format, script, persona }) {
 }
 
 function InstagramReelPreview({ script, persona, settings }) {
+  const safeScript = script || "";
   const schoolName = settings?.schoolName || "Your School Name";
-  const lines = script.split("\n").filter(l => l.trim().length > 0 && !l.includes("["));
+  const lines = safeScript.split("\n").filter(l => l.trim().length > 0 && !l.includes("["));
   const mainCaption = lines[0] || "Director's Insight...";
 
   return (
@@ -90,9 +83,10 @@ function InstagramReelPreview({ script, persona, settings }) {
 }
 
 function TwitterThreadPreview({ script, persona, settings }) {
+  const safeScript = script || "";
   const schoolName = settings?.schoolName || "School Name";
   const handle = schoolName.toLowerCase().replace(/\s+/g, '');
-  const tweets = script.split("\n\n").filter(t => t.trim().length > 0 && !t.includes("[")).slice(0, 3);
+  const tweets = safeScript.split("\n\n").filter(t => t.trim().length > 0 && !t.includes("[")).slice(0, 3);
 
   return (
     <div className="bg-white rounded-[2.5rem] border border-border shadow-2xl overflow-hidden min-h-[550px] flex flex-col">
@@ -131,9 +125,10 @@ function TwitterThreadPreview({ script, persona, settings }) {
 }
 
 function LinkedInPreview({ script, persona, settings }) {
+  const safeScript = script || "";
   const schoolName = settings?.schoolName || "Your Institution";
   const vision = settings?.schoolVision?.substring(0, 40) || "Shaping the future of education";
-  const content = script.split("\n\n").filter(c => c.trim().length > 0 && !c.includes("[")).slice(0, 1);
+  const content = safeScript.split("\n\n").filter(c => c.trim().length > 0 && !c.includes("[")).slice(0, 1);
 
   return (
     <div className="bg-white rounded-[2.5rem] border border-border shadow-2xl overflow-hidden min-h-[550px] flex flex-col">
