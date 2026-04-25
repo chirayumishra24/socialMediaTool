@@ -1,43 +1,44 @@
 import { NextResponse } from "next/server";
 import { generateScript } from "@/lib/ai/writer-agent";
-import { editContent } from "@/lib/ai/editor-agent";
 import { generateSEO } from "@/lib/ai/seo-agent";
+import { editContent } from "@/lib/ai/editor-agent";
 
-export async function POST(request) {
+export async function POST(req) {
   try {
-    const body = await request.json();
-    const { keyword, format = "youtube_long", style = "professional", audience = "general audience", research = null, approvedAngles = [], location = "IN", language = "en", platforms = ["youtube"], brandVoice = null } = body;
+    const { 
+      keyword, format, style, audience, location, research, 
+      brandVoice, directorPersona, schoolContext 
+    } = await req.json();
 
-    if (!keyword) return NextResponse.json({ error: "Missing keyword" }, { status: 400 });
+    // 1. Generate Script
+    const script = await generateScript({
+      keyword, format, style, audience, research, location, 
+      brandVoice, directorPersona, schoolContext
+    });
 
-    // Step 1: Writer Agent → generate raw script
-    const rawScript = await generateScript({ keyword, format, style, audience, research, approvedAngles, location, language, brandVoice });
+    // 2. Generate SEO Bundle
+    const seo = await generateSEO({
+      keyword, format, script
+    });
 
-    // Step 2: Editor Agent → polish and score
-    const edited = await editContent(rawScript, { format, audience });
-
-    // Step 3: SEO Agent → precision tags and metadata
-    const seo = await generateSEO({ keyword, script: edited.editedScript || rawScript, format, location, language, platforms });
+    // 3. Editorial Review
+    const editing = await editContent({
+      script, format, style, brandVoice
+    });
 
     return NextResponse.json({
-      script: edited.editedScript || rawScript,
-      rawScript,
-      editing: {
-        hookScore: edited.hookScore,
-        ctaStrength: edited.ctaStrength,
-        readabilityScore: edited.readabilityScore,
-        overallScore: edited.overallScore,
-        retentionLoops: edited.retentionLoops,
-        changes: edited.changes,
-      },
+      script,
       seo,
+      editing,
       metadata: {
-        keyword, format, style, audience, location, language,
-        generatedAt: new Date().toISOString(),
-      },
+        keyword, format, style, audience, location, 
+        directorPersona,
+        hasResearchContext: !!research,
+        timestamp: new Date().toISOString()
+      }
     });
   } catch (error) {
-    console.error("Generate API error:", error);
+    console.error("Generation Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

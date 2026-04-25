@@ -60,6 +60,13 @@ const STYLES = {
   educational: "Teacher-like, step-by-step, clear explanations",
 };
 
+const PERSONA_SPECS = {
+  visionary: "Visionary Leader: Focus on the future of education, bold transformations, and inspiring parents to think ahead. Use vocabulary like 'frontier', 'evolution', 'paradigm shift'. Speak with a sense of exciting momentum.",
+  nurturing: "Nurturing Mentor: Focus on child safety, emotional well-being, and personalized growth. Use warm, empathetic language like 'support', 'journey', 'care', 'safe space'. Speak like a trusted advisor to parents.",
+  authoritative: "Professional Expert: Focus on academic excellence, data-backed results, and strict standards. Use direct, precise language like 'measurable', 'standardized', 'excellence', 'rigorous'. Speak with undeniable credibility.",
+  community: "Community Pillar: Focus on local impact, inclusivity, and shared growth. Use warm, welcoming language like 'together', 'our family', 'local community', 'belonging'. Speak like a pillar of the neighborhood.",
+};
+
 /**
  * Generate a content script from research.
  */
@@ -73,15 +80,16 @@ export async function generateScript({
   location = "IN",
   language = "en",
   brandVoice = null,
+  directorPersona = "visionary",
+  schoolContext = "", // NEW: Knowledge Base Context
 } = {}) {
   const spec = FORMAT_SPECS[format] || FORMAT_SPECS.youtube_long;
   const styleDesc = STYLES[style] || STYLES.professional;
+  const personaDesc = PERSONA_SPECS[directorPersona] || PERSONA_SPECS.visionary;
 
   let researchContext = "";
   if (research) {
     const parts = ["RESEARCH INTELLIGENCE (use this to make the script highly specific and data-driven):"];
-
-    // New format from R&D Lab pipeline
     if (research.summary) parts.push(`- Executive Summary: ${research.summary}`);
     if (research.angles?.length) parts.push(`- Suggested Angles: ${research.angles.map(a => typeof a === "string" ? a : a.angle || a.title || JSON.stringify(a)).join("; ")}`);
     if (research.hooks?.length) parts.push(`- Hook Ideas: ${research.hooks.map(h => typeof h === "string" ? h : h.hook || h.text || JSON.stringify(h)).join("; ")}`);
@@ -92,16 +100,18 @@ export async function generateScript({
       if (pi.redditCount) parts.push(`- Reddit: ${pi.redditCount} discussions found`);
       if (pi.newsCount) parts.push(`- News: ${pi.newsCount} recent articles`);
     }
-
-    // Legacy format compatibility
-    if (research.recommendedStrategy?.bestAngle) parts.push(`- Best Angle: ${research.recommendedStrategy.bestAngle}`);
-    if (research.contentGaps?.length) parts.push(`- Content Gaps: ${research.contentGaps.map((g) => g.gap).join("; ")}`);
-    if (research.audienceSentiment?.painPoints?.length) parts.push(`- Pain Points: ${research.audienceSentiment.painPoints.join(", ")}`);
-    if (research.competitors?.length) parts.push(`- Competitors: ${research.competitors.map((c) => c.name).join(", ")}`);
     if (approvedAngles.length) parts.push(`- APPROVED ANGLES: ${approvedAngles.map((a) => a.angle).join("; ")}`);
-
     researchContext = parts.join("\n");
   }
+
+  const schoolKnowledgeContext = schoolContext 
+    ? `
+=== INSTITUTIONAL KNOWLEDGE BASE (INTERNAL TRUTH) ===
+You MUST adhere to the following school-specific rules, mission, and context:
+${schoolContext}
+=====================================================
+` 
+    : "";
 
   const brandVoiceContext = brandVoice 
     ? `
@@ -114,16 +124,19 @@ export async function generateScript({
 `
     : "";
 
-  const prompt = `You are a highly respected School Communications Expert and Educational Content Strategist. You specialize in creating informative, engaging, and trust-building content for educational institutions.
+  const prompt = `You are a highly respected School Director and Educational Content Strategist. 
 
 TASK: Write a complete ${spec.name} script.
 
 TOPIC: "${keyword}"
 FORMAT: ${spec.name} (${spec.duration})
 STYLE: ${styleDesc}
+DIRECTOR PERSONA: ${personaDesc}
 AUDIENCE: ${audience}
 LOCATION: ${location}
 LANGUAGE: ${language === "hi" ? "Hindi" : language === "hinglish" ? "Hinglish" : "English"}
+
+${schoolKnowledgeContext}
 ${researchContext}
 ${brandVoiceContext}
 
@@ -131,14 +144,11 @@ FORMAT STRUCTURE: ${spec.structure}
 FORMAT NOTES: ${spec.notes}
 
 REQUIREMENTS:
-1. The hook MUST be irresistible — use curiosity gap, bold claim, or shocking stat
-2. Every 60-90 seconds should have a retention trigger (question, tease, pattern interrupt)
-3. Include specific CTAs optimized for ${spec.name}
-4. If video format: include [B-ROLL], [TEXT OVERLAY], [CUT TO] production notes
-5. If text format: include formatting (bold, bullets, line breaks)
-6. Reference real data, studies, or examples where possible
-7. Tailor cultural references to ${location} audience
-8. EXACTLY MATCH THE BRAND VOICE TONE AND NEVER USE THE "WORDS TO AVOID".
+1. ADOPT THE DIRECTOR PERSONA: Speak with the exact voice of the selected leadership style.
+2. INTERNAL TRUTH FIRST: Prioritize the Institutional Knowledge Base over general trends. If the school policy conflicts with a trend, the policy wins.
+3. The hook MUST be irresistible — use curiosity gap, bold claim, or shocking stat.
+4. Every 60-90 seconds should have a retention trigger (question, tease, pattern interrupt).
+5. EXACTLY MATCH THE BRAND VOICE TONE AND NEVER USE THE "WORDS TO AVOID".
 
 Write the COMPLETE script now. Be specific, not generic. Every line should earn its place.`;
 

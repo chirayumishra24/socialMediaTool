@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { MonitorPlay, Smartphone, Clapperboard, Layers, Hash, Briefcase, BookOpen, PenTool, Sparkles, Bot, Tag, Edit3, Loader2, Copy, FileText, Globe, Flame, Clock, Wand2, ArrowLeft, Beaker, X, ChevronRight } from "lucide-react";
+import { MonitorPlay, Smartphone, Clapperboard, Layers, Hash, Briefcase, BookOpen, PenTool, Sparkles, Bot, Tag, Edit3, Loader2, Copy, FileText, Globe, Flame, Clock, Wand2, ArrowLeft, Beaker, X, ChevronRight, Save, CheckCircle2, UserCheck, Eye } from "lucide-react";
+import SocialPreview from "./SocialPreview";
 
 const FORMATS = [
   { id: "youtube_long", label: "YT Long", icon: MonitorPlay, desc: "8-20min" },
@@ -14,7 +15,6 @@ const FORMATS = [
 ];
 
 const STYLES = ["professional", "casual", "hinglish", "story", "data", "provocative", "educational"];
-const LOCS = [{ c: "IN", l: "India", icon: Globe }, { c: "US", l: "US", icon: Globe }, { c: "GB", l: "UK", icon: Globe }, { c: "GLOBAL", l: "Global", icon: Globe }];
 
 export default function ContentStudio({ researchContext, onClearContext }) {
   const [keyword, setKeyword] = useState("");
@@ -26,270 +26,287 @@ export default function ContentStudio({ researchContext, onClearContext }) {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [tab, setTab] = useState("script");
+  const [isSaved, setIsSaved] = useState(false);
+  const [activePersona, setActivePersona] = useState("visionary");
 
-  // Auto-populate from research context
   useEffect(() => {
+    try {
+      const { getSettings } = require("@/lib/storage");
+      const s = getSettings();
+      if (s.directorPersona) setActivePersona(s.directorPersona);
+    } catch {}
+
     if (researchContext?.keyword) {
       setKeyword(researchContext.keyword);
       if (researchContext.location) setLocation(researchContext.location);
     }
   }, [researchContext]);
 
-  const hasContext = !!researchContext?.keyword;
-
   const handleGenerate = useCallback(async () => {
     if (!keyword.trim()) return;
-    setLoading(true); setError(null); setResult(null);
+    setLoading(true); setError(null); setResult(null); setIsSaved(false);
     try {
       const { getSettings } = require("@/lib/storage");
       const s = getSettings();
-      const brandVoice = {
-        tone: s.brandTone,
-        audience: s.brandTargetAudience,
-        values: s.brandCoreValues,
-        avoidWords: s.brandAvoidWords,
-      };
-
-      // Build research summary to feed to the writer agent
-      let researchSummary = null;
-      if (researchContext?.research) {
-        const r = researchContext.research;
-        researchSummary = {
-          summary: r.executiveSummary || r.summary || "",
-          angles: r.suggestedAngles || r.angles || [],
-          hooks: r.suggestedHooks || r.hooks || [],
-          topKeywords: (researchContext.topKeywords || []).slice(0, 10).map(k => k.keyword || k),
-          platformInsights: {
-            youtubeCount: researchContext.platformData?.youtube?.length || 0,
-            redditCount: researchContext.platformData?.reddit?.length || 0,
-            newsCount: researchContext.platformData?.news?.length || 0,
-            topVideoTitle: researchContext.platformData?.youtube?.[0]?.title || "",
-            topVideoViews: researchContext.platformData?.youtube?.[0]?.metrics?.views || 0,
-          },
-        };
-      }
+      
+      const researchSummary = researchContext?.research ? {
+        summary: researchContext.research.executiveSummary || "",
+        angles: researchContext.research.suggestedAngles || [],
+        hooks: researchContext.research.suggestedHooks || [],
+        topKeywords: (researchContext.topKeywords || []).slice(0, 10).map(k => k.keyword || k),
+      } : null;
 
       const res = await fetch("/api/generate", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          keyword, format, style, audience, location, brandVoice,
+        body: JSON.stringify({ 
+          keyword, format, style, audience, location, 
           research: researchSummary,
+          directorPersona: s.directorPersona || "visionary",
+          schoolContext: s.schoolContext || "", // PASS RAG CONTEXT
+          brandVoice: {
+            tone: s.brandTone,
+            audience: s.brandTargetAudience,
+            values: s.brandCoreValues,
+            avoidWords: s.brandAvoidWords
+          }
         }),
       });
-      if (!res.ok) { const e = await res.json(); throw new Error(e.error || "Failed"); }
+      if (!res.ok) throw new Error("Generation failed");
       setResult(await res.json());
     } catch (e) { setError(e.message); }
     finally { setLoading(false); }
   }, [keyword, format, style, audience, location, researchContext]);
 
-  return (
-    <div className="p-5 max-w-6xl mx-auto">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Controls */}
-        <div className="lg:col-span-4 space-y-4">
-          <h3 className="text-sm font-bold text-txt flex items-center gap-2"><Clapperboard className="w-4 h-4 text-primary" /> Content Studio</h3>
+  const handleSave = () => {
+    if (!result) return;
+    try {
+      const { saveContent } = require("@/lib/storage");
+      saveContent({
+        keyword,
+        format,
+        script: result.script,
+        seo: result.seo,
+        editing: result.editing,
+        metadata: { 
+          keyword, format, style, audience, location, 
+          researchId: researchContext?.id,
+          persona: result.metadata?.directorPersona
+        }
+      });
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 3000);
+    } catch (e) { console.error(e); }
+  };
 
-          {/* Research Context Banner */}
-          {hasContext && (
-            <div className="rounded-xl bg-gradient-to-br from-primary/8 to-accent/8 border border-primary/20 p-4 space-y-2.5 animate-fade-in">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Beaker className="w-4 h-4 text-primary" />
-                  <span className="text-[11px] font-bold text-primary-hover">From R&D Lab</span>
+  return (
+    <div className="p-6 lg:p-10 max-w-7xl mx-auto space-y-8 animate-fade-in">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-6">
+        <div>
+          <h3 className="text-2xl font-bold text-txt tracking-tight flex items-center gap-2">
+            <PenTool className="w-6 h-6 text-primary" strokeWidth={2.5} /> Content Production Studio
+          </h3>
+          <p className="text-sm text-txt-muted font-medium">Turn verified intelligence into platform-optimized educational content.</p>
+        </div>
+        
+        <div className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-bg-card border border-border shadow-sm">
+          <UserCheck className="w-4 h-4 text-primary" />
+          <div>
+            <p className="text-[9px] font-black text-txt-muted uppercase tracking-widest leading-none mb-1">Active Voice</p>
+            <p className="text-xs font-bold text-txt capitalize">{activePersona.replace("_", " ")} Director</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Configuration Panel */}
+        <div className="lg:col-span-4 space-y-6">
+          <div className="rounded-2xl bg-bg-card border border-border p-6 space-y-6 shadow-sm">
+            <div className="space-y-4">
+              <Field label={researchContext?.keyword ? "Topic (Verified Context)" : "Primary Topic"}>
+                <div className="relative">
+                  <input type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)}
+                    placeholder="Enter main subject..."
+                    className={`w-full px-4 py-3 rounded-xl border text-sm text-txt transition-all ${researchContext?.keyword ? "bg-primary/[0.03] border-primary/20" : "bg-bg-elevated border-border"}`} />
+                  {researchContext?.keyword && <Sparkles className="absolute right-3 top-3 w-4 h-4 text-primary opacity-50" />}
                 </div>
-                <button onClick={() => { onClearContext?.(); setKeyword(""); }}
-                  className="p-1 rounded-md hover:bg-bg-elevated text-txt-muted hover:text-txt cursor-pointer transition-all">
-                  <X className="w-3.5 h-3.5" />
-                </button>
+              </Field>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Format Strategy">
+                  <select value={format} onChange={(e) => setFormat(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-bg-elevated border border-border text-sm text-txt cursor-pointer focus:ring-2 focus:ring-primary/20 transition-all outline-none">
+                    {FORMATS.map(f => <option key={f.id} value={f.id}>{f.label}</option>)}
+                  </select>
+                </Field>
+                <Field label="Style / Tone">
+                  <select value={style} onChange={(e) => setStyle(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-bg-elevated border border-border text-sm text-txt cursor-pointer focus:ring-2 focus:ring-primary/20 transition-all outline-none">
+                    {STYLES.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </Field>
               </div>
-              <p className="text-sm font-bold text-txt leading-snug">{researchContext.keyword}</p>
-              {researchContext.research?.executiveSummary && (
-                <p className="text-[11px] text-txt-secondary leading-relaxed line-clamp-3">
-                  {researchContext.research.executiveSummary.substring(0, 180)}...
-                </p>
-              )}
-              <div className="flex flex-wrap gap-1.5">
+
+              <Field label="Target Audience">
+                <input type="text" value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="e.g. Parents of middle-schoolers"
+                  className="w-full px-4 py-3 rounded-xl bg-bg-elevated border border-border text-sm text-txt placeholder:text-txt-muted focus:ring-2 focus:ring-primary/20 transition-all outline-none" />
+              </Field>
+            </div>
+
+            <button onClick={handleGenerate} disabled={loading || !keyword.trim()}
+              className={`w-full py-4 rounded-2xl text-sm font-bold transition-all flex items-center justify-center gap-3 ${loading ? "bg-primary/20 text-primary-hover cursor-wait" : "grad-primary text-white cursor-pointer shadow-xl shadow-primary/20 hover:scale-[0.98] active:scale-95"}`}>
+              {loading ? <><Loader2 className="w-5 h-5 animate-spin" /> Intelligence Processing...</> : <><Sparkles className="w-5 h-5" /> Generate Executive Script</>}
+            </button>
+          </div>
+
+          {researchContext?.research && (
+            <div className="p-6 rounded-2xl bg-primary/5 border border-primary/10 space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-[10px] font-black text-primary-hover uppercase tracking-widest flex items-center gap-2">
+                  <Beaker className="w-3.5 h-3.5" /> Context Source
+                </h4>
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              </div>
+              <p className="text-xs font-bold text-txt leading-relaxed">{researchContext.keyword}</p>
+              <div className="flex flex-wrap gap-2 pt-2 border-t border-primary/10">
                 {researchContext.topKeywords?.slice(0, 5).map((kw, i) => (
-                  <span key={i} className="px-2 py-0.5 rounded-full text-[9px] font-medium bg-primary/10 text-primary-hover border border-primary/15">
-                    {kw.keyword || kw}
-                  </span>
+                  <span key={i} className="text-[9px] font-bold text-primary px-2.5 py-1 rounded-lg bg-white/50 border border-primary/10 shadow-sm">#{kw.keyword || kw}</span>
                 ))}
               </div>
-              {researchContext.platformData && (
-                <div className="flex gap-3 text-[10px] text-txt-muted pt-1 border-t border-border/50">
-                  {researchContext.platformData.youtube?.length > 0 && <span>{researchContext.platformData.youtube.length} videos</span>}
-                  {researchContext.platformData.reddit?.length > 0 && <span>{researchContext.platformData.reddit.length} discussions</span>}
-                  {researchContext.platformData.news?.length > 0 && <span>{researchContext.platformData.news.length} articles</span>}
-                </div>
-              )}
+            </div>
+          )}
+        </div>
+
+        {/* Output Panel */}
+        <div className="lg:col-span-8">
+          {error && (
+            <div className="p-4 mb-6 rounded-xl bg-danger/5 border border-danger/10 text-danger text-sm font-bold flex items-center gap-3">
+              <X className="w-4 h-4" /> {error}
             </div>
           )}
 
-          <div className="rounded-xl bg-bg-card border border-border p-4 space-y-4">
-            {/* Topic field — auto-filled or manual */}
-            <Field label={hasContext ? "Topic (from R&D Lab)" : "Topic *"}>
-              <input type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)}
-                placeholder={hasContext ? "Loaded from research..." : "What's the content about?"}
-                className={`w-full px-3 py-2.5 rounded-lg border text-sm text-txt placeholder:text-txt-muted ${hasContext ? "bg-primary/5 border-primary/20" : "bg-bg-elevated border-border"}`} />
-            </Field>
-            <Field label="Audience">
-              <input type="text" value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="e.g. Parents, Students, Teachers"
-                className="w-full px-3 py-2.5 rounded-lg bg-bg-elevated border border-border text-sm text-txt placeholder:text-txt-muted" />
-            </Field>
-
-            {/* Format — primary selection */}
-            <Field label="Select Format *">
-              <div className="grid grid-cols-2 gap-1.5">
-                {FORMATS.map((f) => (
-                  <button key={f.id} onClick={() => setFormat(f.id)}
-                    className={`p-2.5 rounded-lg text-left border transition-all cursor-pointer ${format === f.id ? "bg-primary-muted border-primary/30 ring-1 ring-primary/20" : "bg-bg-elevated border-border hover:border-border"}`}>
-                    <f.icon className={`w-4 h-4 mb-1.5 ${format === f.id ? "text-primary-hover" : "text-txt-muted"}`} />
-                    <p className="text-[10px] font-bold text-txt mt-0.5">{f.label}</p>
-                    <p className="text-[9px] text-txt-muted">{f.desc}</p>
-                  </button>
-                ))}
-              </div>
-            </Field>
-
-            <Field label="Style">
-              <div className="flex flex-wrap gap-1.5">
-                {STYLES.map((s) => (
-                  <button key={s} onClick={() => setStyle(s)}
-                    className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold capitalize border cursor-pointer transition-all ${style === s ? "bg-accent/15 border-accent/30 text-accent-hover" : "bg-bg-elevated border-border text-txt-muted"}`}>
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </Field>
-            <Field label="Location">
-              <div className="flex gap-1.5">
-                {LOCS.map((l) => (
-                  <button key={l.c} onClick={() => setLocation(l.c)}
-                    className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold border cursor-pointer transition-all flex items-center gap-1.5 ${location === l.c ? "bg-primary-muted border-primary/30 text-primary-hover" : "bg-bg-elevated border-border text-txt-muted hover:text-txt-secondary"}`}>
-                    <l.icon className="w-3 h-3" /> {l.l}
-                  </button>
-                ))}
-              </div>
-            </Field>
-
-            {/* Generate Button */}
-            <button onClick={handleGenerate} disabled={loading || !keyword.trim()}
-              className={`w-full py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${loading ? "bg-primary/20 text-primary-hover cursor-wait" : keyword.trim() ? "grad-primary text-white cursor-pointer shadow-lg shadow-primary/20 hover:opacity-90" : "bg-bg-elevated text-txt-muted cursor-not-allowed"}`}>
-              {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</> : <><Sparkles className="w-4 h-4" /> Generate Script</>}
-            </button>
-            {hasContext && !loading && !result && (
-              <p className="text-[10px] text-txt-muted text-center flex items-center justify-center gap-1">
-                <Beaker className="w-3 h-3" /> Research data will be used to generate a smarter script
-              </p>
-            )}
-            {error && <div className="p-2 rounded-lg bg-danger/10 border border-danger/20 text-xs text-danger">{error}</div>}
-          </div>
-        </div>
-
-        {/* Results */}
-        <div className="lg:col-span-8 space-y-4">
           {!result && !loading && (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary mx-auto mb-4 animate-float"><Wand2 className="w-8 h-8" /></div>
-              <h3 className="text-lg font-bold text-txt mb-1">{hasContext ? "Research Loaded" : "Ready to Create"}</h3>
-              <p className="text-sm text-txt-muted max-w-md">
-                {hasContext
-                  ? <>Topic <span className="font-bold text-txt">&ldquo;{keyword}&rdquo;</span> loaded from R&D Lab. Pick a format and hit generate.</>
-                  : "Set topic, format, and style — let the AI pipeline generate platform-optimized content."
-                }
-              </p>
-              {hasContext && (
-                <div className="mt-4 flex items-center gap-2 text-xs text-primary-hover">
-                  <ChevronRight className="w-3.5 h-3.5" /> Select format → Generate
-                </div>
-              )}
+            <div className="h-full min-h-[500px] flex flex-col items-center justify-center text-center p-12 border border-border border-dashed rounded-[2.5rem] bg-bg-elevated/10">
+              <div className="w-24 h-24 rounded-3xl bg-bg-card border border-border flex items-center justify-center text-txt-muted mx-auto mb-8 shadow-sm ring-8 ring-bg-elevated/30"><PenTool className="w-12 h-12" /></div>
+              <h3 className="text-2xl font-bold text-txt mb-3 tracking-tight">Studio Workspace</h3>
+              <p className="text-sm text-txt-muted max-w-sm mx-auto font-medium leading-relaxed">Select your strategy on the left to synthesize intelligence into a polished executive script.</p>
             </div>
           )}
 
           {loading && (
-            <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary-hover mx-auto mb-4 animate-float"><Bot className="w-8 h-8" /></div>
-              <h3 className="text-lg font-bold text-txt mb-2">AI Pipeline Running</h3>
-              <div className="space-y-1.5 text-xs text-txt-secondary">
-                <p className="flex items-center justify-center gap-2"><PenTool className="w-3.5 h-3.5 text-primary" /> Writer Agent drafting{hasContext ? " (using research context)" : ""}...</p>
-                <p className="flex items-center justify-center gap-2 text-txt-muted"><Edit3 className="w-3.5 h-3.5 text-orange-400" /> Editor Agent polishing...</p>
-                <p className="flex items-center justify-center gap-2 text-txt-muted"><Tag className="w-3.5 h-3.5 text-success" /> SEO Agent tagging...</p>
+            <div className="h-full min-h-[500px] flex flex-col items-center justify-center text-center p-12 border border-border border-dashed rounded-[2.5rem] bg-bg-elevated/10 animate-pulse">
+              <div className="w-24 h-24 rounded-3xl bg-primary/5 flex items-center justify-center text-primary mx-auto mb-8 ring-8 ring-primary/5"><Bot className="w-12 h-12" /></div>
+              <h3 className="text-2xl font-bold text-txt mb-6 tracking-tight">Authoring Intelligence...</h3>
+              <div className="space-y-4 w-72 mx-auto">
+                <div className="h-3 rounded-full bg-bg-elevated overflow-hidden"><div className="h-full bg-primary w-1/3 animate-progress" /></div>
+                <div className="flex justify-between items-center px-1">
+                   <p className="text-[10px] font-black text-primary-hover uppercase tracking-widest">Writing</p>
+                   <p className="text-[10px] font-black text-txt-muted uppercase tracking-widest">•</p>
+                   <p className="text-[10px] font-black text-primary-hover uppercase tracking-widest">Optimizing</p>
+                </div>
               </div>
-              <p className="text-[10px] text-txt-muted mt-4">~60-90 seconds</p>
             </div>
           )}
 
           {result && (
-            <div className="space-y-4 animate-fade-in">
-              <div className="flex gap-1 p-1 rounded-lg bg-bg-card border border-border inline-flex">
-                {[{ id: "script", l: "Script", icon: FileText }, { id: "seo", l: "SEO & Tags", icon: Tag }, { id: "editing", l: "Report", icon: Edit3 }].map((t) => (
-                  <button key={t.id} onClick={() => setTab(t.id)}
-                    className={`px-4 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-all flex items-center gap-1.5 ${tab === t.id ? "bg-primary-muted text-primary-hover" : "text-txt-muted hover:text-txt-secondary"}`}>
-                    <t.icon className="w-3.5 h-3.5" /> {t.l}
+            <div className="space-y-6 animate-fade-in">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex p-1.5 rounded-2xl bg-bg-card border border-border shadow-sm overflow-x-auto custom-scroll no-scrollbar">
+                  {[
+                    { id: "script", l: "Script", icon: FileText }, 
+                    { id: "preview", l: "Visual Mockup", icon: Eye },
+                    { id: "seo", l: "Metadata", icon: Tag }, 
+                    { id: "editing", l: "Audit", icon: Edit3 }
+                  ].map((t) => (
+                    <button key={t.id} onClick={() => setTab(t.id)}
+                      className={`px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider cursor-pointer transition-all flex items-center gap-2.5 whitespace-nowrap ${tab === t.id ? "bg-primary text-white shadow-md shadow-primary/20" : "text-txt-muted hover:text-txt"}`}>
+                      <t.icon className="w-4 h-4" /> {t.l}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => navigator.clipboard.writeText(result.script || "")}
+                    className="p-3 rounded-xl bg-bg-card border border-border text-txt-muted hover:text-txt transition-all cursor-pointer shadow-sm hover:border-primary/20"><Copy className="w-4.5 h-4.5" /></button>
+                  <button onClick={handleSave} disabled={isSaved}
+                    className={`px-8 py-3 rounded-2xl text-[11px] font-bold flex items-center gap-2.5 transition-all cursor-pointer shadow-xl ${isSaved ? "bg-success/10 text-success border border-success/20" : "bg-bg-card border border-border text-txt hover:bg-bg-elevated hover:border-primary/30"}`}>
+                    {isSaved ? <><CheckCircle2 className="w-4.5 h-4.5" /> Pipeline Updated</> : <><Save className="w-4.5 h-4.5" /> Move to Approval</>}
                   </button>
-                ))}
+                </div>
               </div>
 
-              {tab === "script" && (
-                <div className="rounded-xl bg-bg-card border border-border p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-sm font-bold text-txt flex items-center gap-2"><FileText className="w-4 h-4 text-primary" /> Generated Script</h4>
-                    <button onClick={() => navigator.clipboard.writeText(result.script || "")}
-                      className="px-3 py-1 rounded-lg text-[10px] font-bold bg-bg-elevated border border-border text-txt-secondary hover:text-txt cursor-pointer flex items-center gap-1"><Copy className="w-3 h-3" /> Copy</button>
+              <div className="rounded-[2.5rem] bg-bg-card border border-border shadow-sm overflow-hidden min-h-[600px] flex flex-col">
+                {tab === "script" && (
+                  <div className="p-10 flex-1 relative">
+                    <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none"><PenTool className="w-32 h-32" /></div>
+                    <pre className="text-[15px] text-txt-secondary leading-loose whitespace-pre-wrap font-sans custom-scroll max-h-[700px] overflow-y-auto pr-6 selection:bg-primary/10">
+                      {result.script}
+                    </pre>
                   </div>
-                  <pre className="text-xs text-txt-secondary leading-relaxed whitespace-pre-wrap custom-scroll max-h-[500px] overflow-y-auto">{result.script}</pre>
-                </div>
-              )}
+                )}
 
-              {tab === "seo" && result.seo && (
-                <div className="rounded-xl bg-bg-card border border-border p-5 space-y-4">
-                  <h4 className="text-sm font-bold text-txt flex items-center gap-2"><Tag className="w-4 h-4 text-primary" /> Precision Tags</h4>
-                  {result.seo.titles?.map((t, i) => (
-                    <div key={i} className="p-2 rounded-lg bg-bg-elevated border border-border">
-                      <div className="flex justify-between"><p className="text-xs font-semibold text-txt">{t.title}</p><span className="text-[10px] font-bold text-primary-hover">CTR:{t.ctrScore}</span></div>
-                      <p className="text-[10px] text-txt-muted">{t.strategy}</p>
+                {tab === "preview" && (
+                  <div className="p-10 flex-1 bg-bg-elevated/10">
+                    <SocialPreview format={format} script={result.script} persona={activePersona} />
+                  </div>
+                )}
+
+                {tab === "seo" && (
+                  <div className="p-10 space-y-10">
+                    <div className="space-y-6">
+                      <h4 className="text-[11px] font-black text-txt uppercase tracking-[0.2em] border-b border-border pb-3 flex items-center gap-2">
+                        <MonitorPlay className="w-4 h-4 text-primary" /> High-CTR Hooks
+                      </h4>
+                      <div className="grid grid-cols-1 gap-4">
+                        {result.seo?.titles?.map((t, i) => (
+                          <div key={i} className="p-6 rounded-[1.5rem] bg-bg-elevated/50 border border-border flex items-center justify-between group hover:border-primary/20 hover:bg-bg-card transition-all">
+                            <div className="max-w-[80%]"><p className="text-[15px] font-bold text-txt">{t.title}</p><p className="text-[11px] text-txt-muted mt-2 font-medium">{t.strategy}</p></div>
+                            <div className="text-right">
+                              <span className="text-lg font-black text-primary block group-hover:scale-110 transition-transform">{t.ctrScore}%</span>
+                              <p className="text-[9px] font-black text-txt-muted uppercase tracking-tighter">Est. CTR</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  ))}
-                  {result.seo.tags && ["primary", "secondary", "longTail"].map((tier) => (
-                    result.seo.tags[tier]?.length > 0 && (
-                      <div key={tier}>
-                        <p className="text-[9px] text-txt-muted uppercase mb-1">{tier}</p>
-                        <div className="flex flex-wrap gap-1">
-                          {result.seo.tags[tier].map((tag, i) => (
-                            <span key={i} className="px-2 py-0.5 rounded text-[10px] bg-bg-elevated border border-border text-txt-secondary flex items-center gap-1">{tag.tag || tag} {tag.trending && <Flame className="w-2.5 h-2.5 text-orange-500" />}</span>
-                          ))}
+                    <div className="space-y-6">
+                      <h4 className="text-[11px] font-black text-txt uppercase tracking-[0.2em] border-b border-border pb-3 flex items-center gap-2">
+                        <Hash className="w-4 h-4 text-accent" /> Intelligence Tags
+                      </h4>
+                      <div className="flex flex-wrap gap-2.5">
+                        {result.seo?.tags?.primary?.map((tag, i) => (
+                          <span key={i} className="px-4 py-2 rounded-xl text-xs font-bold bg-primary/5 text-primary-hover border border-primary/20 flex items-center gap-2 hover:bg-primary/10 transition-colors shadow-sm">{tag.tag || tag} <Flame className="w-3.5 h-3.5 text-orange-500" /></span>
+                        ))}
+                        {result.seo?.tags?.secondary?.map((tag, i) => (
+                          <span key={i} className="px-4 py-2 rounded-xl text-xs font-bold bg-bg-elevated border border-border text-txt-secondary hover:bg-bg-card transition-colors">{tag.tag || tag}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {tab === "editing" && (
+                  <div className="p-10 space-y-10">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                      {[[ "Hook", result.editing?.hookScore ], [ "CTA", result.editing?.ctaStrength ], [ "Readability", result.editing?.readabilityScore ], [ "Overall", result.editing?.overallScore ]].map(([l, v]) => (
+                        <div key={l} className="p-6 rounded-[2rem] bg-bg-elevated/50 border border-border text-center group hover:bg-bg-card transition-all">
+                          <p className={`text-4xl font-black transition-transform group-hover:scale-110 ${v >= 80 ? "text-success" : v >= 60 ? "text-warning" : "text-danger"}`}>{v || "—"}</p>
+                          <p className="text-[10px] font-black text-txt-muted uppercase tracking-[0.15em] mt-3">{l}</p>
                         </div>
-                      </div>
-                    )
-                  ))}
-                  {result.seo.postingTime && (
-                    <div className="p-3 rounded-lg bg-primary-muted border border-primary/20">
-                      <p className="text-[10px] font-bold text-primary-hover flex items-center gap-1.5 mb-1"><Clock className="w-3.5 h-3.5" /> Best Time: {result.seo.postingTime.bestDay} {result.seo.postingTime.bestTime}</p>
-                      <p className="text-[10px] text-txt-muted">{result.seo.postingTime.reasoning}</p>
+                      ))}
                     </div>
-                  )}
-                </div>
-              )}
-
-              {tab === "editing" && result.editing && (
-                <div className="rounded-xl bg-bg-card border border-border p-5 space-y-3">
-                  <h4 className="text-sm font-bold text-txt flex items-center gap-2"><Edit3 className="w-4 h-4 text-primary" /> Edit Report</h4>
-                  <div className="grid grid-cols-4 gap-2">
-                    {[["Hook", result.editing.hookScore], ["CTA", result.editing.ctaStrength], ["Read", result.editing.readabilityScore], ["Overall", result.editing.overallScore]].map(([l, v]) => (
-                      <div key={l} className="p-2.5 rounded-lg bg-bg-elevated border border-border text-center">
-                        <p className={`text-xl font-bold ${(v || 0) >= 80 ? "text-success" : (v || 0) >= 50 ? "text-warning" : "text-danger"}`}>{v || "—"}</p>
-                        <p className="text-[9px] text-txt-muted">{l}</p>
+                    <div className="space-y-6">
+                      <h4 className="text-[11px] font-black text-txt uppercase tracking-[0.2em] border-b border-border pb-3">AI Editorial Audit</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {result.editing?.changes?.map((c, i) => (
+                          <div key={i} className="flex gap-5 p-6 rounded-2xl bg-bg-elevated/30 border border-border/50 items-start hover:border-primary/10 hover:bg-bg-card transition-all">
+                            <span className="px-2.5 py-1.5 rounded-xl text-[10px] font-black bg-primary/10 text-primary-hover uppercase tracking-tighter shrink-0">{c.type}</span>
+                            <p className="text-sm text-txt-secondary leading-relaxed font-medium">{c.description}</p>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    </div>
                   </div>
-                  {result.editing.changes?.map((c, i) => (
-                    <div key={i} className="flex gap-2 items-start">
-                      <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-accent/15 text-accent-hover shrink-0">{c.type}</span>
-                      <p className="text-[11px] text-txt-secondary">{c.description}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -299,5 +316,5 @@ export default function ContentStudio({ researchContext, onClearContext }) {
 }
 
 function Field({ label, children }) {
-  return (<div><label className="block text-[11px] font-semibold text-txt-secondary mb-1">{label}</label>{children}</div>);
+  return (<div><label className="block text-[10px] font-black text-txt-muted uppercase tracking-[0.15em] mb-3 ml-1">{label}</label>{children}</div>);
 }

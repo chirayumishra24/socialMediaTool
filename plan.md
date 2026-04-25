@@ -144,6 +144,12 @@ DEFAULT_LANGUAGE=en
 - [ ] 10.5.12 Real tweet links, engagement metrics, hashtags
 
 #### Step 4 — Frontend Polish (15 min)
+*   [x] **Phase 3.2: Knowledge Base (RAG) Refinement**
+    *   [x] Create a "School Context" upload/input area in Settings.
+    *   [x] Update `writer-agent.js` to prioritize this "Internal Truth" context.
+*   [x] **Phase 3.3: Visual Social Previews**
+    *   [x] Build `SocialPreview.jsx` with phone mockups for IG, X, and LinkedIn.
+    *   [x] Integrate "Visual Mockup" tab into `ContentStudio.jsx`.
 - [ ] 10.5.13 Update `ResearchLab.jsx` Instagram section to render real reel cards with thumbnails
 - [ ] 10.5.14 Update `DiscoverHub.jsx` to show Instagram results with proper previews
 - [ ] 10.5.15 Add "Video" badge/link for Instagram reels

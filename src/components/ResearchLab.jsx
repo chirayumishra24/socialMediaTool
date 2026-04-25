@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { MonitorPlay, Camera, Hash, MessageSquare, Newspaper, Zap, BarChart2, Search, Globe, Check, Eye, MessageCircle, Heart, ArrowUpRight, Flame, Lightbulb, Target, Copy, Award, Loader2, Sparkles, AlertCircle, Compass, Clock, Activity, ArrowUp } from "lucide-react";
+import { MonitorPlay, Camera, Hash, MessageSquare, Newspaper, Zap, BarChart2, Search, Globe, Check, Eye, MessageCircle, Heart, ArrowUpRight, Flame, Lightbulb, Target, Copy, Award, Loader2, Sparkles, AlertCircle, Compass, Clock, Activity, ArrowUp, Repeat2, Play, User, ExternalLink } from "lucide-react";
 
 const PLATFORMS_LIST = [
   { id: "youtube", label: "YouTube", icon: MonitorPlay },
@@ -91,517 +91,391 @@ export default function ResearchLab({ onResearchComplete, onGoToStudio, initialK
   }, [keyword, platforms, location, depth]);
 
   return (
-    <div className="p-5 max-w-6xl mx-auto space-y-5">
-      {/* Input Panel */}
-      <div className="rounded-2xl bg-bg-card border border-border p-5 space-y-4">
-        <h3 className="text-sm font-bold text-txt flex items-center gap-2"><Search className="w-4 h-4 text-primary" /> Research Pipeline</h3>
-
-        {/* Keyword */}
+    <div className="p-6 lg:p-10 max-w-7xl mx-auto space-y-8 animate-fade-in">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-6">
         <div>
-          <label className="block text-[11px] font-semibold text-txt-secondary mb-1.5">Topic / Keyword *</label>
-          <input
-            type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)}
-            placeholder='e.g. "NEP 2024 changes", "Child psychology tips", "Board exam prep"'
-            className="w-full px-4 py-3 rounded-xl bg-bg-elevated border border-border text-sm text-txt placeholder:text-txt-muted transition-all"
-            onKeyDown={(e) => e.key === "Enter" && handleResearch()}
-          />
+          <h3 className="text-2xl font-bold text-txt tracking-tight flex items-center gap-2">
+            <Search className="w-6 h-6 text-primary" strokeWidth={2.5} /> Institutional R&D Pipeline
+          </h3>
+          <p className="text-sm text-txt-muted font-medium">Verify global trends and newsjacking opportunities before production.</p>
         </div>
-
-        {/* Location */}
-        <div>
-          <label className="block text-[11px] font-semibold text-txt-secondary mb-1.5">Target Location</label>
-          <div className="flex gap-2 flex-wrap">
-            {LOCATIONS.map((l) => (
-              <button key={l.code} onClick={() => setLocation(l.code)}
-                className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-all cursor-pointer flex items-center gap-1.5 ${location === l.code ? "bg-primary-muted text-primary-hover border-primary/30" : "bg-bg-elevated border-border text-txt-muted hover:text-txt-secondary"}`}>
-                <l.icon className="w-3.5 h-3.5" /> {l.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Platforms */}
-        <div>
-          <label className="block text-[11px] font-semibold text-txt-secondary mb-1.5">Platforms to Crawl</label>
-          <div className="flex gap-2 flex-wrap">
-            {PLATFORMS_LIST.map((p) => (
-              <button key={p.id} onClick={() => togglePlatform(p.id)}
-                className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-all cursor-pointer flex items-center gap-1.5 ${platforms.includes(p.id) ? "bg-accent/15 text-accent-hover border-accent/30" : "bg-bg-elevated border-border text-txt-muted opacity-50"}`}>
-                <p.icon className="w-3.5 h-3.5" /> {p.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Depth */}
-        <div>
-          <label className="block text-[11px] font-semibold text-txt-secondary mb-1.5">Research Depth</label>
-          <div className="grid grid-cols-3 gap-2">
-            {DEPTHS.map((d) => (
-              <button key={d.id} onClick={() => setDepth(d.id)}
-                className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${depth === d.id ? "bg-primary-muted border-primary/30" : "bg-bg-elevated border-border hover:border-border"}`}>
-                <d.icon className={`w-5 h-5 mb-2 ${depth === d.id ? "text-primary-hover" : "text-txt-muted"}`} />
-                <p className="text-xs font-bold text-txt mt-1">{d.label}</p>
-                <p className="text-[10px] text-txt-muted">{d.desc}</p>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Submit */}
-        <button onClick={handleResearch} disabled={loading || !keyword.trim()}
-          className={`w-full py-3.5 rounded-xl text-sm font-bold transition-all ${loading ? "bg-primary/20 text-primary-hover cursor-wait" : keyword.trim() ? "grad-primary text-white hover:opacity-90 cursor-pointer shadow-lg shadow-primary/20" : "bg-bg-elevated text-txt-muted cursor-not-allowed"}`}>
-          {loading ? <span className="flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Running R&D Pipeline...</span> : <span className="flex items-center justify-center gap-2"><Sparkles className="w-4 h-4" /> Start Research</span>}
-        </button>
-
-        {error && <div className="p-3 rounded-xl bg-danger/10 border border-danger/20 text-sm text-danger animate-fade-in flex items-center gap-2"><AlertCircle className="w-4 h-4" /> {error}</div>}
       </div>
 
-      {/* Loading State */}
-      {loading && (
-        <div className="rounded-2xl bg-bg-card border border-border p-6 animate-fade-in">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-full bg-primary-muted flex items-center justify-center text-primary-hover animate-pulse"><Search className="w-4 h-4" /></div>
-            <div>
-              <p className="text-sm font-bold text-txt cursor-blink">AI Research Agents Working</p>
-              <p className="text-[11px] text-txt-muted">Crawling {platforms.length} platforms + analyzing with Gemini 3.1 Pro</p>
-            </div>
-          </div>
-          <div className="space-y-2">
-            {platforms.map((p) => (
-              <div key={p} className="flex items-center gap-2 text-[11px] text-txt-muted">
-                <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-                Crawling {PLATFORMS_LIST.find((pl) => pl.id === p)?.label || p}...
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Input Panel */}
+        <div className="lg:col-span-4 space-y-6">
+          <div className="rounded-[2.5rem] bg-bg-card border border-border p-8 space-y-8 shadow-sm">
+            <Field label="Intelligence Topic">
+              <input
+                type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)}
+                placeholder='e.g. "NEP 2024 changes"'
+                className="w-full px-5 py-4 rounded-2xl bg-bg-elevated border border-border text-sm text-txt focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                onKeyDown={(e) => e.key === "Enter" && handleResearch()}
+              />
+            </Field>
+
+            <Field label="Location Focus">
+              <div className="grid grid-cols-2 gap-2">
+                {LOCATIONS.map((l) => (
+                  <button key={l.code} onClick={() => setLocation(l.code)}
+                    className={`px-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-wider border-2 transition-all cursor-pointer flex items-center justify-center gap-2 ${location === l.code ? "bg-primary/10 text-primary border-primary" : "bg-bg-elevated border-border text-txt-muted hover:text-txt"}`}>
+                    <l.icon className="w-3.5 h-3.5" /> {l.label}
+                  </button>
+                ))}
               </div>
-            ))}
-            <div className="flex items-center gap-2 text-[11px] text-txt-muted mt-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              Running deep analysis with Gemini 3.1 Pro...
-            </div>
+            </Field>
+
+            <Field label="Crawl Strategy">
+              <div className="grid grid-cols-1 gap-2">
+                {DEPTHS.map((d) => (
+                  <button key={d.id} onClick={() => setDepth(d.id)}
+                    className={`p-4 rounded-2xl border-2 text-left transition-all cursor-pointer flex items-center gap-4 ${depth === d.id ? "bg-primary/5 border-primary shadow-sm" : "bg-bg-elevated border-border hover:bg-bg-card"}`}>
+                    <div className={`p-2.5 rounded-xl ${depth === d.id ? "bg-primary text-white" : "bg-bg-card text-txt-muted"}`}>
+                      <d.icon className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-txt">{d.label}</p>
+                      <p className="text-[10px] text-txt-muted">{d.desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </Field>
+
+            <button onClick={handleResearch} disabled={loading || !keyword.trim()}
+              className={`w-full py-4 rounded-[2rem] text-sm font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 ${loading ? "bg-primary/20 text-primary-hover cursor-wait" : "grad-primary text-white cursor-pointer shadow-xl shadow-primary/20 hover:scale-[0.98] active:scale-95"}`}>
+              {loading ? <><Loader2 className="w-5 h-5 animate-spin" /> Ingesting Intelligence...</> : <><Sparkles className="w-5 h-5" /> Execute Pipeline</>}
+            </button>
           </div>
-          <div className="h-1 rounded-full bg-bg-elevated overflow-hidden mt-4">
-            <div className="h-full rounded-full grad-primary" style={{ animation: "progressFlow 90s linear forwards" }} />
+
+          <div className="rounded-2xl p-6 bg-accent/5 border border-accent/10 space-y-4">
+             <h4 className="text-[10px] font-black text-accent uppercase tracking-widest flex items-center gap-2">
+               <Globe className="w-3.5 h-3.5" /> Multi-Source Engine
+             </h4>
+             <div className="flex flex-wrap gap-2">
+               {PLATFORMS_LIST.map(p => (
+                 <div key={p.id} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border flex items-center gap-2 ${platforms.includes(p.id) ? "bg-white border-accent/20 text-accent" : "opacity-30 border-border grayscale"}`}>
+                   <p.icon className="w-3 h-3" /> {p.label}
+                 </div>
+               ))}
+             </div>
           </div>
         </div>
-      )}
 
-      {/* Results */}
-      {result && (
-        <>
-          <ResearchResults research={result} platformData={platformData} topKeywords={topKeywords} />
+        {/* Results / Dashboard Panel */}
+        <div className="lg:col-span-8">
+          {!result && !loading && (
+             <div className="h-full min-h-[600px] flex flex-col items-center justify-center text-center p-12 border border-border border-dashed rounded-[3rem] bg-bg-elevated/10">
+                <div className="w-24 h-24 rounded-3xl bg-bg-card border border-border flex items-center justify-center text-txt-muted mx-auto mb-8 shadow-sm ring-8 ring-bg-elevated/30"><Compass className="w-12 h-12" /></div>
+                <h3 className="text-2xl font-bold text-txt mb-3 tracking-tight">R&D Workspace</h3>
+                <p className="text-sm text-txt-muted max-w-sm mx-auto font-medium leading-relaxed">Enter an educational topic on the left to activate the research agents. We'll crawl YouTube, Instagram, X, and News for institutional insights.</p>
+             </div>
+          )}
 
-          {/* CTA: Go to Content Studio */}
-          {onGoToStudio && (
-            <div className="rounded-xl bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 p-5 flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-bold text-txt">Research complete — ready to create?</p>
-                <p className="text-xs text-txt-muted mt-0.5">Topic, trends & platform data will be auto-loaded into Content Studio</p>
-              </div>
-              <button
-                onClick={() => onGoToStudio({ keyword, research: result, platformData, topKeywords, location, depth, researchedAt: new Date().toISOString() })}
-                className="px-5 py-2.5 rounded-xl text-sm font-bold grad-primary text-white cursor-pointer shadow-lg shadow-primary/20 hover:opacity-90 transition-all flex items-center gap-2 shrink-0"
-              >
-                <Sparkles className="w-4 h-4" /> Create Script
-              </button>
+          {loading && (
+            <div className="h-full min-h-[600px] flex flex-col items-center justify-center text-center p-12 border border-border border-dashed rounded-[3rem] bg-bg-elevated/10 animate-pulse">
+               <div className="w-24 h-24 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto mb-8 ring-8 ring-primary/5 animate-bounce"><Search className="w-10 h-10" /></div>
+               <h3 className="text-2xl font-bold text-txt mb-8 tracking-tight uppercase tracking-widest">Ingesting Global Signals...</h3>
+               <div className="space-y-4 w-80 mx-auto">
+                  {platforms.map((p, i) => (
+                    <div key={p} className="flex items-center justify-between text-[11px] font-black text-txt-muted uppercase tracking-wider">
+                      <span>{PLATFORMS_LIST.find(pl => pl.id === p)?.label} Agent</span>
+                      <div className="w-2 h-2 rounded-full bg-primary animate-ping" style={{ animationDelay: `${i * 0.2}s` }} />
+                    </div>
+                  ))}
+               </div>
             </div>
           )}
-        </>
-      )}
+
+          {result && (
+            <div className="space-y-10 animate-fade-in pb-20">
+               <ResearchResults research={result} platformData={platformData} topKeywords={topKeywords} />
+               
+               <div className="sticky bottom-6 left-0 right-0 p-1 bg-white/80 backdrop-blur-xl border border-primary/20 rounded-[2.5rem] shadow-2xl flex items-center justify-between gap-4 z-50">
+                  <div className="pl-8">
+                    <p className="text-xs font-bold text-txt">Intelligence Ingested</p>
+                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Ready for Production</p>
+                  </div>
+                  <button onClick={() => onGoToStudio({ keyword, research: result, platformData, topKeywords, location, depth, researchedAt: new Date().toISOString() })}
+                    className="px-12 py-4 rounded-[2rem] grad-primary text-white text-[13px] font-black uppercase tracking-widest flex items-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-primary/20 cursor-pointer">
+                    <Sparkles className="w-5 h-5" /> Start Content Studio
+                  </button>
+               </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
 
 function ResearchResults({ research, platformData, topKeywords }) {
   const r = research;
-  if (!r) return null;
-
-  // Build sorted video lists
+  
+  // Sort and filter data
   const ytVideos = (platformData?.youtube || []).sort((a, b) => (b.metrics?.views || 0) - (a.metrics?.views || 0));
-  const latestVideos = [...(platformData?.youtube || [])].sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
-  const redditPosts = (platformData?.reddit || []).sort((a, b) => (b.metrics?.likes || 0) - (a.metrics?.likes || 0));
+  const igPosts = (platformData?.instagram || []).sort((a, b) => (b.metrics?.likes || 0) - (a.metrics?.likes || 0));
+  const xPosts = (platformData?.x || []).sort((a, b) => (b.metrics?.likes || 0) - (a.metrics?.likes || 0));
   const newsPosts = (platformData?.news || []).sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
-  const xPosts = (platformData?.x || []);
-
-  const [videoSort, setVideoSort] = useState("views");
-  const displayVideos = videoSort === "views" ? ytVideos : latestVideos;
 
   return (
-    <div className="space-y-4 animate-fade-in">
-      {/* ═══ VAGUE INPUT CHECK ═══ */}
-      {r.isVague && (
-        <div className="rounded-2xl p-8 bg-primary/10 border border-primary/20 backdrop-blur-xl text-center">
-          <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-primary mx-auto mb-4 animate-bounce"><Compass className="w-8 h-8" /></div>
-          <h3 className="text-xl font-bold text-txt mb-2">{r.message || "Topic is too broad"}</h3>
-          <p className="text-sm text-txt-secondary mb-6">To create a high-impact strategy, I need a more specific focus. Try one of these:</p>
-          <div className="flex flex-wrap justify-center gap-2">
-            {r.suggestions?.map((s, i) => (
-              <button key={i} onClick={() => window.dispatchEvent(new CustomEvent('skilizee-set-keyword', { detail: s }))}
-                className="px-4 py-2 rounded-xl bg-bg-elevated border border-border text-sm font-semibold text-primary-hover hover:bg-primary-muted transition-all cursor-pointer flex items-center gap-2">
-                <Search className="w-3.5 h-3.5" /> {s}
-              </button>
-            ))}
-          </div>
+    <div className="space-y-12">
+      {/* ═══ STRATEGY BLUEPRINT ═══ */}
+      {r.strategyBlueprint && (
+        <div className="rounded-[3rem] bg-white border border-border p-10 space-y-10 shadow-sm relative overflow-hidden">
+           <div className="absolute top-0 right-0 p-10 opacity-[0.03] pointer-events-none"><Lightbulb className="w-64 h-64" /></div>
+           
+           <div className="flex items-center gap-4">
+              <div className="p-3 rounded-2xl bg-primary/10 text-primary"><Sparkles className="w-6 h-6" /></div>
+              <div>
+                <h4 className="text-sm font-black text-txt uppercase tracking-widest">Institutional Strategy Blueprint</h4>
+                <p className="text-xs text-txt-muted font-medium">Gemini 3.1 Pro Integrated Analysis</p>
+              </div>
+           </div>
+
+           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+              <div className="space-y-6">
+                <Field label="Core Institutional Concept">
+                  <p className="text-base text-txt-secondary leading-loose font-medium italic">"{r.strategyBlueprint.concept}"</p>
+                </Field>
+                <div className="flex flex-wrap gap-2 pt-4 border-t border-border/50">
+                  {r.strategyBlueprint.recommendedTools?.map(t => (
+                    <span key={t} className="px-4 py-2 rounded-xl bg-bg-elevated border border-border text-[11px] font-bold text-txt-muted">#{t}</span>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="space-y-8">
+                 <div>
+                    <h5 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-4">Execution Roadmap</h5>
+                    <div className="space-y-4">
+                       {r.strategyBlueprint.executionPhases?.map((phase, i) => (
+                         <div key={i} className="flex gap-4 items-start group">
+                            <div className="w-8 h-8 rounded-xl bg-primary/5 border border-primary/10 text-primary text-xs font-black flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white transition-all">{i + 1}</div>
+                            <p className="text-sm text-txt-secondary leading-relaxed font-medium pt-1.5">{phase}</p>
+                         </div>
+                       ))}
+                    </div>
+                 </div>
+              </div>
+           </div>
         </div>
       )}
 
-      {!r.isVague && (
-        <>
-          {/* ═══ STRATEGY BLUEPRINT ═══ */}
-          {r.strategyBlueprint && (
-            <div className="rounded-2xl grad-primary p-[1px] shadow-2xl shadow-primary/20 overflow-hidden">
-              <div className="bg-bg-card p-6 rounded-[15px]">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-primary-muted flex items-center justify-center text-primary"><Lightbulb className="w-5 h-5" /></div>
-                  <div>
-                    <h3 className="text-lg font-bold text-txt">Strategy Blueprint</h3>
-                    <p className="text-[11px] text-txt-muted">Modern Informative Approach for 2025</p>
-                  </div>
+      {/* ═══ PLATFORM INTELLIGENCE GRID ═══ */}
+      <div className="space-y-10">
+        
+        {/* YouTube Section */}
+        {ytVideos.length > 0 && (
+          <Section icon={MonitorPlay} label="High-Retention Video Intelligence" color="text-red-500">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               {ytVideos.slice(0, 4).map((v, i) => (
+                 <MediaCard key={i} data={v} />
+               ))}
+            </div>
+          </Section>
+        )}
+
+        {/* Instagram Section */}
+        {igPosts.length > 0 && (
+          <Section icon={Camera} label="Visual & Reel Performance" color="text-pink-500">
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {igPosts.slice(0, 3).map((ig, i) => (
+                  <InstagramCard key={i} data={ig} />
+                ))}
+             </div>
+          </Section>
+        )}
+
+        {/* X & News Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+           {xPosts.length > 0 && (
+             <Section icon={Hash} label="Public Sentiment (X)" color="text-txt">
+                <div className="space-y-4">
+                   {xPosts.slice(0, 4).map((t, i) => (
+                     <TweetCard key={i} data={t} />
+                   ))}
                 </div>
-                
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div>
-                    <h4 className="text-xs font-bold text-primary uppercase tracking-widest mb-2">Core Concept</h4>
-                    <p className="text-sm text-txt-secondary leading-relaxed">{r.strategyBlueprint.concept}</p>
-                    
-                    <div className="mt-4 p-4 rounded-xl bg-bg-elevated border border-border">
-                      <h4 className="text-[11px] font-bold text-txt mb-2 flex items-center gap-2"><Target className="w-3.5 h-3.5 text-txt-secondary" /> Recommended Stack</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {r.strategyBlueprint.recommendedTools?.map(t => (
-                          <span key={t} className="px-2 py-1 rounded-lg bg-bg-card text-[10px] font-medium border border-border text-txt-muted">{t}</span>
-                        ))}
+             </Section>
+           )}
+           {newsPosts.length > 0 && (
+             <Section icon={Newspaper} label="Newsjacking Headlines" color="text-blue-500">
+                <div className="space-y-4">
+                   {newsPosts.slice(0, 4).map((n, i) => (
+                     <NewsCard key={i} data={n} />
+                   ))}
+                </div>
+             </Section>
+           )}
+        </div>
+
+      </div>
+
+      {/* ═══ AUDIENCE & GAP ANALYSIS ═══ */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+         {r.audienceSentiment && (
+           <div className="p-10 rounded-[3rem] bg-white border border-border space-y-8 shadow-sm">
+              <h4 className="text-sm font-black text-txt uppercase tracking-widest flex items-center gap-3">
+                 <Heart className="w-5 h-5 text-danger" /> Audience Sentiment
+              </h4>
+              <div className="space-y-6">
+                 <div className="flex items-center justify-between p-4 rounded-2xl bg-danger/5 border border-danger/10">
+                    <p className="text-[11px] font-black text-danger uppercase tracking-widest">Pain Points</p>
+                    <p className="text-[10px] text-txt-muted">{r.audienceSentiment.demographics}</p>
+                 </div>
+                 <ul className="space-y-3">
+                    {r.audienceSentiment.painPoints?.map((p, i) => (
+                      <li key={i} className="text-sm text-txt-secondary leading-relaxed font-medium flex items-start gap-3">
+                         <span className="w-1.5 h-1.5 rounded-full bg-danger mt-2 shrink-0" /> {p}
+                      </li>
+                    ))}
+                 </ul>
+              </div>
+           </div>
+         )}
+
+         {r.contentGaps?.length > 0 && (
+           <div className="p-10 rounded-[3rem] bg-white border border-border space-y-8 shadow-sm">
+              <h4 className="text-sm font-black text-txt uppercase tracking-widest flex items-center gap-3">
+                 <Target className="w-5 h-5 text-accent" /> Opportunity Gaps
+              </h4>
+              <div className="space-y-4">
+                 {r.contentGaps.slice(0, 3).map((g, i) => (
+                   <div key={i} className="p-6 rounded-3xl bg-accent/5 border border-accent/10 hover:bg-accent/10 transition-all cursor-default">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-black text-txt uppercase tracking-tight">{g.gap}</span>
+                        <span className="text-[10px] font-black text-accent-hover uppercase bg-white px-2 py-0.5 rounded-lg border border-accent/10">{g.difficulty}</span>
                       </div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="text-xs font-bold text-accent uppercase tracking-widest mb-2">Execution Phases</h4>
-                      <div className="space-y-2">
-                        {r.strategyBlueprint.executionPhases?.map((p, i) => (
-                          <div key={i} className="flex gap-3 items-start">
-                            <span className="shrink-0 w-5 h-5 rounded-full bg-accent/20 text-accent-hover text-[10px] font-bold flex items-center justify-center">{i+1}</span>
-                            <p className="text-xs text-txt-secondary">{p}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    <div className="p-3 rounded-xl bg-success/5 border border-success/20">
-                      <p className="text-[10px] font-bold text-success uppercase mb-1">Modern Competitive Edge</p>
-                      <p className="text-[11px] text-txt-secondary italic">"{r.strategyBlueprint.modernApproach}"</p>
-                    </div>
-                  </div>
-                </div>
+                      <p className="text-xs text-txt-secondary leading-relaxed font-medium">{g.opportunity}</p>
+                   </div>
+                 ))}
               </div>
-            </div>
-          )}
-
-      {ytVideos.length > 0 && (
-        <div className="rounded-xl bg-bg-card border border-border p-5">
-          <div className="flex items-center justify-between mb-3">
-            <h4 className="text-sm font-bold text-txt flex items-center gap-2"><MonitorPlay className="w-4 h-4 text-red-500" /> Trending Videos — {ytVideos.length} found</h4>
-            <div className="flex gap-1 p-0.5 rounded-lg bg-bg-elevated border border-border">
-              <button onClick={() => setVideoSort("views")} className={`px-2.5 py-1 rounded-md text-[10px] font-semibold cursor-pointer transition-all flex items-center gap-1 ${videoSort === "views" ? "bg-primary-muted text-primary-hover" : "text-txt-muted"}`}><Flame className="w-3 h-3" /> Most Views</button>
-              <button onClick={() => setVideoSort("latest")} className={`px-2.5 py-1 rounded-md text-[10px] font-semibold cursor-pointer transition-all flex items-center gap-1 ${videoSort === "latest" ? "bg-primary-muted text-primary-hover" : "text-txt-muted"}`}><Clock className="w-3 h-3" /> Latest</button>
-            </div>
-          </div>
-          <div className="space-y-2.5 max-h-[500px] overflow-y-auto custom-scroll pr-1">
-            {displayVideos.map((v, i) => (
-              <a key={v.id || i} href={v.url} target="_blank" rel="noopener noreferrer"
-                className="flex gap-3 p-3 rounded-lg bg-bg-elevated border border-border hover:border-primary/20 transition-all group block">
-                {/* Rank */}
-                <div className="shrink-0 flex flex-col items-center gap-1 pt-1">
-                  <span className={`w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-bold ${i === 0 ? "bg-yellow-500/15 text-yellow-400" : i === 1 ? "bg-slate-400/15 text-slate-300" : i === 2 ? "bg-amber-600/15 text-amber-500" : "bg-bg-card text-txt-muted"}`}>#{i + 1}</span>
-                </div>
-                {/* Thumbnail */}
-                {v.thumbnail && (
-                  <div className="shrink-0 w-28 h-[72px] rounded-lg overflow-hidden bg-bg-card relative">
-                    <img src={v.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform" loading="lazy" />
-                    {v.duration && <span className="absolute bottom-1 right-1 px-1 py-0.5 rounded text-[8px] font-bold bg-black/80 text-white">{v.duration}</span>}
-                  </div>
-                )}
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-txt leading-snug line-clamp-2 group-hover:text-primary-hover transition-colors">{v.title}</p>
-                  <p className="text-[10px] text-txt-muted mt-0.5">{v.author} {v.publishedAt && `• ${formatDate(v.publishedAt)}`}</p>
-                  {/* Metrics */}
-                  <div className="flex gap-3 mt-1.5">
-                    {v.metrics?.views > 0 && <span className="text-[10px] text-txt-secondary font-semibold flex items-center gap-1"><Eye className="w-3 h-3" /> {fmt(v.metrics.views)} views</span>}
-                    {v.metrics?.likes > 0 && <span className="text-[10px] text-txt-muted flex items-center gap-1"><Heart className="w-3 h-3" /> {fmt(v.metrics.likes)}</span>}
-                    {v.metrics?.comments > 0 && <span className="text-[10px] text-txt-muted flex items-center gap-1"><MessageCircle className="w-3 h-3" /> {fmt(v.metrics.comments)}</span>}
-                  </div>
-                  {/* Tags */}
-                  {v.tags?.length > 0 && (
-                    <div className="flex gap-1 mt-1.5 flex-wrap">
-                      {v.tags.slice(0, 5).map((tag, j) => (
-                        <span key={j} className="px-1.5 py-0.5 rounded text-[8px] font-medium bg-accent/10 text-accent-hover border border-accent/15">{tag}</span>
-                      ))}
-                      {v.tags.length > 5 && <span className="text-[8px] text-txt-muted">+{v.tags.length - 5} more</span>}
-                    </div>
-                  )}
-                </div>
-                {/* Link icon */}
-                <div className="shrink-0 flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span className="text-lg">↗</span>
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ═══ INSTAGRAM ═══ */}
-      {platformData?.instagram?.length > 0 && (
-        <div className="rounded-xl bg-bg-card border border-border p-5">
-          <h4 className="text-sm font-bold text-txt flex items-center gap-2 mb-3">
-            <Camera className="w-4 h-4 text-pink-500" />
-            Instagram — {platformData.instagram.length} {platformData.instagram[0]?.isFallback ? "Format Tips" : "Posts Found"}
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {platformData.instagram.map((ig, i) => (
-              <a key={i} href={ig.url} target="_blank" rel="noopener noreferrer"
-                className="group p-4 rounded-xl bg-bg-elevated border border-border hover:border-pink-500/30 transition-all block no-underline">
-                {/* Thumbnail for real posts */}
-                {ig.thumbnail && (
-                  <div className="relative w-full h-28 rounded-lg overflow-hidden bg-bg-card mb-3">
-                    <img src={ig.thumbnail} alt="" className="w-full h-full object-cover" loading="lazy" />
-                    {ig.isVideo && (
-                      <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/70 text-white text-[9px] font-bold">REEL</span>
-                    )}
-                  </div>
-                )}
-                <div className="flex items-center justify-between mb-2">
-                  <span className="px-2 py-0.5 rounded-lg bg-pink-500/10 text-pink-400 text-[10px] font-bold">
-                    {ig.metrics?.engagement || "High"} Engagement
-                  </span>
-                  <span className="text-[10px] font-bold text-txt-muted">{ig.contentFormat || "Post"}</span>
-                </div>
-                <p className="text-xs font-bold text-txt mb-1 line-clamp-2 group-hover:text-pink-400 transition-colors">
-                  {ig.title?.substring(0, 80)}
-                </p>
-                {ig.author && <p className="text-[10px] text-txt-muted mb-1.5">{ig.author}</p>}
-                <p className="text-[11px] text-txt-secondary leading-relaxed mb-2 line-clamp-2">{ig.tip || ig.description?.substring(0, 120)}</p>
-                {/* Metrics for real posts */}
-                {(ig.metrics?.likes > 0 || ig.metrics?.comments > 0) && (
-                  <div className="flex gap-3 mb-2 text-[10px] text-txt-muted">
-                    {ig.metrics.likes > 0 && <span>{fmt(ig.metrics.likes)} likes</span>}
-                    {ig.metrics.comments > 0 && <span>{fmt(ig.metrics.comments)} comments</span>}
-                    {ig.metrics.views > 0 && <span>{fmt(ig.metrics.views)} views</span>}
-                  </div>
-                )}
-                <div className="flex gap-1 flex-wrap">
-                  {ig.tags?.slice(0, 3).map(t => (
-                    <span key={t} className="text-[9px] text-txt-muted">{t}</span>
-                  ))}
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
-
-
-      {/* ═══ TOP KEYWORDS ═══ */}
-      {topKeywords?.length > 0 && (
-        <div className="rounded-xl bg-bg-card border border-border p-5">
-          <div className="flex items-center justify-between mb-3">
-            <h4 className="text-sm font-bold text-txt flex items-center gap-2"><Target className="w-4 h-4 text-primary" /> Top Keywords — Driving Video Performance</h4>
-            <button onClick={() => {
-              const text = topKeywords.map((k) => k.keyword).join(", ");
-              navigator.clipboard.writeText(text);
-            }} className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-bg-elevated border border-border text-txt-secondary hover:text-txt cursor-pointer transition-all flex items-center gap-1"><Copy className="w-3 h-3" /> Copy All</button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {topKeywords.map((kw, i) => (
-              <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg bg-bg-elevated border border-border">
-                <span className={`w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-bold shrink-0 ${i < 3 ? "bg-yellow-500/15 text-yellow-400" : i < 7 ? "bg-primary-muted text-primary-hover" : "bg-bg-card text-txt-muted"}`}>{i + 1}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-xs font-semibold text-txt truncate">{kw.keyword}</p>
-                    {kw.isOfficialTag && <span className="text-[8px] px-1 py-0.5 rounded bg-success/15 text-success font-bold">TAG</span>}
-                  </div>
-                  <p className="text-[10px] text-txt-muted">{fmt(kw.totalViews)} total views • {kw.appearsIn} video{kw.appearsIn > 1 ? "s" : ""}</p>
-                </div>
-                <div className="shrink-0 text-right">
-                  <div className="w-10 h-1.5 rounded-full bg-bg-card overflow-hidden">
-                    <div className="h-full rounded-full grad-primary" style={{ width: `${kw.score}%` }} />
-                  </div>
-                  <p className="text-[9px] text-txt-muted mt-0.5">{kw.score}/100</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ═══ REDDIT & NEWS & X ═══ */}
-      {(redditPosts.length > 0 || newsPosts.length > 0 || xPosts.length > 0) && (
-        <div className="rounded-xl bg-bg-card border border-border p-5">
-          <h4 className="text-sm font-bold text-txt flex items-center gap-2 mb-3"><Activity className="w-4 h-4 text-primary" /> More Platform Data</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {/* Reddit */}
-            {redditPosts.length > 0 && (
-              <div>
-                <p className="text-[10px] font-bold text-orange-400 mb-2 flex items-center gap-1"><MessageSquare className="w-3.5 h-3.5" /> Reddit — {redditPosts.length} posts</p>
-                <div className="space-y-1.5">
-                  {redditPosts.slice(0, 5).map((p, i) => (
-                    <a key={i} href={p.url} target="_blank" rel="noopener noreferrer"
-                      className="block p-2 rounded-lg bg-bg-card-hover border border-border hover:border-orange-500/20 transition-all">
-                      <p className="text-[11px] font-semibold text-txt line-clamp-2">{p.title}</p>
-                      <p className="text-[9px] text-txt-muted mt-0.5 flex items-center gap-1"><span className="font-semibold text-txt-secondary">r/{p.subreddit}</span> • <ArrowUp className="w-2.5 h-2.5" /> {fmt(p.metrics?.likes || 0)} • <MessageCircle className="w-2.5 h-2.5" /> {p.metrics?.comments || 0}</p>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-            {/* News */}
-            {newsPosts.length > 0 && (
-              <div>
-                <p className="text-[10px] font-bold text-blue-400 mb-2 flex items-center gap-1"><Newspaper className="w-3.5 h-3.5" /> News — {newsPosts.length} articles</p>
-                <div className="space-y-1.5">
-                  {newsPosts.slice(0, 5).map((n, i) => (
-                    <a key={i} href={n.url} target="_blank" rel="noopener noreferrer"
-                      className="block p-2 rounded-lg bg-bg-card-hover border border-border hover:border-blue-500/20 transition-all">
-                      <p className="text-[11px] font-semibold text-txt line-clamp-2">{n.title}</p>
-                      <p className="text-[9px] text-txt-muted mt-0.5">{n.author} • {formatDate(n.publishedAt)}</p>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-            {/* X/Twitter */}
-            {xPosts.length > 0 && (
-              <div>
-                <p className="text-[10px] font-bold text-slate-300 mb-2 flex items-center gap-1"><Hash className="w-3.5 h-3.5" /> Twitter — {xPosts.length} posts</p>
-                <div className="space-y-1.5">
-                  {xPosts.slice(0, 5).map((t, i) => (
-                    <a key={i} href={t.url} target="_blank" rel="noopener noreferrer"
-                      className="block p-2 rounded-lg bg-bg-card-hover border border-border hover:border-slate-400/20 transition-all">
-                      <p className="text-[11px] font-semibold text-txt line-clamp-2">{t.title}</p>
-                      <p className="text-[9px] text-txt-muted mt-0.5">{t.author}</p>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Market Landscape */}
-      {r.marketLandscape && (
-        <div className="rounded-xl bg-bg-card border border-border p-5">
-          <h4 className="text-sm font-bold text-txt flex items-center gap-2 mb-3"><BarChart2 className="w-4 h-4 text-primary" /> Market Landscape</h4>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
-            <MiniStat label="Saturation" value={r.marketLandscape.saturationLevel} />
-            <MiniStat label="Score" value={`${r.marketLandscape.saturationScore}/100`} />
-            <MiniStat label="Content Volume" value={r.marketLandscape.totalEstimatedContent} />
-            <MiniStat label="Growth" value={r.marketLandscape.growthTrend} />
-          </div>
-          <p className="text-xs text-txt-secondary leading-relaxed">{r.marketLandscape.summary}</p>
-        </div>
-      )}
-
-      {/* Audience Sentiment */}
-      {r.audienceSentiment && (
-        <div className="rounded-xl bg-bg-card border border-border p-5">
-          <h4 className="text-sm font-bold text-txt flex items-center gap-2 mb-3"><Heart className="w-4 h-4 text-primary" /> Audience Sentiment — {r.audienceSentiment.overall}</h4>
-          <p className="text-xs text-txt-muted mb-2">{r.audienceSentiment.demographics}</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <p className="text-[10px] font-bold text-danger mb-1.5">Pain Points</p>
-              {r.audienceSentiment.painPoints?.map((p, i) => (
-                <p key={i} className="text-xs text-txt-secondary mb-1">• {p}</p>
-              ))}
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-success mb-1.5">Desires</p>
-              {r.audienceSentiment.desires?.map((d, i) => (
-                <p key={i} className="text-xs text-txt-secondary mb-1">• {d}</p>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Content Gaps */}
-      {r.contentGaps?.length > 0 && (
-        <div className="rounded-xl bg-bg-card border border-border p-5">
-          <h4 className="text-sm font-bold text-txt flex items-center gap-2 mb-3"><Search className="w-4 h-4 text-primary" /> Content Gaps — Opportunities</h4>
-          <div className="space-y-2">
-            {r.contentGaps.map((g, i) => (
-              <div key={i} className="p-3 rounded-lg bg-bg-elevated border border-border">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-xs font-semibold text-txt">{g.gap}</p>
-                  <span className={`shrink-0 px-2 py-0.5 rounded text-[9px] font-bold ${g.difficulty === "easy" ? "badge-cool" : g.difficulty === "hard" ? "badge-hot" : "badge-warm"}`}>{g.difficulty}</span>
-                </div>
-                <p className="text-[11px] text-txt-muted mt-1">{g.opportunity}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Trending Angles */}
-      {r.trendingAngles?.length > 0 && (
-        <div className="rounded-xl bg-bg-card border border-border p-5">
-          <h4 className="text-sm font-bold text-txt flex items-center gap-2 mb-3"><Flame className="w-4 h-4 text-orange-500" /> Trending Angles</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {r.trendingAngles.map((a, i) => (
-              <div key={i} className="p-3 rounded-lg bg-bg-elevated border border-border hover:border-primary/20 transition-all">
-                <div className="flex items-start justify-between gap-2 mb-1">
-                  <p className="text-xs font-semibold text-txt">{a.angle}</p>
-                  <span className="text-[10px] font-bold text-primary-hover">{a.viralPotential}/100</span>
-                </div>
-                <p className="text-[11px] text-txt-muted mb-2">{a.description}</p>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="px-2 py-0.5 rounded text-[9px] font-semibold bg-accent/15 text-accent-hover">{a.suggestedFormat}</span>
-                  {a.platforms?.map((p) => (
-                    <span key={p} className="text-[9px] text-txt-muted">{p}</span>
-                  ))}
-                </div>
-                {a.hookIdea && <p className="text-[10px] text-primary-hover mt-1.5 italic flex items-center gap-1"><Lightbulb className="w-3 h-3" /> Hook: "{a.hookIdea}"</p>}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Recommended Strategy */}
-      {r.recommendedStrategy && (
-        <div className="rounded-xl bg-bg-card border border-primary/20 p-5 glow-pulse">
-          <h4 className="text-sm font-bold text-txt flex items-center gap-2 mb-2"><Award className="w-4 h-4 text-primary" /> Recommended Strategy</h4>
-          <p className="text-xs text-txt-secondary mb-2">{r.recommendedStrategy.keyMessage}</p>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-            <MiniStat label="Best Platform" value={r.recommendedStrategy.bestPlatform} />
-            <MiniStat label="Best Format" value={r.recommendedStrategy.bestFormat} />
-            <MiniStat label="Viral Potential" value={`${r.recommendedStrategy.estimatedViralPotential}/100`} />
-            <MiniStat label="Best Angle" value={r.recommendedStrategy.bestAngle?.substring(0, 30)} />
-          </div>
-        </div>
-      )}
-    </>
-  )}
-</div>
-  );
-}
-
-function MiniStat({ label, value }) {
-  return (
-    <div className="p-2 rounded-lg bg-bg-card-hover">
-      <p className="text-[9px] text-txt-muted uppercase tracking-wider">{label}</p>
-      <p className="text-xs font-bold text-txt truncate">{value || "—"}</p>
+           </div>
+         )}
+      </div>
     </div>
   );
 }
 
-function Spinner() {
+function Section({ icon: Icon, label, color, children }) {
   return (
-    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-    </svg>
+    <div className="space-y-6">
+       <div className="flex items-center gap-3">
+          <Icon className={`w-5 h-5 ${color}`} />
+          <h4 className="text-xs font-black text-txt uppercase tracking-[0.2em]">{label}</h4>
+       </div>
+       {children}
+    </div>
   );
+}
+
+function MediaCard({ data }) {
+  return (
+    <a href={data.url} target="_blank" rel="noopener noreferrer" 
+      className="group bg-white rounded-[2rem] border border-border overflow-hidden hover:border-primary/30 transition-all shadow-sm hover:shadow-xl block">
+       <div className="aspect-video relative overflow-hidden bg-bg-elevated">
+          {data.thumbnail && <img src={data.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+             <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30"><Play className="w-6 h-6 fill-white" /></div>
+          </div>
+          {data.metrics?.views > 0 && (
+            <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg bg-black/80 text-white text-[10px] font-black uppercase tracking-widest backdrop-blur-sm">
+               {fmt(data.metrics.views)} VIEWS
+            </div>
+          )}
+       </div>
+       <div className="p-6 space-y-3">
+          <p className="text-sm font-bold text-txt leading-snug line-clamp-2 group-hover:text-primary transition-colors">{data.title}</p>
+          <div className="flex items-center justify-between">
+             <p className="text-[10px] text-txt-muted font-bold uppercase tracking-widest">{data.author}</p>
+             <div className="flex gap-2">
+                <Heart className="w-3 h-3 text-txt-muted" /> <span className="text-[10px] font-bold text-txt-muted">{fmt(data.metrics?.likes)}</span>
+             </div>
+          </div>
+       </div>
+    </a>
+  );
+}
+
+function InstagramCard({ data }) {
+  return (
+    <a href={data.url} target="_blank" rel="noopener noreferrer"
+      className="group bg-white rounded-[2rem] border border-border p-6 hover:border-pink-500/30 transition-all shadow-sm hover:shadow-xl flex flex-col h-full block">
+       <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+             <div className="w-8 h-8 rounded-full bg-pink-500/10 flex items-center justify-center text-pink-500"><Camera className="w-4 h-4" /></div>
+             <p className="text-[10px] font-black text-txt uppercase tracking-widest">Reel Strategy</p>
+          </div>
+          <Flame className="w-4 h-4 text-orange-500 animate-pulse" />
+       </div>
+       
+       {data.thumbnail && (
+          <div className="w-full aspect-[9/12] rounded-2xl overflow-hidden bg-bg-elevated mb-5 relative">
+             <img src={data.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+             {data.videoUrl && <div className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white"><Play className="w-3 h-3 fill-white" /></div>}
+          </div>
+       )}
+
+       <p className="text-[13px] font-bold text-txt leading-relaxed line-clamp-3 mb-4">{data.title || data.description}</p>
+       
+       <div className="mt-auto pt-4 border-t border-border flex items-center justify-between text-[10px] font-black text-txt-muted uppercase tracking-widest">
+          <div className="flex items-center gap-3">
+             <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5" /> {fmt(data.metrics?.likes)}</span>
+             <span className="flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5" /> {fmt(data.metrics?.comments)}</span>
+          </div>
+          <ExternalLink className="w-3.5 h-3.5 group-hover:text-pink-500" />
+       </div>
+    </a>
+  );
+}
+
+function TweetCard({ data }) {
+  return (
+    <a href={data.url} target="_blank" rel="noopener noreferrer"
+      className="group p-6 rounded-[1.8rem] bg-bg-elevated/50 border border-border hover:bg-white hover:border-primary/20 transition-all block">
+       <div className="flex items-center gap-3 mb-4">
+          {data.profileImage ? (
+            <img src={data.profileImage} alt="" className="w-8 h-8 rounded-full border border-border" />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center"><User className="w-4 h-4" /></div>
+          )}
+          <div>
+            <p className="text-xs font-black text-txt leading-none mb-0.5">{data.authorName || data.author}</p>
+            <p className="text-[10px] text-txt-muted font-medium">{data.author}</p>
+          </div>
+       </div>
+       <p className="text-[13px] text-txt-secondary leading-relaxed font-medium mb-4 line-clamp-3 group-hover:text-txt transition-colors">
+          {data.title || data.description}
+       </p>
+       <div className="flex items-center gap-6 text-[10px] font-black text-txt-muted uppercase tracking-tighter">
+          <span className="flex items-center gap-1.5 hover:text-primary"><Heart className="w-3.5 h-3.5" /> {fmt(data.metrics?.likes)}</span>
+          <span className="flex items-center gap-1.5 hover:text-primary"><Repeat2 className="w-3.5 h-3.5" /> {fmt(data.metrics?.retweets)}</span>
+          <span className="flex items-center gap-1.5 hover:text-primary"><MessageCircle className="w-3.5 h-3.5" /> {fmt(data.metrics?.comments)}</span>
+       </div>
+    </a>
+  );
+}
+
+function NewsCard({ data }) {
+  return (
+    <a href={data.url} target="_blank" rel="noopener noreferrer"
+      className="group p-6 rounded-[1.8rem] bg-bg-elevated/50 border border-border hover:bg-white hover:border-blue-500/20 transition-all block">
+       <div className="flex items-center gap-3 mb-3">
+          <div className="px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-500 text-[9px] font-black uppercase tracking-widest">{data.author}</div>
+          <span className="text-[10px] text-txt-muted font-medium italic">{formatDate(data.publishedAt)}</span>
+       </div>
+       <p className="text-sm font-bold text-txt leading-relaxed line-clamp-2 group-hover:text-blue-500 transition-colors">
+          {data.title}
+       </p>
+       <div className="mt-4 flex items-center gap-2 text-[10px] font-black text-primary uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+          Full Article <ArrowRight className="w-3 h-3" />
+       </div>
+    </a>
+  );
+}
+
+function Field({ label, children }) {
+  return (<div><label className="block text-[10px] font-black text-txt-muted uppercase tracking-[0.2em] mb-4 ml-1">{label}</label>{children}</div>);
 }
 
 function fmt(n) {
@@ -621,7 +495,6 @@ function formatDate(dateStr) {
     if (diffH < 24) return `${diffH}h ago`;
     const diffD = Math.floor(diffH / 24);
     if (diffD < 7) return `${diffD}d ago`;
-    if (diffD < 30) return `${Math.floor(diffD / 7)}w ago`;
-    return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+    return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
   } catch { return dateStr; }
 }
