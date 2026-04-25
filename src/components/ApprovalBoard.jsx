@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Clock, CheckCircle2, Clapperboard, Rocket, ListChecks, FileText, Lightbulb, XCircle } from "lucide-react";
 
 const STAGES = [
-  { id: "pending", label: "Pending Review", icon: "⏳", color: "warning" },
-  { id: "approved", label: "Approved", icon: "✅", color: "success" },
-  { id: "in_production", label: "In Production", icon: "🎬", color: "accent" },
-  { id: "published", label: "Published", icon: "🚀", color: "primary" },
+  { id: "pending", label: "Pending Review", icon: Clock, color: "warning" },
+  { id: "approved", label: "Approved", icon: CheckCircle2, color: "success" },
+  { id: "in_production", label: "In Production", icon: Clapperboard, color: "accent" },
+  { id: "published", label: "Published", icon: Rocket, color: "primary" },
 ];
 
 export default function ApprovalBoard() {
@@ -40,13 +41,13 @@ export default function ApprovalBoard() {
   return (
     <div className="p-5 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-5">
-        <h3 className="text-sm font-bold text-txt flex items-center gap-2">✅ Approval Board</h3>
+        <h3 className="text-sm font-bold text-txt flex items-center gap-2"><ListChecks className="w-4 h-4 text-primary" /> Approval Board</h3>
         <span className="text-[11px] text-txt-muted">{items.length} total items</span>
       </div>
 
       {items.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="text-5xl mb-4">📋</div>
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary mx-auto mb-4 animate-float"><FileText className="w-8 h-8" /></div>
           <h3 className="text-lg font-bold text-txt mb-1">No research yet</h3>
           <p className="text-sm text-txt-muted">Run your first R&D pipeline to see items here.</p>
         </div>
@@ -55,7 +56,7 @@ export default function ApprovalBoard() {
           {STAGES.map((stage) => (
             <div key={stage.id} className="kanban-col">
               <div className="flex items-center gap-2 mb-3">
-                <span>{stage.icon}</span>
+                <stage.icon className={`w-4 h-4 text-${stage.color}`} />
                 <h4 className="text-xs font-bold text-txt">{stage.label}</h4>
                 <span className="ml-auto text-[10px] text-txt-muted bg-bg-elevated px-2 py-0.5 rounded-full">
                   {getItemsByStage(stage.id).length}
@@ -75,34 +76,34 @@ export default function ApprovalBoard() {
                     </p>
 
                     {item.research?.recommendedStrategy && (
-                      <p className="text-[10px] text-primary-hover mb-2 italic line-clamp-2">
-                        💡 {item.research.recommendedStrategy.bestAngle}
+                      <p className="text-[10px] text-primary-hover mb-2 italic line-clamp-2 flex items-center gap-1">
+                        <Lightbulb className="w-3 h-3 shrink-0" /> <span className="truncate">{item.research.recommendedStrategy.bestAngle}</span>
                       </p>
                     )}
 
                     <div className="flex gap-1 flex-wrap">
                       {stage.id !== "approved" && (
                         <button onClick={() => updateStatus(item.id, "approved")}
-                          className="px-2 py-1 rounded text-[9px] font-bold bg-success/15 text-success border border-success/20 cursor-pointer hover:bg-success/25 transition-all">
-                          ✅ Approve
+                          className="px-2 py-1 rounded text-[9px] font-bold bg-success/15 text-success border border-success/20 cursor-pointer hover:bg-success/25 transition-all flex items-center gap-1">
+                          <CheckCircle2 className="w-2.5 h-2.5" /> Approve
                         </button>
                       )}
                       {stage.id === "approved" && (
                         <button onClick={() => updateStatus(item.id, "in_production")}
-                          className="px-2 py-1 rounded text-[9px] font-bold bg-accent/15 text-accent-hover border border-accent/20 cursor-pointer hover:bg-accent/25 transition-all">
-                          🎬 To Production
+                          className="px-2 py-1 rounded text-[9px] font-bold bg-accent/15 text-accent-hover border border-accent/20 cursor-pointer hover:bg-accent/25 transition-all flex items-center gap-1">
+                          <Clapperboard className="w-2.5 h-2.5" /> To Production
                         </button>
                       )}
                       {stage.id === "in_production" && (
                         <button onClick={() => updateStatus(item.id, "published")}
-                          className="px-2 py-1 rounded text-[9px] font-bold bg-primary-muted text-primary-hover border border-primary/20 cursor-pointer hover:bg-primary/25 transition-all">
-                          🚀 Publish
+                          className="px-2 py-1 rounded text-[9px] font-bold bg-primary-muted text-primary-hover border border-primary/20 cursor-pointer hover:bg-primary/25 transition-all flex items-center gap-1">
+                          <Rocket className="w-2.5 h-2.5" /> Publish
                         </button>
                       )}
                       {stage.id === "pending" && (
                         <button onClick={() => updateStatus(item.id, "rejected")}
-                          className="px-2 py-1 rounded text-[9px] font-bold bg-danger/15 text-danger border border-danger/20 cursor-pointer hover:bg-danger/25 transition-all">
-                          ❌ Reject
+                          className="px-2 py-1 rounded text-[9px] font-bold bg-danger/15 text-danger border border-danger/20 cursor-pointer hover:bg-danger/25 transition-all flex items-center gap-1">
+                          <XCircle className="w-2.5 h-2.5" /> Reject
                         </button>
                       )}
                     </div>

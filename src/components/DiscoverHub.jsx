@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { Search, MonitorPlay, Camera, Hash, MessageSquare, Newspaper, Eye, Heart, ExternalLink } from "lucide-react";
 
 const PLATFORMS = [
-  { id: "youtube", label: "YouTube", icon: "🎬", color: "bg-red-500/15 text-red-400 border-red-500/20" },
-  { id: "instagram", label: "Instagram", icon: "📸", color: "bg-pink-500/15 text-pink-400 border-pink-500/20" },
-  { id: "x", label: "X", icon: "𝕏", color: "bg-slate-500/15 text-slate-300 border-slate-500/20" },
-  { id: "reddit", label: "Reddit", icon: "📡", color: "bg-orange-500/15 text-orange-400 border-orange-500/20" },
-  { id: "news", label: "News", icon: "📰", color: "bg-blue-500/15 text-blue-400 border-blue-500/20" },
+  { id: "youtube", label: "YouTube", icon: MonitorPlay, color: "bg-red-500/15 text-red-400 border-red-500/20" },
+  { id: "instagram", label: "Instagram", icon: Camera, color: "bg-pink-500/15 text-pink-400 border-pink-500/20" },
+  { id: "x", label: "X", icon: Hash, color: "bg-slate-500/15 text-slate-300 border-slate-500/20" },
+  { id: "reddit", label: "Reddit", icon: MessageSquare, color: "bg-orange-500/15 text-orange-400 border-orange-500/20" },
+  { id: "news", label: "News", icon: Newspaper, color: "bg-blue-500/15 text-blue-400 border-blue-500/20" },
 ];
 
 const SORT_OPTIONS = [
@@ -53,7 +54,7 @@ export default function DiscoverHub() {
       <div className="relative rounded-2xl overflow-hidden p-6 border border-border">
         <div className="absolute inset-0 grad-primary opacity-[0.04]" />
         <div className="relative text-center space-y-4">
-          <h2 className="text-xl font-bold text-txt">🔍 Discover Trending Content</h2>
+          <h2 className="text-xl font-bold text-txt flex items-center justify-center gap-2"><Search className="w-5 h-5 text-primary" /> Discover Trending Content</h2>
           <p className="text-sm text-txt-muted">Search across 5 platforms — find what's working right now</p>
 
           <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="max-w-2xl mx-auto">
@@ -61,7 +62,7 @@ export default function DiscoverHub() {
               <input type="text" value={query} onChange={(e) => setQuery(e.target.value)}
                 placeholder='Search any topic...'
                 className="w-full pl-10 pr-24 py-3.5 rounded-2xl bg-bg-card border border-border text-sm text-txt placeholder:text-txt-muted transition-all" />
-              <span className="absolute left-3.5 text-txt-muted">🔎</span>
+              <Search className="absolute left-3.5 text-txt-muted w-4 h-4" />
               <button type="submit" disabled={loading || !query.trim()}
                 className={`absolute right-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${loading ? "bg-primary/20 text-primary-hover cursor-wait" : query.trim() ? "grad-primary text-white cursor-pointer" : "bg-bg-elevated text-txt-muted cursor-not-allowed"}`}>
                 {loading ? "Crawling..." : "Discover"}
@@ -72,8 +73,8 @@ export default function DiscoverHub() {
           <div className="flex flex-wrap justify-center gap-2">
             {PLATFORMS.map((p) => (
               <button key={p.id} onClick={() => setSelectedPlatforms((prev) => prev.includes(p.id) ? prev.filter((x) => x !== p.id) : [...prev, p.id])}
-                className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-all cursor-pointer ${selectedPlatforms.includes(p.id) ? p.color : "bg-bg-elevated border-border text-txt-muted opacity-40"}`}>
-                {p.icon} {p.label}
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-all cursor-pointer flex items-center gap-1 ${selectedPlatforms.includes(p.id) ? p.color : "bg-bg-elevated border-border text-txt-muted opacity-40"}`}>
+                <p.icon className="w-3.5 h-3.5" /> {p.label}
               </button>
             ))}
           </div>
@@ -123,7 +124,7 @@ export default function DiscoverHub() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {sorted.map((item, i) => {
-              const pm = PLATFORMS.find((p) => p.id === item.platform) || { icon: "📄", label: item.platform, color: "" };
+              const pm = PLATFORMS.find((p) => p.id === item.platform) || { icon: Newspaper, label: item.platform, color: "" };
               return (
                 <div key={item.id || i} onClick={() => setExpanded(expanded === item.id ? null : item.id)}
                   className={`p-4 rounded-xl bg-bg-card border border-border hover:border-primary/20 transition-all cursor-pointer animate-fade-in ${i < 3 ? "ring-1 ring-primary/10" : ""}`}
@@ -137,16 +138,16 @@ export default function DiscoverHub() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <h4 className="text-sm font-semibold text-txt leading-snug line-clamp-2">{item.title}</h4>
-                        <span className={`shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold border ${pm.color}`}>{pm.icon}</span>
+                        <span className={`shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold border flex items-center justify-center ${pm.color}`}><pm.icon className="w-3.5 h-3.5" /></span>
                       </div>
                       <div className="flex items-center gap-2 mt-1 text-[10px] text-txt-muted">
                         <span className="truncate max-w-[120px]">{item.author}</span>
                         {item.duration && <span className="px-1.5 py-0.5 rounded bg-bg-elevated">{item.duration}</span>}
                       </div>
                       <div className="flex gap-3 mt-1">
-                        {item.metrics?.views > 0 && <span className="text-[10px] text-txt-muted">👁 {fmt(item.metrics.views)}</span>}
-                        {item.metrics?.likes > 0 && <span className="text-[10px] text-txt-muted">❤️ {fmt(item.metrics.likes)}</span>}
-                        {item.metrics?.comments > 0 && <span className="text-[10px] text-txt-muted">💬 {fmt(item.metrics.comments)}</span>}
+                        {item.metrics?.views > 0 && <span className="text-[10px] text-txt-muted flex items-center gap-1"><Eye className="w-3 h-3" /> {fmt(item.metrics.views)}</span>}
+                        {item.metrics?.likes > 0 && <span className="text-[10px] text-txt-muted flex items-center gap-1"><Heart className="w-3 h-3" /> {fmt(item.metrics.likes)}</span>}
+                        {item.metrics?.comments > 0 && <span className="text-[10px] text-txt-muted flex items-center gap-1"><MessageSquare className="w-3 h-3" /> {fmt(item.metrics.comments)}</span>}
                       </div>
                     </div>
                   </div>
@@ -155,8 +156,8 @@ export default function DiscoverHub() {
                       {item.description && <p className="text-xs text-txt-secondary">{item.description}</p>}
                       {item.tags?.length > 0 && <div className="flex flex-wrap gap-1">{item.tags.map((t, j) => <span key={j} className="px-2 py-0.5 rounded-full text-[9px] bg-bg-elevated border border-border text-txt-muted">{t}</span>)}</div>}
                       <a href={item.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold grad-primary text-white">
-                        Open on {pm.label} ↗
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold grad-primary text-white hover:opacity-90 transition-opacity">
+                        Open on {pm.label} <ExternalLink className="w-3 h-3" />
                       </a>
                     </div>
                   )}

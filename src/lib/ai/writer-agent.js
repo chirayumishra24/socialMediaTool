@@ -99,7 +99,7 @@ ${approvedAngles.length ? `- APPROVED ANGLES: ${approvedAngles.map((a) => a.angl
 `
     : "";
 
-  const prompt = `You are an elite content creator with 10M+ combined followers. You specialize in creating viral, high-retention content.
+  const prompt = `You are a highly respected School Communications Expert and Educational Content Strategist. You specialize in creating informative, engaging, and trust-building content for educational institutions.
 
 TASK: Write a complete ${spec.name} script.
 

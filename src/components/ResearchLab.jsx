@@ -1,26 +1,27 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { MonitorPlay, Camera, Hash, MessageSquare, Newspaper, Zap, BarChart2, Search, Globe, Check, Eye, MessageCircle, Heart, ArrowUpRight, Flame, Lightbulb, Target, Copy, Award, Loader2, Sparkles, AlertCircle, Compass, Clock, Activity, ArrowUp } from "lucide-react";
 
 const PLATFORMS_LIST = [
-  { id: "youtube", label: "YouTube", icon: "🎬" },
-  { id: "instagram", label: "Instagram", icon: "📸" },
-  { id: "x", label: "X / Twitter", icon: "𝕏" },
-  { id: "reddit", label: "Reddit", icon: "📡" },
-  { id: "news", label: "News", icon: "📰" },
+  { id: "youtube", label: "YouTube", icon: MonitorPlay },
+  { id: "instagram", label: "Instagram", icon: Camera },
+  { id: "x", label: "X / Twitter", icon: Hash },
+  { id: "reddit", label: "Reddit", icon: MessageSquare },
+  { id: "news", label: "News", icon: Newspaper },
 ];
 
 const DEPTHS = [
-  { id: "quick", label: "Quick Scan", desc: "~30s — basic overview", icon: "⚡" },
-  { id: "standard", label: "Standard", desc: "~60s — balanced analysis", icon: "📊" },
-  { id: "deep", label: "Deep Dive", desc: "~90s — full R&D", icon: "🔬" },
+  { id: "quick", label: "Quick Scan", desc: "~30s — basic overview", icon: Zap },
+  { id: "standard", label: "Standard", desc: "~60s — balanced analysis", icon: BarChart2 },
+  { id: "deep", label: "Deep Dive", desc: "~90s — full R&D", icon: Search },
 ];
 
 const LOCATIONS = [
-  { code: "IN", label: "🇮🇳 India" },
-  { code: "US", label: "🇺🇸 United States" },
-  { code: "GB", label: "🇬🇧 United Kingdom" },
-  { code: "GLOBAL", label: "🌍 Global" },
+  { code: "IN", label: "India", icon: Globe },
+  { code: "US", label: "United States", icon: Globe },
+  { code: "GB", label: "United Kingdom", icon: Globe },
+  { code: "GLOBAL", label: "Global", icon: Globe },
 ];
 
 export default function ResearchLab() {
@@ -78,14 +79,14 @@ export default function ResearchLab() {
     <div className="p-5 max-w-6xl mx-auto space-y-5">
       {/* Input Panel */}
       <div className="rounded-2xl bg-bg-card border border-border p-5 space-y-4">
-        <h3 className="text-sm font-bold text-txt flex items-center gap-2">🔬 Research Pipeline</h3>
+        <h3 className="text-sm font-bold text-txt flex items-center gap-2"><Search className="w-4 h-4 text-primary" /> Research Pipeline</h3>
 
         {/* Keyword */}
         <div>
           <label className="block text-[11px] font-semibold text-txt-secondary mb-1.5">Topic / Keyword *</label>
           <input
             type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)}
-            placeholder='e.g. "AI Tools for Creators", "Startup Funding", "Mental Health"'
+            placeholder='e.g. "NEP 2024 changes", "Child psychology tips", "Board exam prep"'
             className="w-full px-4 py-3 rounded-xl bg-bg-elevated border border-border text-sm text-txt placeholder:text-txt-muted transition-all"
             onKeyDown={(e) => e.key === "Enter" && handleResearch()}
           />
@@ -97,8 +98,8 @@ export default function ResearchLab() {
           <div className="flex gap-2 flex-wrap">
             {LOCATIONS.map((l) => (
               <button key={l.code} onClick={() => setLocation(l.code)}
-                className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-all cursor-pointer ${location === l.code ? "bg-primary-muted text-primary-hover border-primary/30" : "bg-bg-elevated border-border text-txt-muted hover:text-txt-secondary"}`}>
-                {l.label}
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-all cursor-pointer flex items-center gap-1.5 ${location === l.code ? "bg-primary-muted text-primary-hover border-primary/30" : "bg-bg-elevated border-border text-txt-muted hover:text-txt-secondary"}`}>
+                <l.icon className="w-3.5 h-3.5" /> {l.label}
               </button>
             ))}
           </div>
@@ -110,8 +111,8 @@ export default function ResearchLab() {
           <div className="flex gap-2 flex-wrap">
             {PLATFORMS_LIST.map((p) => (
               <button key={p.id} onClick={() => togglePlatform(p.id)}
-                className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-all cursor-pointer ${platforms.includes(p.id) ? "bg-accent/15 text-accent-hover border-accent/30" : "bg-bg-elevated border-border text-txt-muted opacity-50"}`}>
-                {p.icon} {p.label}
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-all cursor-pointer flex items-center gap-1.5 ${platforms.includes(p.id) ? "bg-accent/15 text-accent-hover border-accent/30" : "bg-bg-elevated border-border text-txt-muted opacity-50"}`}>
+                <p.icon className="w-3.5 h-3.5" /> {p.label}
               </button>
             ))}
           </div>
@@ -124,7 +125,7 @@ export default function ResearchLab() {
             {DEPTHS.map((d) => (
               <button key={d.id} onClick={() => setDepth(d.id)}
                 className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${depth === d.id ? "bg-primary-muted border-primary/30" : "bg-bg-elevated border-border hover:border-border"}`}>
-                <span className="text-lg">{d.icon}</span>
+                <d.icon className={`w-5 h-5 mb-2 ${depth === d.id ? "text-primary-hover" : "text-txt-muted"}`} />
                 <p className="text-xs font-bold text-txt mt-1">{d.label}</p>
                 <p className="text-[10px] text-txt-muted">{d.desc}</p>
               </button>
@@ -135,17 +136,17 @@ export default function ResearchLab() {
         {/* Submit */}
         <button onClick={handleResearch} disabled={loading || !keyword.trim()}
           className={`w-full py-3.5 rounded-xl text-sm font-bold transition-all ${loading ? "bg-primary/20 text-primary-hover cursor-wait" : keyword.trim() ? "grad-primary text-white hover:opacity-90 cursor-pointer shadow-lg shadow-primary/20" : "bg-bg-elevated text-txt-muted cursor-not-allowed"}`}>
-          {loading ? <span className="flex items-center justify-center gap-2"><Spinner /> Running R&D Pipeline...</span> : "🔬 Start Research"}
+          {loading ? <span className="flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Running R&D Pipeline...</span> : <span className="flex items-center justify-center gap-2"><Sparkles className="w-4 h-4" /> Start Research</span>}
         </button>
 
-        {error && <div className="p-3 rounded-xl bg-danger/10 border border-danger/20 text-sm text-danger animate-fade-in">⚠️ {error}</div>}
+        {error && <div className="p-3 rounded-xl bg-danger/10 border border-danger/20 text-sm text-danger animate-fade-in flex items-center gap-2"><AlertCircle className="w-4 h-4" /> {error}</div>}
       </div>
 
       {/* Loading State */}
       {loading && (
         <div className="rounded-2xl bg-bg-card border border-border p-6 animate-fade-in">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-full bg-primary-muted flex items-center justify-center text-sm animate-pulse">🤖</div>
+            <div className="w-8 h-8 rounded-full bg-primary-muted flex items-center justify-center text-primary-hover animate-pulse"><Search className="w-4 h-4" /></div>
             <div>
               <p className="text-sm font-bold text-txt cursor-blink">AI Research Agents Working</p>
               <p className="text-[11px] text-txt-muted">Crawling {platforms.length} platforms + analyzing with Gemini 3.1 Pro</p>
@@ -194,14 +195,14 @@ function ResearchResults({ research, platformData, topKeywords }) {
       {/* ═══ VAGUE INPUT CHECK ═══ */}
       {r.isVague && (
         <div className="rounded-2xl p-8 bg-primary/10 border border-primary/20 backdrop-blur-xl text-center">
-          <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-3xl mx-auto mb-4 animate-bounce">🤔</div>
+          <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-primary mx-auto mb-4 animate-bounce"><Compass className="w-8 h-8" /></div>
           <h3 className="text-xl font-bold text-txt mb-2">{r.message || "Topic is too broad"}</h3>
           <p className="text-sm text-txt-secondary mb-6">To create a high-impact strategy, I need a more specific focus. Try one of these:</p>
           <div className="flex flex-wrap justify-center gap-2">
             {r.suggestions?.map((s, i) => (
               <button key={i} onClick={() => window.dispatchEvent(new CustomEvent('skilizee-set-keyword', { detail: s }))}
-                className="px-4 py-2 rounded-xl bg-bg-elevated border border-border text-sm font-semibold text-primary-hover hover:bg-primary-muted transition-all cursor-pointer">
-                🔍 {s}
+                className="px-4 py-2 rounded-xl bg-bg-elevated border border-border text-sm font-semibold text-primary-hover hover:bg-primary-muted transition-all cursor-pointer flex items-center gap-2">
+                <Search className="w-3.5 h-3.5" /> {s}
               </button>
             ))}
           </div>
@@ -215,7 +216,7 @@ function ResearchResults({ research, platformData, topKeywords }) {
             <div className="rounded-2xl grad-primary p-[1px] shadow-2xl shadow-primary/20 overflow-hidden">
               <div className="bg-bg-card p-6 rounded-[15px]">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-primary-muted flex items-center justify-center text-xl">💡</div>
+                  <div className="w-10 h-10 rounded-xl bg-primary-muted flex items-center justify-center text-primary"><Lightbulb className="w-5 h-5" /></div>
                   <div>
                     <h3 className="text-lg font-bold text-txt">Strategy Blueprint</h3>
                     <p className="text-[11px] text-txt-muted">Modern Informative Approach for 2025</p>
@@ -228,7 +229,7 @@ function ResearchResults({ research, platformData, topKeywords }) {
                     <p className="text-sm text-txt-secondary leading-relaxed">{r.strategyBlueprint.concept}</p>
                     
                     <div className="mt-4 p-4 rounded-xl bg-bg-elevated border border-border">
-                      <h4 className="text-[11px] font-bold text-txt mb-2 flex items-center gap-2">🛠️ Recommended Stack</h4>
+                      <h4 className="text-[11px] font-bold text-txt mb-2 flex items-center gap-2"><Target className="w-3.5 h-3.5 text-txt-secondary" /> Recommended Stack</h4>
                       <div className="flex flex-wrap gap-2">
                         {r.strategyBlueprint.recommendedTools?.map(t => (
                           <span key={t} className="px-2 py-1 rounded-lg bg-bg-card text-[10px] font-medium border border-border text-txt-muted">{t}</span>
@@ -263,10 +264,10 @@ function ResearchResults({ research, platformData, topKeywords }) {
       {ytVideos.length > 0 && (
         <div className="rounded-xl bg-bg-card border border-border p-5">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="text-sm font-bold text-txt flex items-center gap-2">🎬 Trending Videos — {ytVideos.length} found</h4>
+            <h4 className="text-sm font-bold text-txt flex items-center gap-2"><MonitorPlay className="w-4 h-4 text-red-500" /> Trending Videos — {ytVideos.length} found</h4>
             <div className="flex gap-1 p-0.5 rounded-lg bg-bg-elevated border border-border">
-              <button onClick={() => setVideoSort("views")} className={`px-2.5 py-1 rounded-md text-[10px] font-semibold cursor-pointer transition-all ${videoSort === "views" ? "bg-primary-muted text-primary-hover" : "text-txt-muted"}`}>🔥 Most Views</button>
-              <button onClick={() => setVideoSort("latest")} className={`px-2.5 py-1 rounded-md text-[10px] font-semibold cursor-pointer transition-all ${videoSort === "latest" ? "bg-primary-muted text-primary-hover" : "text-txt-muted"}`}>🕐 Latest</button>
+              <button onClick={() => setVideoSort("views")} className={`px-2.5 py-1 rounded-md text-[10px] font-semibold cursor-pointer transition-all flex items-center gap-1 ${videoSort === "views" ? "bg-primary-muted text-primary-hover" : "text-txt-muted"}`}><Flame className="w-3 h-3" /> Most Views</button>
+              <button onClick={() => setVideoSort("latest")} className={`px-2.5 py-1 rounded-md text-[10px] font-semibold cursor-pointer transition-all flex items-center gap-1 ${videoSort === "latest" ? "bg-primary-muted text-primary-hover" : "text-txt-muted"}`}><Clock className="w-3 h-3" /> Latest</button>
             </div>
           </div>
           <div className="space-y-2.5 max-h-[500px] overflow-y-auto custom-scroll pr-1">
@@ -290,9 +291,9 @@ function ResearchResults({ research, platformData, topKeywords }) {
                   <p className="text-[10px] text-txt-muted mt-0.5">{v.author} {v.publishedAt && `• ${formatDate(v.publishedAt)}`}</p>
                   {/* Metrics */}
                   <div className="flex gap-3 mt-1.5">
-                    {v.metrics?.views > 0 && <span className="text-[10px] text-txt-secondary font-semibold">👁 {fmt(v.metrics.views)} views</span>}
-                    {v.metrics?.likes > 0 && <span className="text-[10px] text-txt-muted">❤️ {fmt(v.metrics.likes)}</span>}
-                    {v.metrics?.comments > 0 && <span className="text-[10px] text-txt-muted">💬 {fmt(v.metrics.comments)}</span>}
+                    {v.metrics?.views > 0 && <span className="text-[10px] text-txt-secondary font-semibold flex items-center gap-1"><Eye className="w-3 h-3" /> {fmt(v.metrics.views)} views</span>}
+                    {v.metrics?.likes > 0 && <span className="text-[10px] text-txt-muted flex items-center gap-1"><Heart className="w-3 h-3" /> {fmt(v.metrics.likes)}</span>}
+                    {v.metrics?.comments > 0 && <span className="text-[10px] text-txt-muted flex items-center gap-1"><MessageCircle className="w-3 h-3" /> {fmt(v.metrics.comments)}</span>}
                   </div>
                   {/* Tags */}
                   {v.tags?.length > 0 && (
@@ -314,25 +315,51 @@ function ResearchResults({ research, platformData, topKeywords }) {
         </div>
       )}
 
-      {/* ═══ INSTAGRAM STRATEGY ═══ */}
+      {/* ═══ INSTAGRAM ═══ */}
       {platformData?.instagram?.length > 0 && (
         <div className="rounded-xl bg-bg-card border border-border p-5">
-          <h4 className="text-sm font-bold text-txt flex items-center gap-2 mb-3">📸 Instagram Content Strategy — {platformData.instagram.length} Formats</h4>
+          <h4 className="text-sm font-bold text-txt flex items-center gap-2 mb-3">
+            <Camera className="w-4 h-4 text-pink-500" />
+            Instagram — {platformData.instagram.length} {platformData.instagram[0]?.isFallback ? "Format Tips" : "Posts Found"}
+          </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {platformData.instagram.map((ig, i) => (
-              <div key={i} className="p-4 rounded-xl bg-bg-elevated border border-border hover:border-accent/30 transition-all">
+              <a key={i} href={ig.url} target="_blank" rel="noopener noreferrer"
+                className="group p-4 rounded-xl bg-bg-elevated border border-border hover:border-pink-500/30 transition-all block no-underline">
+                {/* Thumbnail for real posts */}
+                {ig.thumbnail && (
+                  <div className="relative w-full h-28 rounded-lg overflow-hidden bg-bg-card mb-3">
+                    <img src={ig.thumbnail} alt="" className="w-full h-full object-cover" loading="lazy" />
+                    {ig.isVideo && (
+                      <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/70 text-white text-[9px] font-bold">REEL</span>
+                    )}
+                  </div>
+                )}
                 <div className="flex items-center justify-between mb-2">
-                  <span className="px-2 py-0.5 rounded-lg bg-accent/10 text-accent-hover text-[10px] font-bold">{ig.metrics?.engagement || "High"} Engagement</span>
-                  <span className="text-xs font-bold text-txt">{ig.contentFormat || "Post"}</span>
+                  <span className="px-2 py-0.5 rounded-lg bg-pink-500/10 text-pink-400 text-[10px] font-bold">
+                    {ig.metrics?.engagement || "High"} Engagement
+                  </span>
+                  <span className="text-[10px] font-bold text-txt-muted">{ig.contentFormat || "Post"}</span>
                 </div>
-                <p className="text-xs font-bold text-txt mb-1.5">{ig.title?.split(":")[0]}</p>
-                <p className="text-[11px] text-txt-secondary leading-relaxed mb-3">{ig.tip || ig.description}</p>
+                <p className="text-xs font-bold text-txt mb-1 line-clamp-2 group-hover:text-pink-400 transition-colors">
+                  {ig.title?.substring(0, 80)}
+                </p>
+                {ig.author && <p className="text-[10px] text-txt-muted mb-1.5">{ig.author}</p>}
+                <p className="text-[11px] text-txt-secondary leading-relaxed mb-2 line-clamp-2">{ig.tip || ig.description?.substring(0, 120)}</p>
+                {/* Metrics for real posts */}
+                {(ig.metrics?.likes > 0 || ig.metrics?.comments > 0) && (
+                  <div className="flex gap-3 mb-2 text-[10px] text-txt-muted">
+                    {ig.metrics.likes > 0 && <span>{fmt(ig.metrics.likes)} likes</span>}
+                    {ig.metrics.comments > 0 && <span>{fmt(ig.metrics.comments)} comments</span>}
+                    {ig.metrics.views > 0 && <span>{fmt(ig.metrics.views)} views</span>}
+                  </div>
+                )}
                 <div className="flex gap-1 flex-wrap">
                   {ig.tags?.slice(0, 3).map(t => (
                     <span key={t} className="text-[9px] text-txt-muted">{t}</span>
                   ))}
                 </div>
-              </div>
+              </a>
             ))}
           </div>
         </div>
@@ -343,11 +370,11 @@ function ResearchResults({ research, platformData, topKeywords }) {
       {topKeywords?.length > 0 && (
         <div className="rounded-xl bg-bg-card border border-border p-5">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="text-sm font-bold text-txt flex items-center gap-2">🏷️ Top Keywords — Driving Video Performance</h4>
+            <h4 className="text-sm font-bold text-txt flex items-center gap-2"><Target className="w-4 h-4 text-primary" /> Top Keywords — Driving Video Performance</h4>
             <button onClick={() => {
               const text = topKeywords.map((k) => k.keyword).join(", ");
               navigator.clipboard.writeText(text);
-            }} className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-bg-elevated border border-border text-txt-secondary hover:text-txt cursor-pointer transition-all">📋 Copy All</button>
+            }} className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-bg-elevated border border-border text-txt-secondary hover:text-txt cursor-pointer transition-all flex items-center gap-1"><Copy className="w-3 h-3" /> Copy All</button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {topKeywords.map((kw, i) => (
@@ -375,18 +402,18 @@ function ResearchResults({ research, platformData, topKeywords }) {
       {/* ═══ REDDIT & NEWS & X ═══ */}
       {(redditPosts.length > 0 || newsPosts.length > 0 || xPosts.length > 0) && (
         <div className="rounded-xl bg-bg-card border border-border p-5">
-          <h4 className="text-sm font-bold text-txt mb-3">📡 More Platform Data</h4>
+          <h4 className="text-sm font-bold text-txt flex items-center gap-2 mb-3"><Activity className="w-4 h-4 text-primary" /> More Platform Data</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {/* Reddit */}
             {redditPosts.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold text-orange-400 mb-2">📡 Reddit — {redditPosts.length} posts</p>
+                <p className="text-[10px] font-bold text-orange-400 mb-2 flex items-center gap-1"><MessageSquare className="w-3.5 h-3.5" /> Reddit — {redditPosts.length} posts</p>
                 <div className="space-y-1.5">
                   {redditPosts.slice(0, 5).map((p, i) => (
                     <a key={i} href={p.url} target="_blank" rel="noopener noreferrer"
                       className="block p-2 rounded-lg bg-bg-card-hover border border-border hover:border-orange-500/20 transition-all">
                       <p className="text-[11px] font-semibold text-txt line-clamp-2">{p.title}</p>
-                      <p className="text-[9px] text-txt-muted mt-0.5">r/{p.subreddit} • ⬆️ {fmt(p.metrics?.likes || 0)} • 💬 {p.metrics?.comments || 0}</p>
+                      <p className="text-[9px] text-txt-muted mt-0.5 flex items-center gap-1"><span className="font-semibold text-txt-secondary">r/{p.subreddit}</span> • <ArrowUp className="w-2.5 h-2.5" /> {fmt(p.metrics?.likes || 0)} • <MessageCircle className="w-2.5 h-2.5" /> {p.metrics?.comments || 0}</p>
                     </a>
                   ))}
                 </div>
@@ -395,7 +422,7 @@ function ResearchResults({ research, platformData, topKeywords }) {
             {/* News */}
             {newsPosts.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold text-blue-400 mb-2">📰 News — {newsPosts.length} articles</p>
+                <p className="text-[10px] font-bold text-blue-400 mb-2 flex items-center gap-1"><Newspaper className="w-3.5 h-3.5" /> News — {newsPosts.length} articles</p>
                 <div className="space-y-1.5">
                   {newsPosts.slice(0, 5).map((n, i) => (
                     <a key={i} href={n.url} target="_blank" rel="noopener noreferrer"
@@ -410,7 +437,7 @@ function ResearchResults({ research, platformData, topKeywords }) {
             {/* X/Twitter */}
             {xPosts.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold text-slate-300 mb-2">𝕏 Twitter — {xPosts.length} posts</p>
+                <p className="text-[10px] font-bold text-slate-300 mb-2 flex items-center gap-1"><Hash className="w-3.5 h-3.5" /> Twitter — {xPosts.length} posts</p>
                 <div className="space-y-1.5">
                   {xPosts.slice(0, 5).map((t, i) => (
                     <a key={i} href={t.url} target="_blank" rel="noopener noreferrer"
@@ -429,7 +456,7 @@ function ResearchResults({ research, platformData, topKeywords }) {
       {/* Market Landscape */}
       {r.marketLandscape && (
         <div className="rounded-xl bg-bg-card border border-border p-5">
-          <h4 className="text-sm font-bold text-txt mb-3">📊 Market Landscape</h4>
+          <h4 className="text-sm font-bold text-txt flex items-center gap-2 mb-3"><BarChart2 className="w-4 h-4 text-primary" /> Market Landscape</h4>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
             <MiniStat label="Saturation" value={r.marketLandscape.saturationLevel} />
             <MiniStat label="Score" value={`${r.marketLandscape.saturationScore}/100`} />
@@ -443,7 +470,7 @@ function ResearchResults({ research, platformData, topKeywords }) {
       {/* Audience Sentiment */}
       {r.audienceSentiment && (
         <div className="rounded-xl bg-bg-card border border-border p-5">
-          <h4 className="text-sm font-bold text-txt mb-3">🎯 Audience Sentiment — {r.audienceSentiment.overall}</h4>
+          <h4 className="text-sm font-bold text-txt flex items-center gap-2 mb-3"><Heart className="w-4 h-4 text-primary" /> Audience Sentiment — {r.audienceSentiment.overall}</h4>
           <p className="text-xs text-txt-muted mb-2">{r.audienceSentiment.demographics}</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
@@ -465,7 +492,7 @@ function ResearchResults({ research, platformData, topKeywords }) {
       {/* Content Gaps */}
       {r.contentGaps?.length > 0 && (
         <div className="rounded-xl bg-bg-card border border-border p-5">
-          <h4 className="text-sm font-bold text-txt mb-3">🕳️ Content Gaps — Opportunities</h4>
+          <h4 className="text-sm font-bold text-txt flex items-center gap-2 mb-3"><Search className="w-4 h-4 text-primary" /> Content Gaps — Opportunities</h4>
           <div className="space-y-2">
             {r.contentGaps.map((g, i) => (
               <div key={i} className="p-3 rounded-lg bg-bg-elevated border border-border">
@@ -483,7 +510,7 @@ function ResearchResults({ research, platformData, topKeywords }) {
       {/* Trending Angles */}
       {r.trendingAngles?.length > 0 && (
         <div className="rounded-xl bg-bg-card border border-border p-5">
-          <h4 className="text-sm font-bold text-txt mb-3">🔥 Trending Angles</h4>
+          <h4 className="text-sm font-bold text-txt flex items-center gap-2 mb-3"><Flame className="w-4 h-4 text-orange-500" /> Trending Angles</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {r.trendingAngles.map((a, i) => (
               <div key={i} className="p-3 rounded-lg bg-bg-elevated border border-border hover:border-primary/20 transition-all">
@@ -498,7 +525,7 @@ function ResearchResults({ research, platformData, topKeywords }) {
                     <span key={p} className="text-[9px] text-txt-muted">{p}</span>
                   ))}
                 </div>
-                {a.hookIdea && <p className="text-[10px] text-primary-hover mt-1.5 italic">💡 Hook: "{a.hookIdea}"</p>}
+                {a.hookIdea && <p className="text-[10px] text-primary-hover mt-1.5 italic flex items-center gap-1"><Lightbulb className="w-3 h-3" /> Hook: "{a.hookIdea}"</p>}
               </div>
             ))}
           </div>
@@ -508,7 +535,7 @@ function ResearchResults({ research, platformData, topKeywords }) {
       {/* Recommended Strategy */}
       {r.recommendedStrategy && (
         <div className="rounded-xl bg-bg-card border border-primary/20 p-5 glow-pulse">
-          <h4 className="text-sm font-bold text-txt mb-2">🎯 Recommended Strategy</h4>
+          <h4 className="text-sm font-bold text-txt flex items-center gap-2 mb-2"><Award className="w-4 h-4 text-primary" /> Recommended Strategy</h4>
           <p className="text-xs text-txt-secondary mb-2">{r.recommendedStrategy.keyMessage}</p>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
             <MiniStat label="Best Platform" value={r.recommendedStrategy.bestPlatform} />

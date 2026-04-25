@@ -5,15 +5,18 @@
 
 const YT_API = "https://www.googleapis.com/youtube/v3";
 
-export async function searchYouTube(query, apiKey, maxResults = 12) {
-  if (!apiKey) return scrapeYouTube(query);
+export async function searchYouTube(query, apiKey, maxResults = 12, language = "en") {
+  if (!apiKey) return scrapeYouTube(query, language);
 
   try {
     const searchUrl = new URL(`${YT_API}/search`);
+    const isEnglish = language === "en" || language === "hinglish";
+    const finalQuery = isEnglish && !query.toLowerCase().includes("english") ? `${query} in english` : query;
     searchUrl.searchParams.set("part", "snippet");
-    searchUrl.searchParams.set("q", query);
+    searchUrl.searchParams.set("q", finalQuery);
     searchUrl.searchParams.set("type", "video");
     searchUrl.searchParams.set("order", "relevance");
+    searchUrl.searchParams.set("relevanceLanguage", language === "hi" ? "hi" : "en");
     searchUrl.searchParams.set("maxResults", String(maxResults));
     searchUrl.searchParams.set("publishedAfter", daysAgo(30));
     searchUrl.searchParams.set("key", apiKey);
@@ -60,11 +63,17 @@ export async function searchYouTube(query, apiKey, maxResults = 12) {
   }
 }
 
-async function scrapeYouTube(query) {
+async function scrapeYouTube(query, language = "en") {
   try {
-    const url = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}&sp=CAMSAhAB`;
+    const isEnglish = language === "en" || language === "hinglish";
+    const finalQuery = isEnglish && !query.toLowerCase().includes("english") ? `${query} in english` : query;
+    const langCode = language === "hi" ? "hi" : "en";
+    const url = `https://www.youtube.com/results?search_query=${encodeURIComponent(finalQuery)}&sp=CAMSAhAB&hl=${langCode}`;
     const res = await fetch(url, {
-      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
+      headers: { 
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Accept-Language": language === "hi" ? "hi-IN,hi;q=0.9,en-US;q=0.8" : "en-US,en;q=0.9"
+      },
       signal: AbortSignal.timeout(10000),
     });
     const html = await res.text();

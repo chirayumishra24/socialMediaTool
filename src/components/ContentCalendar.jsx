@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -35,13 +36,13 @@ export default function ContentCalendar() {
   return (
     <div className="p-5 max-w-7xl mx-auto space-y-5">
       <div className="flex items-center justify-between bg-bg-card border border-border p-4 rounded-xl">
-        <h3 className="text-lg font-bold text-txt flex items-center gap-2">🗓️ Content Calendar</h3>
+        <h3 className="text-lg font-bold text-txt flex items-center gap-2"><CalendarIcon className="w-5 h-5 text-primary" /> Content Calendar</h3>
         <div className="flex items-center gap-4">
-          <button onClick={prevMonth} className="p-2 rounded-lg bg-bg-elevated border border-border hover:bg-primary-muted transition-all cursor-pointer">◀</button>
+          <button onClick={prevMonth} className="p-2 rounded-lg bg-bg-elevated border border-border hover:bg-primary-muted transition-all cursor-pointer"><ChevronLeft className="w-4 h-4 text-txt-muted" /></button>
           <span className="text-sm font-bold text-txt w-32 text-center">
             {currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
           </span>
-          <button onClick={nextMonth} className="p-2 rounded-lg bg-bg-elevated border border-border hover:bg-primary-muted transition-all cursor-pointer">▶</button>
+          <button onClick={nextMonth} className="p-2 rounded-lg bg-bg-elevated border border-border hover:bg-primary-muted transition-all cursor-pointer"><ChevronRight className="w-4 h-4 text-txt-muted" /></button>
         </div>
       </div>
 

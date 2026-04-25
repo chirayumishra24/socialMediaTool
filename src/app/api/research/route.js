@@ -15,7 +15,7 @@ export async function POST(request) {
 
     // Step 1: Crawl platforms in parallel
     const crawlTasks = [];
-    if (platforms.includes("youtube")) crawlTasks.push(searchYouTube(keyword, process.env.YOUTUBE_API_KEY, 10).then((d) => ({ youtube: d })));
+    if (platforms.includes("youtube")) crawlTasks.push(searchYouTube(keyword, process.env.YOUTUBE_API_KEY, 10, language).then((d) => ({ youtube: d })));
     if (platforms.includes("reddit")) crawlTasks.push(searchReddit(keyword, 8).then((d) => ({ reddit: d })));
     if (platforms.includes("x")) crawlTasks.push(searchX(keyword).then((d) => ({ x: d })));
     if (platforms.includes("news")) crawlTasks.push(searchNews(keyword).then((d) => ({ news: d })));

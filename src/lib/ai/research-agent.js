@@ -14,10 +14,10 @@ import { generateJSON } from "./ai-client";
 export async function runResearch(keyword, { location = "IN", language = "en", platformData = {}, depth = "deep" } = {}) {
   const platformSummary = formatPlatformData(platformData);
 
-  const prompt = `You are the Lead Strategy Director at SkilizeeAI, an elite digital marketing intelligence firm.
-Your goal is to transform a simple keyword into a high-impact, INFORMATIVE, and data-backed content strategy.
+  const prompt = `You are the Lead Educational Strategy Director at Skilizee Edu, an elite school intelligence and curriculum planning platform.
+Your goal is to transform a simple keyword into a high-impact, INFORMATIVE, and data-backed educational content strategy. This is for a School Director looking to communicate with parents, students, and educators.
 
-TASK: Conduct a ${depth.toUpperCase()}-level research and strategy plan for: "${keyword}"
+TASK: Conduct a ${depth.toUpperCase()}-level educational research and strategy plan for: "${keyword}"
 
 STEP 0: VAGUE CHECK
 If the keyword is too broad (e.g., "AI", "Marketing", "Money") and impossible to create a precise strategy for, you MUST return ONLY this JSON:

@@ -12,9 +12,10 @@ export async function GET(request) {
 
   const platformsParam = searchParams.get("platforms");
   const platforms = platformsParam ? platformsParam.split(",") : ["youtube", "reddit", "x", "news", "instagram"];
+  const language = searchParams.get("language") || "en";
 
   const tasks = [];
-  if (platforms.includes("youtube")) tasks.push(searchYouTube(query, process.env.YOUTUBE_API_KEY).catch(() => []));
+  if (platforms.includes("youtube")) tasks.push(searchYouTube(query, process.env.YOUTUBE_API_KEY, 12, language).catch(() => []));
   if (platforms.includes("reddit")) tasks.push(searchReddit(query).catch(() => []));
   if (platforms.includes("x")) tasks.push(searchX(query).catch(() => []));
   if (platforms.includes("instagram")) tasks.push(searchInstagram(query).catch(() => []));

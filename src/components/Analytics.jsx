@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { BarChart, Search, CheckCircle2, Clapperboard, Rocket } from "lucide-react";
 
 export default function Analytics() {
   const [stats, setStats] = useState(null);
@@ -25,14 +26,14 @@ export default function Analytics() {
 
   return (
     <div className="p-5 max-w-5xl mx-auto space-y-5">
-      <h3 className="text-sm font-bold text-txt flex items-center gap-2">📊 Analytics</h3>
+      <h3 className="text-sm font-bold text-txt flex items-center gap-2"><BarChart className="w-4 h-4 text-primary" /> Analytics</h3>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <AnalyticCard icon="🔬" label="Total Research" value={stats.totalResearch} />
-        <AnalyticCard icon="✅" label="Approved" value={stats.approved} />
-        <AnalyticCard icon="🎬" label="Content Created" value={stats.totalContent} />
-        <AnalyticCard icon="🚀" label="Published" value={stats.published} />
+        <AnalyticCard icon={<Search className="w-5 h-5 text-accent-hover" />} label="Total Research" value={stats.totalResearch} />
+        <AnalyticCard icon={<CheckCircle2 className="w-5 h-5 text-success" />} label="Approved" value={stats.approved} />
+        <AnalyticCard icon={<Clapperboard className="w-5 h-5 text-warning" />} label="Content Created" value={stats.totalContent} />
+        <AnalyticCard icon={<Rocket className="w-5 h-5 text-primary" />} label="Published" value={stats.published} />
       </div>
 
       {/* Format Distribution */}
@@ -68,7 +69,9 @@ export default function Analytics() {
               .slice(0, 10)
               .map((item, i) => (
                 <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-bg-elevated">
-                  <span className="text-sm">{item.type === "research" ? "🔬" : "🎬"}</span>
+                  <div className="w-8 h-8 rounded bg-bg-card border border-border flex items-center justify-center shrink-0">
+                    {item.type === "research" ? <Search className="w-4 h-4 text-accent-hover" /> : <Clapperboard className="w-4 h-4 text-warning" />}
+                  </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-txt truncate">{item.keyword || item.metadata?.keyword || "Untitled"}</p>
                     <p className="text-[10px] text-txt-muted">{item.type} • {new Date(item.savedAt).toLocaleDateString()}</p>
@@ -87,9 +90,9 @@ export default function Analytics() {
 
 function AnalyticCard({ icon, label, value }) {
   return (
-    <div className="p-4 rounded-xl bg-bg-card border border-border">
-      <span className="text-2xl">{icon}</span>
-      <p className="text-2xl font-bold text-txt mt-1">{value}</p>
+    <div className="p-4 rounded-xl bg-bg-card border border-border flex flex-col items-center text-center">
+      <div className="mb-2 w-10 h-10 rounded-full bg-bg-elevated flex items-center justify-center">{icon}</div>
+      <p className="text-2xl font-bold text-txt">{value}</p>
       <p className="text-[11px] text-txt-muted">{label}</p>
     </div>
   );
