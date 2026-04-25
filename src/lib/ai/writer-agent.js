@@ -77,16 +77,31 @@ export async function generateScript({
   const spec = FORMAT_SPECS[format] || FORMAT_SPECS.youtube_long;
   const styleDesc = STYLES[style] || STYLES.professional;
 
-  const researchContext = research
-    ? `
-APPROVED RESEARCH FINDINGS:
-- Best Angle: ${research.recommendedStrategy?.bestAngle || "N/A"}
-- Content Gaps: ${research.contentGaps?.map((g) => g.gap).join("; ") || "N/A"}
-- Audience Pain Points: ${research.audienceSentiment?.painPoints?.join(", ") || "N/A"}
-- Key Competitors: ${research.competitors?.map((c) => c.name).join(", ") || "N/A"}
-${approvedAngles.length ? `- APPROVED ANGLES: ${approvedAngles.map((a) => a.angle).join("; ")}` : ""}
-`
-    : "";
+  let researchContext = "";
+  if (research) {
+    const parts = ["RESEARCH INTELLIGENCE (use this to make the script highly specific and data-driven):"];
+
+    // New format from R&D Lab pipeline
+    if (research.summary) parts.push(`- Executive Summary: ${research.summary}`);
+    if (research.angles?.length) parts.push(`- Suggested Angles: ${research.angles.map(a => typeof a === "string" ? a : a.angle || a.title || JSON.stringify(a)).join("; ")}`);
+    if (research.hooks?.length) parts.push(`- Hook Ideas: ${research.hooks.map(h => typeof h === "string" ? h : h.hook || h.text || JSON.stringify(h)).join("; ")}`);
+    if (research.topKeywords?.length) parts.push(`- Trending Keywords: ${research.topKeywords.join(", ")}`);
+    if (research.platformInsights) {
+      const pi = research.platformInsights;
+      if (pi.youtubeCount) parts.push(`- YouTube: ${pi.youtubeCount} videos found. Top: "${pi.topVideoTitle}" (${pi.topVideoViews?.toLocaleString()} views)`);
+      if (pi.redditCount) parts.push(`- Reddit: ${pi.redditCount} discussions found`);
+      if (pi.newsCount) parts.push(`- News: ${pi.newsCount} recent articles`);
+    }
+
+    // Legacy format compatibility
+    if (research.recommendedStrategy?.bestAngle) parts.push(`- Best Angle: ${research.recommendedStrategy.bestAngle}`);
+    if (research.contentGaps?.length) parts.push(`- Content Gaps: ${research.contentGaps.map((g) => g.gap).join("; ")}`);
+    if (research.audienceSentiment?.painPoints?.length) parts.push(`- Pain Points: ${research.audienceSentiment.painPoints.join(", ")}`);
+    if (research.competitors?.length) parts.push(`- Competitors: ${research.competitors.map((c) => c.name).join(", ")}`);
+    if (approvedAngles.length) parts.push(`- APPROVED ANGLES: ${approvedAngles.map((a) => a.angle).join("; ")}`);
+
+    researchContext = parts.join("\n");
+  }
 
   const brandVoiceContext = brandVoice 
     ? `

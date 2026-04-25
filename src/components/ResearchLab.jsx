@@ -24,8 +24,12 @@ const LOCATIONS = [
   { code: "GLOBAL", label: "Global", icon: Globe },
 ];
 
-export default function ResearchLab() {
-  const [keyword, setKeyword] = useState("");
+export default function ResearchLab({ onResearchComplete, onGoToStudio, initialKeyword }) {
+  const [keyword, setKeyword] = useState(initialKeyword || "");
+
+  useEffect(() => {
+    if (initialKeyword) setKeyword(initialKeyword);
+  }, [initialKeyword]);
   const [platforms, setPlatforms] = useState(["youtube", "instagram", "x", "reddit", "news"]);
   const [depth, setDepth] = useState("deep");
   const [location, setLocation] = useState("IN");
@@ -65,6 +69,17 @@ export default function ResearchLab() {
       setResult(data.research);
       setPlatformData(data.platformData);
       setTopKeywords(data.topKeywords || []);
+
+      // Emit context to parent so ContentStudio can use it
+      onResearchComplete?.({
+        keyword,
+        research: data.research,
+        platformData: data.platformData,
+        topKeywords: data.topKeywords || [],
+        location,
+        depth,
+        researchedAt: new Date().toISOString(),
+      });
 
       // Auto-save to localStorage
       try {
@@ -171,7 +186,27 @@ export default function ResearchLab() {
       )}
 
       {/* Results */}
-      {result && <ResearchResults research={result} platformData={platformData} topKeywords={topKeywords} />}
+      {result && (
+        <>
+          <ResearchResults research={result} platformData={platformData} topKeywords={topKeywords} />
+
+          {/* CTA: Go to Content Studio */}
+          {onGoToStudio && (
+            <div className="rounded-xl bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 p-5 flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-bold text-txt">Research complete — ready to create?</p>
+                <p className="text-xs text-txt-muted mt-0.5">Topic, trends & platform data will be auto-loaded into Content Studio</p>
+              </div>
+              <button
+                onClick={() => onGoToStudio({ keyword, research: result, platformData, topKeywords, location, depth, researchedAt: new Date().toISOString() })}
+                className="px-5 py-2.5 rounded-xl text-sm font-bold grad-primary text-white cursor-pointer shadow-lg shadow-primary/20 hover:opacity-90 transition-all flex items-center gap-2 shrink-0"
+              >
+                <Sparkles className="w-4 h-4" /> Create Script
+              </button>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

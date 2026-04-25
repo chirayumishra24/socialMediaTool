@@ -17,7 +17,7 @@ const SORT_OPTIONS = [
   { id: "recent", label: "Most Recent" },
 ];
 
-export default function DiscoverHub() {
+export default function DiscoverHub({ onStartResearch }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -155,10 +155,16 @@ export default function DiscoverHub() {
                     <div className="mt-3 pt-3 border-t border-border space-y-2 animate-fade-in">
                       {item.description && <p className="text-xs text-txt-secondary">{item.description}</p>}
                       {item.tags?.length > 0 && <div className="flex flex-wrap gap-1">{item.tags.map((t, j) => <span key={j} className="px-2 py-0.5 rounded-full text-[9px] bg-bg-elevated border border-border text-txt-muted">{t}</span>)}</div>}
-                      <a href={item.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold grad-primary text-white hover:opacity-90 transition-opacity">
-                        Open on {pm.label} <ExternalLink className="w-3 h-3" />
-                      </a>
+                      <div className="flex gap-2">
+                        <a href={item.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold grad-primary text-white hover:opacity-90 transition-opacity">
+                          Open on {pm.label} <ExternalLink className="w-3 h-3" />
+                        </a>
+                        <button onClick={(e) => { e.stopPropagation(); onStartResearch?.(item.title); }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-primary/10 text-primary-hover border border-primary/20 hover:bg-primary/20 transition-all cursor-pointer">
+                          <Search className="w-3 h-3" /> Research this Topic
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>

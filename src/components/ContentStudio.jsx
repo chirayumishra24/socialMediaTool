@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { MonitorPlay, Smartphone, Clapperboard, Layers, Hash, Briefcase, BookOpen, PenTool, Sparkles, Bot, Tag, Edit3, Loader2, Copy, FileText, Globe, Flame, Clock, Wand2 } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import { MonitorPlay, Smartphone, Clapperboard, Layers, Hash, Briefcase, BookOpen, PenTool, Sparkles, Bot, Tag, Edit3, Loader2, Copy, FileText, Globe, Flame, Clock, Wand2, ArrowLeft, Beaker, X, ChevronRight } from "lucide-react";
 
 const FORMATS = [
   { id: "youtube_long", label: "YT Long", icon: MonitorPlay, desc: "8-20min" },
@@ -16,7 +16,7 @@ const FORMATS = [
 const STYLES = ["professional", "casual", "hinglish", "story", "data", "provocative", "educational"];
 const LOCS = [{ c: "IN", l: "India", icon: Globe }, { c: "US", l: "US", icon: Globe }, { c: "GB", l: "UK", icon: Globe }, { c: "GLOBAL", l: "Global", icon: Globe }];
 
-export default function ContentStudio() {
+export default function ContentStudio({ researchContext, onClearContext }) {
   const [keyword, setKeyword] = useState("");
   const [audience, setAudience] = useState("");
   const [format, setFormat] = useState("youtube_long");
@@ -26,6 +26,16 @@ export default function ContentStudio() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [tab, setTab] = useState("script");
+
+  // Auto-populate from research context
+  useEffect(() => {
+    if (researchContext?.keyword) {
+      setKeyword(researchContext.keyword);
+      if (researchContext.location) setLocation(researchContext.location);
+    }
+  }, [researchContext]);
+
+  const hasContext = !!researchContext?.keyword;
 
   const handleGenerate = useCallback(async () => {
     if (!keyword.trim()) return;
@@ -40,15 +50,37 @@ export default function ContentStudio() {
         avoidWords: s.brandAvoidWords,
       };
 
+      // Build research summary to feed to the writer agent
+      let researchSummary = null;
+      if (researchContext?.research) {
+        const r = researchContext.research;
+        researchSummary = {
+          summary: r.executiveSummary || r.summary || "",
+          angles: r.suggestedAngles || r.angles || [],
+          hooks: r.suggestedHooks || r.hooks || [],
+          topKeywords: (researchContext.topKeywords || []).slice(0, 10).map(k => k.keyword || k),
+          platformInsights: {
+            youtubeCount: researchContext.platformData?.youtube?.length || 0,
+            redditCount: researchContext.platformData?.reddit?.length || 0,
+            newsCount: researchContext.platformData?.news?.length || 0,
+            topVideoTitle: researchContext.platformData?.youtube?.[0]?.title || "",
+            topVideoViews: researchContext.platformData?.youtube?.[0]?.metrics?.views || 0,
+          },
+        };
+      }
+
       const res = await fetch("/api/generate", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ keyword, format, style, audience, location, brandVoice }),
+        body: JSON.stringify({
+          keyword, format, style, audience, location, brandVoice,
+          research: researchSummary,
+        }),
       });
       if (!res.ok) { const e = await res.json(); throw new Error(e.error || "Failed"); }
       setResult(await res.json());
     } catch (e) { setError(e.message); }
     finally { setLoading(false); }
-  }, [keyword, format, style, audience, location]);
+  }, [keyword, format, style, audience, location, researchContext]);
 
   return (
     <div className="p-5 max-w-6xl mx-auto">
@@ -56,20 +88,61 @@ export default function ContentStudio() {
         {/* Controls */}
         <div className="lg:col-span-4 space-y-4">
           <h3 className="text-sm font-bold text-txt flex items-center gap-2"><Clapperboard className="w-4 h-4 text-primary" /> Content Studio</h3>
+
+          {/* Research Context Banner */}
+          {hasContext && (
+            <div className="rounded-xl bg-gradient-to-br from-primary/8 to-accent/8 border border-primary/20 p-4 space-y-2.5 animate-fade-in">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Beaker className="w-4 h-4 text-primary" />
+                  <span className="text-[11px] font-bold text-primary-hover">From R&D Lab</span>
+                </div>
+                <button onClick={() => { onClearContext?.(); setKeyword(""); }}
+                  className="p-1 rounded-md hover:bg-bg-elevated text-txt-muted hover:text-txt cursor-pointer transition-all">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <p className="text-sm font-bold text-txt leading-snug">{researchContext.keyword}</p>
+              {researchContext.research?.executiveSummary && (
+                <p className="text-[11px] text-txt-secondary leading-relaxed line-clamp-3">
+                  {researchContext.research.executiveSummary.substring(0, 180)}...
+                </p>
+              )}
+              <div className="flex flex-wrap gap-1.5">
+                {researchContext.topKeywords?.slice(0, 5).map((kw, i) => (
+                  <span key={i} className="px-2 py-0.5 rounded-full text-[9px] font-medium bg-primary/10 text-primary-hover border border-primary/15">
+                    {kw.keyword || kw}
+                  </span>
+                ))}
+              </div>
+              {researchContext.platformData && (
+                <div className="flex gap-3 text-[10px] text-txt-muted pt-1 border-t border-border/50">
+                  {researchContext.platformData.youtube?.length > 0 && <span>{researchContext.platformData.youtube.length} videos</span>}
+                  {researchContext.platformData.reddit?.length > 0 && <span>{researchContext.platformData.reddit.length} discussions</span>}
+                  {researchContext.platformData.news?.length > 0 && <span>{researchContext.platformData.news.length} articles</span>}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="rounded-xl bg-bg-card border border-border p-4 space-y-4">
-            <Field label="Topic *">
-              <input type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="What's the content about?"
-                className="w-full px-3 py-2.5 rounded-lg bg-bg-elevated border border-border text-sm text-txt placeholder:text-txt-muted" />
+            {/* Topic field — auto-filled or manual */}
+            <Field label={hasContext ? "Topic (from R&D Lab)" : "Topic *"}>
+              <input type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)}
+                placeholder={hasContext ? "Loaded from research..." : "What's the content about?"}
+                className={`w-full px-3 py-2.5 rounded-lg border text-sm text-txt placeholder:text-txt-muted ${hasContext ? "bg-primary/5 border-primary/20" : "bg-bg-elevated border-border"}`} />
             </Field>
             <Field label="Audience">
               <input type="text" value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="e.g. Parents, Students, Teachers"
                 className="w-full px-3 py-2.5 rounded-lg bg-bg-elevated border border-border text-sm text-txt placeholder:text-txt-muted" />
             </Field>
-            <Field label="Format">
+
+            {/* Format — primary selection */}
+            <Field label="Select Format *">
               <div className="grid grid-cols-2 gap-1.5">
                 {FORMATS.map((f) => (
                   <button key={f.id} onClick={() => setFormat(f.id)}
-                    className={`p-2 rounded-lg text-left border transition-all cursor-pointer ${format === f.id ? "bg-primary-muted border-primary/30" : "bg-bg-elevated border-border hover:border-border"}`}>
+                    className={`p-2.5 rounded-lg text-left border transition-all cursor-pointer ${format === f.id ? "bg-primary-muted border-primary/30 ring-1 ring-primary/20" : "bg-bg-elevated border-border hover:border-border"}`}>
                     <f.icon className={`w-4 h-4 mb-1.5 ${format === f.id ? "text-primary-hover" : "text-txt-muted"}`} />
                     <p className="text-[10px] font-bold text-txt mt-0.5">{f.label}</p>
                     <p className="text-[9px] text-txt-muted">{f.desc}</p>
@@ -77,6 +150,7 @@ export default function ContentStudio() {
                 ))}
               </div>
             </Field>
+
             <Field label="Style">
               <div className="flex flex-wrap gap-1.5">
                 {STYLES.map((s) => (
@@ -97,10 +171,17 @@ export default function ContentStudio() {
                 ))}
               </div>
             </Field>
+
+            {/* Generate Button */}
             <button onClick={handleGenerate} disabled={loading || !keyword.trim()}
               className={`w-full py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${loading ? "bg-primary/20 text-primary-hover cursor-wait" : keyword.trim() ? "grad-primary text-white cursor-pointer shadow-lg shadow-primary/20 hover:opacity-90" : "bg-bg-elevated text-txt-muted cursor-not-allowed"}`}>
-              {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</> : <><Sparkles className="w-4 h-4" /> Generate Content</>}
+              {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</> : <><Sparkles className="w-4 h-4" /> Generate Script</>}
             </button>
+            {hasContext && !loading && !result && (
+              <p className="text-[10px] text-txt-muted text-center flex items-center justify-center gap-1">
+                <Beaker className="w-3 h-3" /> Research data will be used to generate a smarter script
+              </p>
+            )}
             {error && <div className="p-2 rounded-lg bg-danger/10 border border-danger/20 text-xs text-danger">{error}</div>}
           </div>
         </div>
@@ -110,8 +191,18 @@ export default function ContentStudio() {
           {!result && !loading && (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary mx-auto mb-4 animate-float"><Wand2 className="w-8 h-8" /></div>
-              <h3 className="text-lg font-bold text-txt mb-1">Ready to Create</h3>
-              <p className="text-sm text-txt-muted max-w-md">Set topic, format, and style — let the AI pipeline generate platform-optimized content.</p>
+              <h3 className="text-lg font-bold text-txt mb-1">{hasContext ? "Research Loaded" : "Ready to Create"}</h3>
+              <p className="text-sm text-txt-muted max-w-md">
+                {hasContext
+                  ? <>Topic <span className="font-bold text-txt">&ldquo;{keyword}&rdquo;</span> loaded from R&D Lab. Pick a format and hit generate.</>
+                  : "Set topic, format, and style — let the AI pipeline generate platform-optimized content."
+                }
+              </p>
+              {hasContext && (
+                <div className="mt-4 flex items-center gap-2 text-xs text-primary-hover">
+                  <ChevronRight className="w-3.5 h-3.5" /> Select format → Generate
+                </div>
+              )}
             </div>
           )}
 
@@ -120,7 +211,7 @@ export default function ContentStudio() {
               <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary-hover mx-auto mb-4 animate-float"><Bot className="w-8 h-8" /></div>
               <h3 className="text-lg font-bold text-txt mb-2">AI Pipeline Running</h3>
               <div className="space-y-1.5 text-xs text-txt-secondary">
-                <p className="flex items-center justify-center gap-2"><PenTool className="w-3.5 h-3.5 text-primary" /> Writer Agent drafting...</p>
+                <p className="flex items-center justify-center gap-2"><PenTool className="w-3.5 h-3.5 text-primary" /> Writer Agent drafting{hasContext ? " (using research context)" : ""}...</p>
                 <p className="flex items-center justify-center gap-2 text-txt-muted"><Edit3 className="w-3.5 h-3.5 text-orange-400" /> Editor Agent polishing...</p>
                 <p className="flex items-center justify-center gap-2 text-txt-muted"><Tag className="w-3.5 h-3.5 text-success" /> SEO Agent tagging...</p>
               </div>

@@ -14,6 +14,18 @@ import ContentCalendar from "@/components/ContentCalendar";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [researchContext, setResearchContext] = useState(null);
+  const [prefilledResearchKeyword, setPrefilledResearchKeyword] = useState("");
+
+  const handleNavigateToStudio = (ctx) => {
+    setResearchContext(ctx);
+    setActiveTab("studio");
+  };
+
+  const handleStartResearch = (keyword) => {
+    setPrefilledResearchKeyword(keyword);
+    setActiveTab("research");
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-bg">
@@ -27,11 +39,11 @@ export default function App() {
 
         <main className="flex-1 overflow-y-auto relative custom-scroll">
           {activeTab === "dashboard" && <Dashboard onNavigate={setActiveTab} />}
-          {activeTab === "research" && <ResearchLab />}
+          {activeTab === "research" && <ResearchLab initialKeyword={prefilledResearchKeyword} onResearchComplete={setResearchContext} onGoToStudio={handleNavigateToStudio} />}
           {activeTab === "approval" && <ApprovalBoard />}
           {activeTab === "calendar" && <ContentCalendar />}
-          {activeTab === "studio" && <ContentStudio />}
-          {activeTab === "discover" && <DiscoverHub />}
+          {activeTab === "studio" && <ContentStudio researchContext={researchContext} onClearContext={() => setResearchContext(null)} />}
+          {activeTab === "discover" && <DiscoverHub onStartResearch={handleStartResearch} />}
           {activeTab === "analytics" && <Analytics />}
           {activeTab === "settings" && <Settings />}
         </main>
