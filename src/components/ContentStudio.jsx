@@ -303,9 +303,20 @@ export default function ContentStudio({ researchContext, onClearContext }) {
                       </div>
                     </div>
                     <div className="space-y-6">
-                      <h4 className="text-[11px] font-black text-txt uppercase tracking-[0.2em] border-b border-border pb-3 flex items-center gap-2">
-                        <Hash className="w-4 h-4 text-accent" /> Intelligence Tags
-                      </h4>
+                      <div className="flex items-center justify-between border-b border-border pb-3">
+                        <h4 className="text-[11px] font-black text-txt uppercase tracking-[0.2em] flex items-center gap-2">
+                          <Hash className="w-4 h-4 text-accent" /> Intelligence Tags
+                        </h4>
+                        <button 
+                          onClick={() => {
+                            const tags = [...(result.seo?.tags?.primary || []), ...(result.seo?.tags?.secondary || [])].map(t => t.tag || t).join(' ');
+                            navigator.clipboard.writeText(tags);
+                          }}
+                          className="text-[9px] font-black text-primary uppercase tracking-widest hover:underline cursor-pointer"
+                        >
+                          Copy All Tags
+                        </button>
+                      </div>
                       <div className="flex flex-wrap gap-2.5">
                         {result.seo?.tags?.primary?.map((tag, i) => (
                           <span key={i} className="px-4 py-2 rounded-xl text-xs font-bold bg-primary/5 text-primary-hover border border-primary/20 flex items-center gap-2 hover:bg-primary/10 transition-colors shadow-sm">{tag.tag || tag} <Flame className="w-3.5 h-3.5 text-orange-500" /></span>

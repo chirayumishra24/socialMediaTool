@@ -68,7 +68,11 @@ export default function MorningBriefing({ onStartResearch, onGoToStudio }) {
           </div>
           <div>
             <h4 className="text-[15px] font-black text-txt uppercase tracking-wider">Director's Morning Briefing</h4>
-            <p className="text-[10px] font-bold text-txt-muted uppercase tracking-[0.2em] mt-1">Autopilot Intelligence Scan</p>
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-[10px] font-bold text-txt-muted uppercase tracking-[0.2em]">Autopilot Intelligence Scan</p>
+              <span className="text-[10px] text-primary/40">•</span>
+              <p className="text-[9px] font-black text-primary/60 uppercase tracking-widest">Last Scanned: {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2.5 px-4 py-2 rounded-full bg-accent/5 border border-accent/20 shadow-sm self-start sm:self-auto">
