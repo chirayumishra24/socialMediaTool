@@ -1,40 +1,38 @@
 /**
- * SkilizeeAI — Research Agent
- * Deep topic R&D: market landscape, audience sentiment, content gaps,
- * trending sub-angles, competitor audit, newsjacking opportunities.
+ * SkilizeeAI — Research Agent (2026 Edition)
+ * Deep topic R&D focused on CURRENT 2026 trends, news, and signals.
  */
 
 import { generateJSON } from "./ai-client";
 
-/**
- * Run full R&D pipeline for a keyword.
- * @param {string} keyword
- * @param {object} context — { location, language, platformData, depth }
- */
 export async function runResearch(keyword, { location = "IN", language = "en", platformData = {}, depth = "deep" } = {}) {
   const platformSummary = formatPlatformData(platformData);
+  const today = new Date().toISOString().split("T")[0];
 
-  const prompt = `You are the Lead Educational Strategy Director at Skilizee Edu, an elite school intelligence and curriculum planning platform.
-Your goal is to transform a simple keyword into a high-impact, INFORMATIVE, and data-backed educational content strategy. This is for a School Director looking to communicate with parents, students, and educators.
+  const prompt = `You are an elite Content Intelligence Analyst operating in April 2026.
 
-TASK: Conduct a ${depth.toUpperCase()}-level educational research and strategy plan for: "${keyword}"
+CRITICAL: Today's date is ${today}. ALL analysis must reflect the CURRENT 2026 landscape.
+- Reference only 2025-2026 data, trends, algorithm changes, and cultural shifts.
+- Do NOT reference outdated 2023-2024 trends as if they are current.
+- Mention specific recent events, policy changes, or viral moments from early-to-mid 2026.
+
+TASK: Conduct a ${depth.toUpperCase()}-level research analysis for: "${keyword}"
 
 STEP 0: VAGUE CHECK
-If the keyword is too broad (e.g., "AI", "Marketing", "Money") and impossible to create a precise strategy for, you MUST return ONLY this JSON:
-{ "isVague": true, "message": "The topic is too broad for a precise strategy.", "suggestions": ["suggest a more specific version 1", "suggest a more specific version 2"] }
+If the keyword is too broad (e.g., "AI", "Marketing"), return ONLY:
+{ "isVague": true, "message": "Too broad for precise strategy.", "suggestions": ["specific version 1", "specific version 2", "specific version 3"] }
 
-STEP 1: ANALYSIS & STRATEGY
-If not vague, analyze the data and provide a comprehensive strategy. Prioritize INFORMATIVE and educational content over shallow or rubbish content.
+STEP 1: FULL ANALYSIS (if not vague)
 
 CONTEXT:
-- Target Location: ${location}
-- Content Language: ${language}
-- Date: ${new Date().toISOString().split("T")[0]}
+- Location Focus: ${location}
+- Language: ${language}
+- Analysis Date: ${today}
 
-REAL-TIME PLATFORM DATA:
-${platformSummary || "No platform data provided — use your deep training data for the latest 2024-2025 trends."}
+REAL-TIME PLATFORM DATA (crawled just now):
+${platformSummary || "No live crawl data — use your knowledge of current 2025-2026 trends and developments."}
 
-Analyze and return a JSON object with this EXACT structure:
+Return this JSON structure:
 {
   "keyword": "${keyword}",
   "isVague": false,
@@ -43,49 +41,49 @@ Analyze and return a JSON object with this EXACT structure:
     "saturationScore": 0-100,
     "totalEstimatedContent": "e.g. 50K+ videos",
     "growthTrend": "rising|stable|declining",
-    "summary": "2-3 sentence market overview focusing on INFORMATIVE value"
+    "summary": "2-3 sentences about the CURRENT 2026 landscape for this topic. Reference specific recent developments."
   },
   "audienceSentiment": {
     "overall": "positive|negative|mixed|neutral",
     "score": 0-100,
-    "painPoints": ["list of 3-5 deep audience pain points"],
-    "desires": ["list of 3-5 audience desires"],
-    "demographics": "primary audience description"
+    "painPoints": ["5 specific, actionable pain points people have RIGHT NOW in 2026"],
+    "desires": ["5 specific desires/aspirations"],
+    "demographics": "primary audience description with 2026 context"
   },
   "contentGaps": [
     {
-      "gap": "description of content gap",
-      "opportunity": "why this is a golden opportunity for informative content",
+      "gap": "specific underserved angle",
+      "opportunity": "why this is a golden opportunity in 2026",
       "difficulty": "easy|medium|hard",
       "estimatedDemand": "high|medium|low"
     }
   ],
   "trendingAngles": [
     {
-      "angle": "specific informative sub-angle title",
-      "description": "why this angle is trending and its value",
+      "angle": "specific 2026-relevant angle title",
+      "description": "why this is trending NOW",
       "platforms": ["youtube", "instagram", "x"],
       "viralPotential": 0-100,
       "suggestedFormat": "youtube_long|youtube_short|reel|carousel|thread|blog",
-      "hookIdea": "educational/informative hook"
+      "hookIdea": "compelling hook idea"
     }
   ],
   "strategyBlueprint": {
-    "concept": "The high-level informative content pillar",
+    "concept": "The high-level content pillar rooted in 2026 reality",
     "executionPhases": ["Phase 1: ...", "Phase 2: ...", "Phase 3: ..."],
-    "modernApproach": "Why this works in the current 2025 landscape",
+    "modernApproach": "Why this works specifically in the current 2026 algorithm + cultural landscape",
     "recommendedTools": ["Tool 1", "Tool 2"]
   },
   "recommendedStrategy": {
     "bestPlatform": "youtube|instagram|x|linkedin|blog",
     "bestFormat": "format name",
-    "bestAngle": "the single best informative angle to pursue",
+    "bestAngle": "the single strongest angle for 2026",
     "estimatedViralPotential": 0-100,
-    "keyMessage": "core informative message in 1 sentence"
+    "keyMessage": "core message in 1 sentence"
   }
 }
 
-Return ONLY valid JSON. Be specific, data-driven, and prioritize depth and informative value.`;
+Return ONLY valid JSON. Be hyper-specific. Reference real 2026 developments.`;
 
   return generateJSON(prompt, depth === "quick" ? "flash" : "pro");
 }
@@ -93,34 +91,34 @@ Return ONLY valid JSON. Be specific, data-driven, and prioritize depth and infor
 function formatPlatformData(data) {
   const parts = [];
   if (data.youtube?.length) {
-    parts.push("YOUTUBE TRENDING:\n" + data.youtube.slice(0, 8).map((v) =>
-      `- "${v.title}" (${formatNum(v.metrics?.views)} views). Tags: ${v.tags?.join(", ")}`
+    parts.push("YOUTUBE (LIVE CRAWL):\n" + data.youtube.slice(0, 8).map((v) =>
+      `- "${v.title}" by ${v.author || "unknown"} (${fmtNum(v.metrics?.views)} views, ${fmtNum(v.metrics?.likes)} likes). Published: ${v.publishedAt || "recent"}`
     ).join("\n"));
   }
   if (data.instagram?.length) {
-    parts.push("INSTAGRAM STRATEGY:\n" + data.instagram.slice(0, 5).map((i) =>
-      `- ${i.title}: ${i.tip}`
+    parts.push("INSTAGRAM (LIVE CRAWL):\n" + data.instagram.slice(0, 5).map((i) =>
+      `- "${i.title || i.description}" (${fmtNum(i.metrics?.likes)} likes)`
     ).join("\n"));
   }
   if (data.reddit?.length) {
-    parts.push("REDDIT HOT:\n" + data.reddit.slice(0, 5).map((r) =>
-      `- "${r.title}" (${formatNum(r.metrics?.likes)} upvotes)`
+    parts.push("REDDIT (LIVE CRAWL):\n" + data.reddit.slice(0, 5).map((r) =>
+      `- "${r.title}" (${fmtNum(r.metrics?.likes)} upvotes)`
     ).join("\n"));
   }
   if (data.x?.length) {
-    parts.push("X/TWITTER:\n" + data.x.slice(0, 5).map((t) =>
-      `- "${t.title}" (Engagement: ${t.metrics?.likes} likes)`
+    parts.push("X/TWITTER (LIVE CRAWL):\n" + data.x.slice(0, 5).map((t) =>
+      `- "${t.title}" (${t.metrics?.likes} likes, ${t.metrics?.retweets} RTs)`
     ).join("\n"));
   }
   if (data.news?.length) {
-    parts.push("NEWS:\n" + data.news.slice(0, 5).map((n) =>
-      `- "${n.title}"`
+    parts.push("NEWS (LIVE CRAWL):\n" + data.news.slice(0, 5).map((n) =>
+      `- "${n.title}" — ${n.author || "unknown"} (${n.publishedAt || "recent"})`
     ).join("\n"));
   }
   return parts.join("\n\n");
 }
 
-function formatNum(n) {
+function fmtNum(n) {
   if (!n) return "0";
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;

@@ -1,6 +1,6 @@
 /**
- * SkilizeeAI — Writer Agent
- * Multi-format, platform-specific content generation.
+ * SkilizeeAI — Writer Agent (2026 Edition)
+ * Generates dramatically better, more human, platform-optimized scripts.
  */
 
 import { generate } from "./ai-client";
@@ -9,180 +9,145 @@ const FORMAT_SPECS = {
   youtube_long: {
     name: "YouTube Long-form",
     duration: "8-20 minutes",
-    structure: "Hook (0-30s) → Context (30s-2m) → Main Content with 3-5 chapters → CTA → Outro",
-    notes: "Include B-roll suggestions, chapter timestamps, pattern interrupts every 2-3 min, retention loops",
+    structure: "Cold Open Hook (0-15s) → Context Bridge (15s-1m) → 3-5 Content Chapters with timestamps → Emotional Climax → CTA → Outro",
+    notes: "Include B-roll/visual cues in [brackets], chapter timestamps, pattern interrupts every 90s, open loops between sections, curiosity gaps before each chapter transition. Write camera directions.",
   },
   youtube_short: {
     name: "YouTube Short",
-    duration: "15-60 seconds",
-    structure: "Hook (0-3s) → One key insight → Twist/payoff → CTA",
-    notes: "Pattern-interrupt in first 2s, text overlay cues, vertical format",
+    duration: "30-60 seconds",
+    structure: "Pattern-interrupt hook (0-2s) → One powerful insight with proof → Unexpected twist → Rewatch trigger + CTA",
+    notes: "First frame must stop the scroll. Use text overlay cues [TEXT: ...]. End with a loop or cliffhanger that encourages rewatch. Vertical format.",
   },
   instagram_reel: {
     name: "Instagram Reel",
-    duration: "15-90 seconds",
-    structure: "Visual hook (0-2s) → Problem → Solution → CTA overlay",
-    notes: "Text-overlay driven, trending audio suggestion, save-worthy",
+    duration: "30-90 seconds",
+    structure: "Visual pattern-interrupt (0-1s) → Problem agitation → Solution reveal → Save-worthy takeaway → CTA overlay",
+    notes: "Text overlays drive retention. Suggest trending audio. Make it save-worthy with a surprising stat or framework. Include [VISUAL: ...] cues.",
   },
   instagram_carousel: {
     name: "Instagram Carousel",
     duration: "8-12 slides",
-    structure: "Hook slide → Problem slides → Solution slides → Summary → CTA slide",
-    notes: "Each slide max 30 words, swipe psychology, save-worthy data/tips",
+    structure: "Slide 1: Bold hook question/claim → Slides 2-3: Problem → Slides 4-8: Framework/Solution → Slide 9: Summary → Slide 10: CTA",
+    notes: "Max 25 words per slide. Each slide must create a reason to swipe. Use data, frameworks, or contrarian takes. Make it screenshot-worthy.",
   },
   x_thread: {
     name: "X/Twitter Thread",
-    duration: "5-15 tweets",
-    structure: "Banger opener → Numbered insights → Data/proof → CTA + retweet ask",
-    notes: "Each tweet max 280 chars, engagement hooks between tweets, contrarian angle",
+    duration: "8-15 tweets",
+    structure: "Tweet 1: Banger claim or story hook → Tweets 2-12: Numbered insights with proof → Tweet 13: Surprising conclusion → Tweet 14: CTA + repost ask",
+    notes: "Each tweet max 280 chars. Tweet 1 is EVERYTHING — it must stop the scroll. Use numbers, bold claims, or 'I studied X and here's what I found'. Mix data tweets with story tweets.",
   },
   linkedin_post: {
     name: "LinkedIn Post",
-    duration: "800-1500 characters",
-    structure: "Hook line → Story/insight → Key takeaways → Soft CTA",
-    notes: "Professional tone, personal experience angle, line breaks for readability",
+    duration: "1000-1800 characters",
+    structure: "Hook line (controversial or surprising) → White space → Personal story/insight → 3-5 key takeaways → Soft CTA with question",
+    notes: "First line must stop the feed. Use lots of line breaks. Mix personal experience with data. End with an engaging question. No hashtag spam — max 3-5 relevant ones.",
   },
   blog_article: {
     name: "Blog Article",
-    duration: "1000-3000 words",
-    structure: "H1 → Intro hook → H2 sections (3-5) → Conclusion → CTA",
-    notes: "SEO-optimized headings, internal linking suggestions, FAQ section",
+    duration: "1500-3000 words",
+    structure: "H1 with keyword → Intro hook with stat/story → H2 sections (4-6) each with actionable content → FAQ section → Conclusion with CTA",
+    notes: "SEO-optimized headings (include target keyword naturally). Each H2 should answer a specific question. Include internal linking suggestions, data citations, and a structured FAQ for featured snippets.",
   },
 };
 
 const STYLES = {
-  professional: "Professional, data-backed, authoritative tone",
-  casual: "Casual, conversational, relatable Gen-Z friendly tone",
-  hinglish: "Hinglish (Hindi+English mix), relatable Indian internet culture",
-  story: "Story-driven, narrative arc, emotional journey",
-  data: "Data-driven, statistics-heavy, research-backed",
-  provocative: "Contrarian, bold claims, debate-sparking, pattern-interrupting",
-  educational: "Teacher-like, step-by-step, clear explanations",
+  professional: "Professional, authoritative, data-backed. Like a McKinsey analyst presenting to a boardroom.",
+  casual: "Casual, conversational, warm. Like a smart friend explaining over coffee. Use contractions, rhetorical questions.",
+  hinglish: "Hinglish (Hindi+English mix). Relatable Indian internet culture. Use common Hindi phrases naturally woven into English.",
+  story: "Story-driven, narrative arc. Open with a scene, build tension, deliver the lesson through lived experience.",
+  data: "Data-heavy, research-backed. Every claim has a number. Use 'according to...', 'research shows...'. Cite specific studies.",
+  provocative: "Contrarian, bold. Challenge conventional wisdom. Start with 'Everyone says X. They're wrong.' Spark debate.",
+  educational: "Teacher-like, clear, step-by-step. Use analogies, examples, and progressive complexity. Make complex simple.",
 };
 
-const PERSONA_SPECS = {
-  visionary: "Visionary Leader: Focus on the future of education, bold transformations, and inspiring parents to think ahead. Use vocabulary like 'frontier', 'evolution', 'paradigm shift'. Speak with a sense of exciting momentum.",
-  nurturing: "Nurturing Mentor: Focus on child safety, emotional well-being, and personalized growth. Use warm, empathetic language like 'support', 'journey', 'care', 'safe space'. Speak like a trusted advisor to parents.",
-  authoritative: "Professional Expert: Focus on academic excellence, data-backed results, and strict standards. Use direct, precise language like 'measurable', 'standardized', 'excellence', 'rigorous'. Speak with undeniable credibility.",
-  community: "Community Pillar: Focus on local impact, inclusivity, and shared growth. Use warm, welcoming language like 'together', 'our family', 'local community', 'belonging'. Speak like a pillar of the neighborhood.",
-};
-
-/**
- * Generate a content script from research.
- */
 export async function generateScript({
   keyword,
   format = "youtube_long",
   style = "professional",
   audience = "general audience",
   research = null,
-  approvedAngles = [],
   location = "IN",
   language = "en",
   brandVoice = null,
-  directorPersona = "visionary",
-  schoolContext = "", // NEW: Knowledge Base Context
-  learningSignals = null,
 } = {}) {
   const spec = FORMAT_SPECS[format] || FORMAT_SPECS.youtube_long;
   const styleDesc = STYLES[style] || STYLES.professional;
-  const personaDesc = PERSONA_SPECS[directorPersona] || PERSONA_SPECS.visionary;
+  const today = new Date().toISOString().split("T")[0];
 
   let researchContext = "";
   if (research) {
-    const parts = ["RESEARCH INTELLIGENCE (use this to make the script highly specific and data-driven):"];
-    if (research.summary) parts.push(`- Executive Summary: ${research.summary}`);
-    if (research.angles?.length) parts.push(`- Suggested Angles: ${research.angles.map(a => typeof a === "string" ? a : a.angle || a.title || JSON.stringify(a)).join("; ")}`);
-    if (research.hooks?.length) parts.push(`- Hook Ideas: ${research.hooks.map(h => typeof h === "string" ? h : h.hook || h.text || JSON.stringify(h)).join("; ")}`);
-    if (research.topKeywords?.length) parts.push(`- Trending Keywords: ${research.topKeywords.join(", ")}`);
-    if (research.platformInsights) {
-      const pi = research.platformInsights;
-      if (pi.youtubeCount) parts.push(`- YouTube: ${pi.youtubeCount} videos found. Top: "${pi.topVideoTitle}" (${pi.topVideoViews?.toLocaleString()} views)`);
-      if (pi.redditCount) parts.push(`- Reddit: ${pi.redditCount} discussions found`);
-      if (pi.newsCount) parts.push(`- News: ${pi.newsCount} recent articles`);
-    }
-    if (approvedAngles.length) parts.push(`- APPROVED ANGLES: ${approvedAngles.map((a) => a.angle).join("; ")}`);
+    const parts = ["═══ VERIFIED RESEARCH INTELLIGENCE ═══"];
+    if (research.summary) parts.push(`Summary: ${research.summary}`);
+    if (research.angles?.length) parts.push(`Angles: ${research.angles.map(a => typeof a === "string" ? a : a.angle || a.title || JSON.stringify(a)).join("; ")}`);
+    if (research.hooks?.length) parts.push(`Hooks: ${research.hooks.map(h => typeof h === "string" ? h : h.hook || h.text || JSON.stringify(h)).join("; ")}`);
+    if (research.topKeywords?.length) parts.push(`Trending Keywords: ${research.topKeywords.join(", ")}`);
+    parts.push("═══════════════════════════════════════");
     researchContext = parts.join("\n");
   }
 
-  const schoolKnowledgeContext = schoolContext 
-    ? `
-=== INSTITUTIONAL KNOWLEDGE BASE (INTERNAL TRUTH) ===
-You MUST adhere to the following school-specific rules, mission, and context:
-${schoolContext}
-=====================================================
-` 
+  const brandCtx = brandVoice
+    ? `\nBRAND VOICE: Tone=${brandVoice.tone || "N/A"}, Audience=${brandVoice.audience || "N/A"}, Values=${brandVoice.values || "N/A"}, AVOID: ${brandVoice.avoidWords || "None"}\n`
     : "";
 
-  const brandVoiceContext = brandVoice 
-    ? `
-=== BRAND VOICE & GUIDELINES ===
-- Tone: ${brandVoice.tone || "N/A"}
-- Target Audience: ${brandVoice.audience || "N/A"}
-- Core Values: ${brandVoice.values || "N/A"}
-- WORDS TO AVOID: ${brandVoice.avoidWords || "None"}
-================================
-`
-    : "";
+  const prompt = `You are one of the world's top content strategists — your scripts consistently get millions of views.
 
-  const learningContext = learningSignals?.publishedPosts
-    ? `
-=== PERFORMANCE MEMORY FROM PREVIOUS POSTS ===
-- Published Posts Tracked: ${learningSignals.publishedPosts}
-- Total Clicks Tracked: ${learningSignals.totalClicks || 0}
-- Average CTR: ${learningSignals.averageCtr || 0}%
-- Best Tags: ${(learningSignals.topTags || []).slice(0, 6).map((item) => `${item.tag} (${item.totalClicks} clicks across ${item.posts} posts)`).join("; ")}
-- Winning Formats: ${(learningSignals.winningFormats || []).slice(0, 4).map((item) => `${item.format} (${item.avgClicks} avg clicks)`).join("; ")}
-- Lessons: ${(learningSignals.lessons || []).join(" ")}
-- Reuse the patterns that win. Do not copy previous scripts verbatim.
-==============================================
-`
-    : "";
+TODAY: ${today}. Your script MUST feel current, referencing 2025-2026 developments where relevant.
 
-  const prompt = `You are a highly respected School Director and Educational Content Strategist. 
-
-TASK: Write a complete ${spec.name} script.
+TASK: Write a COMPLETE, PRODUCTION-READY ${spec.name} script.
 
 TOPIC: "${keyword}"
 FORMAT: ${spec.name} (${spec.duration})
-STYLE: ${styleDesc}
-DIRECTOR PERSONA: ${personaDesc}
+TONE: ${styleDesc}
 AUDIENCE: ${audience}
 LOCATION: ${location}
 LANGUAGE: ${language === "hi" ? "Hindi" : language === "hinglish" ? "Hinglish" : "English"}
 
-${schoolKnowledgeContext}
 ${researchContext}
-${brandVoiceContext}
-${learningContext}
+${brandCtx}
 
 FORMAT STRUCTURE: ${spec.structure}
 FORMAT NOTES: ${spec.notes}
 
-REQUIREMENTS:
-1. ADOPT THE DIRECTOR PERSONA: Speak with the exact voice of the selected leadership style.
-2. INTERNAL TRUTH FIRST: Prioritize the Institutional Knowledge Base over general trends. If the school policy conflicts with a trend, the policy wins.
-3. The hook MUST be irresistible — use curiosity gap, bold claim, or shocking stat.
-4. Every 60-90 seconds should have a retention trigger (question, tease, pattern interrupt).
-5. EXACTLY MATCH THE BRAND VOICE TONE AND NEVER USE THE "WORDS TO AVOID".
+═══ QUALITY STANDARDS (NON-NEGOTIABLE) ═══
 
-Write the COMPLETE script now. Be specific, not generic. Every line should earn its place.`;
+1. HOOK: The first 2-3 lines must be IMPOSSIBLE to ignore. Use one of these proven patterns:
+   - Shocking statistic: "97% of parents don't know this about..."
+   - Contrarian take: "Everything you've been told about X is wrong"
+   - Story cold-open: "Last Tuesday, a principal in Bangalore did something no one expected..."
+   - Curiosity gap: "There's one thing that separates top students from everyone else. And it's not what you think."
+
+2. SPECIFICITY: Never be generic. Replace every vague claim with a specific example, number, or story.
+   - BAD: "Many schools are adopting AI"
+   - GOOD: "In January 2026, 340 CBSE schools integrated AI tutoring — and dropout rates fell 23%"
+
+3. RETENTION ARCHITECTURE: Build in a retention trigger every 60-90 seconds:
+   - Open loop: "But there's a catch — I'll get to that in a moment"
+   - Question: "Now ask yourself — does YOUR child's school do this?"
+   - Tease: "The third point is the one that shocked even me"
+   - Pattern interrupt: [CUT TO B-ROLL] or [SWITCH CAMERA ANGLE]
+
+4. EMOTIONAL DEPTH: Connect to real human emotions. Parents worry about their children's future. Students feel pressure. Teachers feel overwhelmed. Tap into these authentically.
+
+5. ACTIONABLE VALUE: The viewer/reader must leave with at least ONE thing they can DO immediately. Not just inspiration — concrete action.
+
+6. NATURAL LANGUAGE: Write like a real human speaks. No corporate buzzwords. No "In today's rapidly evolving landscape..." garbage. Be direct, warm, and real.
+
+7. CTA: End with a specific, natural call-to-action that feels like a genuine invitation, not a sales pitch.
+
+8. 2026 CURRENCY: Reference at least 1-2 specific 2025-2026 developments, policies, tools, or cultural moments relevant to this topic.
+
+Write the COMPLETE script now. Every single line must earn its place. If a line doesn't hook, inform, or move — cut it.`;
 
   return generate(prompt, { tier: "pro" });
 }
 
-/**
- * Generate a bundle of scripts for different platforms.
- */
 export async function generateBundle(options) {
   const formats = options.formats || ["instagram_reel", "x_thread", "linkedin_post"];
-  
-  const bundlePromises = formats.map(format => 
-    generateScript({ ...options, format })
-      .then(script => ({ format, script }))
+  const results = await Promise.all(
+    formats.map(format =>
+      generateScript({ ...options, format }).then(script => ({ format, script }))
+    )
   );
-  
-  const results = await Promise.all(bundlePromises);
   return results.reduce((acc, curr) => ({ ...acc, [curr.format]: curr.script }), {});
 }
 

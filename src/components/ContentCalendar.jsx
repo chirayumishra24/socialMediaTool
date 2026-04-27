@@ -2,18 +2,16 @@
 
 import { useMemo, useState } from "react";
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
-import { useResearchHistory } from "@/lib/storage";
+import { useContentHistory } from "@/lib/storage";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export default function ContentCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const researchItems = useResearchHistory();
+  const items = useContentHistory();
   const scheduledItems = useMemo(
-    () => researchItems.filter((item) =>
-      item.scheduledDate && (item.status === "approved" || item.status === "in_production" || item.status === "published")
-    ),
-    [researchItems]
+    () => items.filter((item) => item.metadata?.scheduledDate || item.savedAt),
+    [items]
   );
 
   const getDaysInMonth = (date) => {
@@ -33,52 +31,59 @@ export default function ContentCalendar() {
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
   return (
-    <div className="p-5 max-w-7xl mx-auto space-y-5">
-      <div className="flex items-center justify-between bg-bg-card border border-border p-4 rounded-xl">
-        <h3 className="text-lg font-bold text-txt flex items-center gap-2"><CalendarIcon className="w-5 h-5 text-primary" /> Content Calendar</h3>
+    <div className="p-6 lg:p-10 max-w-7xl mx-auto space-y-6 animate-fade-in">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 rounded-[2rem] bg-white border border-border p-5 shadow-sm">
+        <div>
+          <h3 className="text-xl font-black tracking-tight text-txt flex items-center gap-2">
+            <CalendarIcon className="w-5 h-5 text-primary" /> Content Scheduler
+          </h3>
+          <p className="mt-1 text-sm text-txt-muted font-medium">Track saved scripts and plan your posting schedule.</p>
+        </div>
         <div className="flex items-center gap-4">
-          <button onClick={prevMonth} className="p-2 rounded-lg bg-bg-elevated border border-border hover:bg-primary-muted transition-all cursor-pointer"><ChevronLeft className="w-4 h-4 text-txt-muted" /></button>
-          <span className="text-sm font-bold text-txt w-32 text-center">
+          <button onClick={prevMonth} className="p-2 rounded-xl bg-bg-elevated border border-border cursor-pointer hover:bg-bg-card transition-all">
+            <ChevronLeft className="w-4 h-4 text-txt-muted" />
+          </button>
+          <span className="text-sm font-black text-txt w-36 text-center">
             {currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
           </span>
-          <button onClick={nextMonth} className="p-2 rounded-lg bg-bg-elevated border border-border hover:bg-primary-muted transition-all cursor-pointer"><ChevronRight className="w-4 h-4 text-txt-muted" /></button>
+          <button onClick={nextMonth} className="p-2 rounded-xl bg-bg-elevated border border-border cursor-pointer hover:bg-bg-card transition-all">
+            <ChevronRight className="w-4 h-4 text-txt-muted" />
+          </button>
         </div>
       </div>
 
-      <div className="rounded-xl border border-border bg-bg-card overflow-hidden">
-        {/* Days Header */}
-        <div className="grid grid-cols-7 border-b border-border bg-bg-elevated">
-          {DAYS.map(day => (
-            <div key={day} className="p-2 text-center text-[11px] font-bold text-txt-secondary uppercase tracking-wider border-r border-border last:border-0">
+      <div className="rounded-[2rem] border border-border bg-white overflow-hidden shadow-sm">
+        <div className="grid grid-cols-7 border-b border-border bg-bg-elevated/30">
+          {DAYS.map((day) => (
+            <div key={day} className="p-3 text-center text-[11px] font-black uppercase tracking-[0.16em] text-txt-muted border-r border-border last:border-r-0">
               {day}
             </div>
           ))}
         </div>
 
-        {/* Calendar Grid */}
-        <div className="grid grid-cols-7 auto-rows-[120px]">
-          {blanks.map(i => (
-            <div key={`blank-${i}`} className="border-r border-b border-border bg-bg-card/50" />
+        <div className="grid grid-cols-7 auto-rows-[130px]">
+          {blanks.map((i) => (
+            <div key={`blank-${i}`} className="border-r border-b border-border bg-bg-card/20" />
           ))}
-          {days.map(day => {
-            const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+          {days.map((day) => {
+            const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
             const isToday = day === today.getDate() && currentDate.getMonth() === today.getMonth() && currentDate.getFullYear() === today.getFullYear();
-            const itemsToday = scheduledItems.filter(item => item.scheduledDate === dateStr);
+            const itemsToday = scheduledItems.filter((item) => {
+              const targetDate = item.metadata?.scheduledDate || item.savedAt?.slice(0, 10);
+              return targetDate === dateStr;
+            });
 
             return (
-              <div key={day} className={`p-2 border-r border-b border-border relative group transition-all hover:bg-bg-elevated ${isToday ? "bg-primary/5" : ""}`}>
-                <span className={`text-xs font-bold ${isToday ? "flex items-center justify-center w-6 h-6 rounded-full bg-primary text-white" : "text-txt-muted"}`}>
+              <div key={day} className={`p-2 border-r border-b border-border ${isToday ? "bg-primary/5" : "bg-white"}`}>
+                <span className={`text-xs font-black ${isToday ? "w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center" : "text-txt-muted"}`}>
                   {day}
                 </span>
-                
-                <div className="mt-2 space-y-1.5 overflow-y-auto max-h-[70px] custom-scroll pr-1">
-                  {itemsToday.map(item => (
-                    <div key={item.id} className={`p-1.5 rounded-md text-[9px] border cursor-pointer hover:opacity-80 transition-opacity ${item.status === "published" ? "bg-primary-muted border-primary/20 text-primary-hover" : item.status === "in_production" ? "bg-accent/15 border-accent/20 text-accent-hover" : "bg-success/15 border-success/20 text-success"}`} title={item.keyword}>
-                      <div className="font-semibold truncate">{item.keyword}</div>
-                      <div className="flex justify-between items-center mt-0.5 opacity-80">
-                        <span className="uppercase">{item.status === 'in_production' ? 'PROD' : item.status}</span>
-                        <span>{item.research?.recommendedStrategy?.bestFormat || 'Content'}</span>
-                      </div>
+                <div className="mt-2 space-y-1.5 max-h-[84px] overflow-y-auto custom-scroll pr-1">
+                  {itemsToday.map((item) => (
+                    <div key={item.id} className="p-2 rounded-lg border text-[9px] font-bold bg-primary/10 border-primary/20 text-primary" title={item.keyword}>
+                      <div className="truncate">{item.keyword}</div>
+                      <div className="mt-1 uppercase opacity-80">{item.format?.replace(/_/g, " ")}</div>
                     </div>
                   ))}
                 </div>

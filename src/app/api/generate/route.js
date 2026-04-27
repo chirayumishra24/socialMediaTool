@@ -5,10 +5,9 @@ import { editContent } from "@/lib/ai/editor-agent";
 
 export async function POST(req) {
   try {
-    const { 
-      keyword, format, style, audience, location, research, 
-      brandVoice, directorPersona, schoolContext,
-      learningSignals,
+    const {
+      keyword, format, style, audience, location, research,
+      brandVoice,
       bundle = false, bundleFormats = ["instagram_reel", "x_thread", "linkedin_post"]
     } = await req.json();
 
@@ -18,8 +17,7 @@ export async function POST(req) {
 
     if (bundle) {
       const scripts = await generateBundle({
-        keyword, style, audience, research, location, 
-        brandVoice, directorPersona, schoolContext, learningSignals,
+        keyword, style, audience, research, location, brandVoice,
         formats: bundleFormats
       });
 
@@ -27,28 +25,22 @@ export async function POST(req) {
         bundle: true,
         scripts,
         metadata: {
-          keyword, style, audience, location, 
-          directorPersona,
+          keyword, style, audience, location,
           timestamp: new Date().toISOString()
         }
       });
     }
 
-    // 1. Generate Single Script
+    // 1. Generate Script
     const script = await generateScript({
-      keyword, format, style, audience, research, location, 
-      brandVoice, directorPersona, schoolContext, learningSignals
+      keyword, format, style, audience, research, location, brandVoice
     });
 
-    // 2. Generate SEO Bundle
-    const seo = await generateSEO({
-      keyword, format, script, location, learningSignals
-    });
+    // 2. Generate SEO
+    const seo = await generateSEO({ keyword, format, script, location });
 
     // 3. Editorial Review
-    const editing = await editContent({
-      script, format, audience
-    });
+    const editing = await editContent({ script, format, audience });
 
     const finalScript = editing?.editedScript || script;
 
@@ -58,10 +50,8 @@ export async function POST(req) {
       seo,
       editing,
       metadata: {
-        keyword, format, style, audience, location, 
-        directorPersona,
+        keyword, format, style, audience, location,
         hasResearchContext: !!research,
-        usedLearningSignals: !!learningSignals?.publishedPosts,
         timestamp: new Date().toISOString()
       }
     });

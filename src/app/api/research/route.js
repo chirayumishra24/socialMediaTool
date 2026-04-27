@@ -25,15 +25,15 @@ export async function POST(request) {
     const platformData = {};
     crawlResults.forEach((r) => { if (r.status === "fulfilled") Object.assign(platformData, r.value); });
 
-    // Step 2: Extract top keywords from YouTube tags
+    // Step 2: Extract top keywords from crawled data
     const topKeywords = extractTopKeywords(platformData);
 
-    // Step 3: Sort videos by views (trending) and recency (latest)
+    // Step 3: Sort videos by views
     if (platformData.youtube) {
       platformData.youtube = platformData.youtube.sort((a, b) => (b.metrics?.views || 0) - (a.metrics?.views || 0));
     }
 
-    // Step 4: Run AI research with platform data as context
+    // Step 4: Run AI research with platform data
     const research = await runResearch(keyword, { location, language, platformData, depth });
 
     return NextResponse.json({
@@ -55,11 +55,9 @@ export async function POST(request) {
 function extractTopKeywords(platformData) {
   const tagMap = {};
 
-  // Extract from YouTube video tags
   (platformData.youtube || []).forEach((video) => {
     const views = video.metrics?.views || 0;
     const tags = video.tags || [];
-    // Also extract keywords from title
     const titleWords = (video.title || "").toLowerCase()
       .replace(/[^a-z0-9\s]/g, "").split(/\s+/)
       .filter((w) => w.length > 3);
@@ -74,7 +72,6 @@ function extractTopKeywords(platformData) {
     });
   });
 
-  // Extract from Reddit post titles
   (platformData.reddit || []).forEach((post) => {
     const score = post.metrics?.likes || 0;
     const words = (post.title || "").toLowerCase()
@@ -82,7 +79,7 @@ function extractTopKeywords(platformData) {
       .filter((w) => w.length > 3);
     words.forEach((w) => {
       if (!tagMap[w]) tagMap[w] = { tag: w, totalViews: 0, videoCount: 0, fromTags: false };
-      tagMap[w].totalViews += score * 10; // weight Reddit upvotes
+      tagMap[w].totalViews += score * 10;
       tagMap[w].videoCount += 1;
     });
   });
