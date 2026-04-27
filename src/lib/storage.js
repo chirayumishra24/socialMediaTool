@@ -255,3 +255,9 @@ export function usePerformanceInsights() {
     };
   }, [content]);
 }
+
+// --- SETTINGS (MOCK) ---
+export function useSettingsSnapshot() {
+  return { schoolName: "Skilizee Academy", schoolVision: "Shaping the future of education" };
+}
+
