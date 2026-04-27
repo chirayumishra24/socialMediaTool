@@ -198,37 +198,85 @@ function ResearchResults({ research, platformData, topKeywords }) {
   const r = research;
   const ytVideos = (platformData?.youtube || []).sort((a, b) => (b.metrics?.views || 0) - (a.metrics?.views || 0));
   const igPosts = (platformData?.instagram || []).sort((a, b) => (b.metrics?.likes || 0) - (a.metrics?.likes || 0));
+  const igVideoPosts = igPosts.filter((post) => post.isVideo || post.videoUrl || String(post.contentFormat || "").toLowerCase().includes("video") || String(post.contentFormat || "").toLowerCase().includes("reel"));
+  const featuredIgPosts = igVideoPosts.length > 0 ? igVideoPosts : igPosts;
   const xPosts = (platformData?.x || []).sort((a, b) => (b.metrics?.likes || 0) - (a.metrics?.likes || 0));
   const newsPosts = (platformData?.news || []).sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
 
   return (
     <div className="space-y-12">
+      <div className="rounded-[3rem] bg-white border border-border p-8 lg:p-10 shadow-sm space-y-8">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+          <div className="space-y-3 max-w-3xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-3 py-1 rounded-full bg-primary text-white text-[10px] font-black uppercase tracking-widest">R&D Output</span>
+              <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest">
+                {r.keyword}
+              </span>
+              <span className="px-3 py-1 rounded-full bg-bg-elevated border border-border text-[10px] font-black uppercase tracking-widest text-txt-muted">
+                Fit {r.relevanceCheck?.score || 0}/100
+              </span>
+            </div>
+            <h4 className="text-3xl lg:text-4xl font-black text-txt tracking-tight leading-tight">Top video signals first, then the deeper strategy.</h4>
+            <p className="text-sm text-txt-secondary font-medium leading-relaxed">
+              YouTube appears first, Instagram video links second, and the rest of the research stack follows below.
+            </p>
+          </div>
+          {r.recommendedStrategy && (
+            <div className="rounded-[2rem] bg-accent/5 border border-accent/15 px-5 py-4 space-y-2 lg:max-w-sm w-full">
+              <p className="text-[10px] font-black text-accent uppercase tracking-[0.2em]">Primary Angle</p>
+              <p className="text-base font-bold text-txt leading-snug">{r.recommendedStrategy.bestAngle}</p>
+              <p className="text-sm text-txt-secondary leading-relaxed font-medium">{r.recommendedStrategy.keyMessage}</p>
+            </div>
+          )}
+        </div>
+
+        {ytVideos.length > 0 && (
+          <Section icon={MonitorPlay} label="YouTube Videos" color="text-red-500">
+            <div className="grid grid-cols-1 xl:grid-cols-[1.15fr_0.85fr] gap-6">
+              <FeaturedVideoCard data={ytVideos[0]} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {ytVideos.slice(1, 5).map((video, index) => (
+                  <MediaCard key={`${video.id || index}-yt`} data={video} compact />
+                ))}
+              </div>
+            </div>
+          </Section>
+        )}
+
+        {featuredIgPosts.length > 0 && (
+          <Section icon={Camera} label="Instagram Video Links" color="text-pink-500">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {featuredIgPosts.slice(0, 4).map((post, index) => (
+                <InstagramLinkCard key={`${post.id || index}-ig`} data={post} />
+              ))}
+            </div>
+          </Section>
+        )}
+      </div>
+
       <div className="rounded-[3rem] bg-white border border-border p-10 space-y-8 shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
           <div className="space-y-4 max-w-3xl">
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest">Topic Focus</span>
               <span className="px-3 py-1 rounded-full bg-bg-elevated border border-border text-[10px] font-black uppercase tracking-widest text-txt-muted">
-                Fit {r.relevanceCheck?.score || 0}/100
+                {r.topicFocus?.interpretedTopic || r.keyword}
               </span>
             </div>
             <div>
               <h4 className="text-3xl font-black text-txt tracking-tight">{r.keyword}</h4>
               <p className="text-sm text-txt-muted font-medium mt-2">
-                {r.topicFocus?.interpretedTopic || r.keyword}
+                {r.executiveSummary}
               </p>
             </div>
-            <p className="text-base text-txt-secondary leading-loose font-medium">
-              {r.executiveSummary}
-            </p>
           </div>
 
           {r.recommendedStrategy && (
             <div className="lg:max-w-sm w-full rounded-[2rem] bg-primary/5 border border-primary/10 p-6 space-y-4">
               <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Best Move</p>
               <p className="text-lg font-bold text-txt leading-snug">{r.recommendedStrategy.bestAngle}</p>
-              <p className="text-sm text-txt-secondary leading-relaxed font-medium">{r.recommendedStrategy.keyMessage}</p>
-              <div className="flex flex-wrap gap-2 pt-2">
+              <div className="flex flex-wrap gap-2 pt-1">
                 <span className="px-3 py-1 rounded-xl bg-white border border-primary/10 text-[10px] font-black uppercase tracking-widest text-primary">
                   {r.recommendedStrategy.bestPlatform}
                 </span>
@@ -323,20 +371,6 @@ function ResearchResults({ research, platformData, topKeywords }) {
       )}
 
       <div className="space-y-10">
-        {ytVideos.length > 0 && (
-          <Section icon={MonitorPlay} label="Trending Videos (2026)" color="text-red-500">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {ytVideos.slice(0, 4).map((v, i) => <MediaCard key={i} data={v} />)}
-            </div>
-          </Section>
-        )}
-        {igPosts.length > 0 && (
-          <Section icon={Camera} label="Instagram Signals" color="text-pink-500">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {igPosts.slice(0, 3).map((ig, i) => <InstagramCard key={i} data={ig} />)}
-            </div>
-          </Section>
-        )}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {xPosts.length > 0 && (
             <Section icon={Hash} label="X / Twitter" color="text-txt">
@@ -511,17 +545,42 @@ function Section({ icon: Icon, label, color, children }) {
   );
 }
 
-function MediaCard({ data }) {
+function FeaturedVideoCard({ data }) {
+  return (
+    <a href={data.url} target="_blank" rel="noopener noreferrer" className="group rounded-[2.5rem] border border-border overflow-hidden bg-white shadow-sm hover:shadow-xl hover:border-primary/25 transition-all block">
+      <div className="aspect-video relative overflow-hidden bg-bg-elevated">
+        {data.thumbnail && <img src={data.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 p-6 text-white space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="px-3 py-1 rounded-full bg-red-500/90 text-[10px] font-black uppercase tracking-widest">Featured Video</span>
+            {data.duration ? <span className="px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm text-[10px] font-black uppercase tracking-widest">{data.duration}</span> : null}
+          </div>
+          <p className="text-xl lg:text-2xl font-black tracking-tight leading-tight max-w-2xl">{data.title}</p>
+          <div className="flex items-center justify-between gap-4 text-[11px] font-bold uppercase tracking-widest text-white/80">
+            <span>{data.author}</span>
+            <div className="flex items-center gap-4">
+              <span>{fmt(data.metrics?.views)} views</span>
+              <span>{fmt(data.metrics?.likes)} likes</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </a>
+  );
+}
+
+function MediaCard({ data, compact = false }) {
   return (
     <a href={data.url} target="_blank" rel="noopener noreferrer" className="group bg-white rounded-[2rem] border border-border overflow-hidden hover:border-primary/30 transition-all shadow-sm hover:shadow-xl block">
-      <div className="aspect-video relative overflow-hidden bg-bg-elevated">
+      <div className={`relative overflow-hidden bg-bg-elevated ${compact ? "aspect-[16/10]" : "aspect-video"}`}>
         {data.thumbnail && <img src={data.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
           <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30"><Play className="w-6 h-6 fill-white" /></div>
         </div>
         {data.metrics?.views > 0 && <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg bg-black/80 text-white text-[10px] font-black uppercase tracking-widest backdrop-blur-sm">{fmt(data.metrics.views)} views</div>}
       </div>
-      <div className="p-6 space-y-3">
+      <div className={`space-y-3 ${compact ? "p-5" : "p-6"}`}>
         <p className="text-sm font-bold text-txt leading-snug line-clamp-2 group-hover:text-primary transition-colors">{data.title}</p>
         <div className="flex items-center justify-between">
           <p className="text-[10px] text-txt-muted font-bold uppercase tracking-widest">{data.author}</p>
@@ -532,29 +591,45 @@ function MediaCard({ data }) {
   );
 }
 
-function InstagramCard({ data }) {
+function InstagramLinkCard({ data }) {
   return (
-    <a href={data.url} target="_blank" rel="noopener noreferrer" className="group bg-white rounded-[2rem] border border-border p-6 hover:border-pink-500/30 transition-all shadow-sm hover:shadow-xl flex flex-col h-full block">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-pink-500/10 flex items-center justify-center text-pink-500"><Camera className="w-4 h-4" /></div>
-          <p className="text-[10px] font-black text-txt uppercase tracking-widest">Reel</p>
+    <a href={data.url} target="_blank" rel="noopener noreferrer" className="group rounded-[2rem] border border-border bg-white p-5 shadow-sm hover:shadow-xl hover:border-pink-500/25 transition-all block">
+      <div className="flex items-start gap-4">
+        <div className="w-24 h-28 rounded-[1.4rem] overflow-hidden bg-bg-elevated shrink-0 relative">
+          {data.thumbnail ? (
+            <img src={data.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-pink-500/8 text-pink-500">
+              <Camera className="w-8 h-8" />
+            </div>
+          )}
+          <div className="absolute top-2 right-2 h-7 w-7 rounded-full bg-black/60 text-white flex items-center justify-center">
+            <Play className="w-3.5 h-3.5 fill-white" />
+          </div>
         </div>
-        <Flame className="w-4 h-4 text-orange-500 animate-pulse" />
-      </div>
-      {data.thumbnail && (
-        <div className="w-full aspect-[9/12] rounded-2xl overflow-hidden bg-bg-elevated mb-5 relative">
-          <img src={data.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-          {data.videoUrl && <div className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white"><Play className="w-3 h-3 fill-white" /></div>}
+        <div className="flex-1 min-w-0 space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="px-2.5 py-1 rounded-full bg-pink-500/10 text-pink-500 text-[9px] font-black uppercase tracking-widest">
+              {data.isFallback ? "Instagram Idea" : "Instagram Reel"}
+            </span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-txt-muted">{data.author}</span>
+          </div>
+          <p className="text-sm font-bold text-txt leading-relaxed line-clamp-2 group-hover:text-pink-500 transition-colors">
+            {data.title || data.description}
+          </p>
+          <p className="text-xs text-txt-secondary leading-relaxed line-clamp-2">
+            {data.description}
+          </p>
+          <div className="flex items-center justify-between gap-3 pt-2 border-t border-border">
+            <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-txt-muted">
+              <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5" /> {fmt(data.metrics?.likes)}</span>
+              <span className="flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5" /> {fmt(data.metrics?.comments)}</span>
+            </div>
+            <span className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary">
+              Open Link <ExternalLink className="w-3.5 h-3.5" />
+            </span>
+          </div>
         </div>
-      )}
-      <p className="text-[13px] font-bold text-txt leading-relaxed line-clamp-3 mb-4">{data.title || data.description}</p>
-      <div className="mt-auto pt-4 border-t border-border flex items-center justify-between text-[10px] font-black text-txt-muted uppercase tracking-widest">
-        <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5" /> {fmt(data.metrics?.likes)}</span>
-          <span className="flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5" /> {fmt(data.metrics?.comments)}</span>
-        </div>
-        <ExternalLink className="w-3.5 h-3.5 group-hover:text-pink-500" />
       </div>
     </a>
   );
