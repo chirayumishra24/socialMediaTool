@@ -80,6 +80,14 @@ export async function generateScript({
     if (research.summary) parts.push(`Summary: ${research.summary}`);
     if (research.angles?.length) parts.push(`Angles: ${research.angles.map(a => typeof a === "string" ? a : a.angle || a.title || JSON.stringify(a)).join("; ")}`);
     if (research.hooks?.length) parts.push(`Hooks: ${research.hooks.map(h => typeof h === "string" ? h : h.hook || h.text || JSON.stringify(h)).join("; ")}`);
+    if (research.recommendedStrategy?.bestAngle) parts.push(`Best Angle: ${research.recommendedStrategy.bestAngle}`);
+    if (research.recommendedStrategy?.keyMessage) parts.push(`Key Message: ${research.recommendedStrategy.keyMessage}`);
+    if (research.evidence?.length) {
+      parts.push(`Evidence: ${research.evidence.map((item) => {
+        if (typeof item === "string") return item;
+        return `[${item.platform || "source"}] ${item.title || "signal"} - ${item.whyItMatters || item.engagementHint || "relevant current signal"}`;
+      }).join("; ")}`);
+    }
     if (research.topKeywords?.length) parts.push(`Trending Keywords: ${research.topKeywords.join(", ")}`);
     parts.push("═══════════════════════════════════════");
     researchContext = parts.join("\n");

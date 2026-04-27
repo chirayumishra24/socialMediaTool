@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { MonitorPlay, Camera, Hash, MessageSquare, Newspaper, Zap, BarChart2, Search, Globe, Heart, ArrowRight, Flame, Lightbulb, Target, Loader2, Sparkles, Compass, Repeat2, Play, User, ExternalLink, MessageCircle, Wand2 } from "lucide-react";
+import { MonitorPlay, Camera, Hash, MessageSquare, Newspaper, Zap, BarChart2, Search, Globe, Heart, ArrowRight, Flame, Lightbulb, Target, Loader2, Sparkles, Compass, Repeat2, Play, User, ExternalLink, MessageCircle } from "lucide-react";
 
 const PLATFORMS_LIST = [
   { id: "youtube", label: "YouTube", icon: MonitorPlay },
@@ -55,7 +55,7 @@ export default function ResearchLab({ onResearchComplete, onGoToStudio, initialK
       let savedResearch = null;
       try {
         const { saveResearch } = require("@/lib/storage");
-        savedResearch = saveResearch({ keyword, research: data.research, platformData: data.platformData, location, depth });
+        savedResearch = saveResearch({ keyword, research: data.research, platformData: data.platformData, topKeywords: data.topKeywords || [], location, depth });
       } catch {}
 
       onResearchComplete?.({
@@ -165,18 +165,27 @@ export default function ResearchLab({ onResearchComplete, onGoToStudio, initialK
 
           {result && (
             <div className="space-y-10 animate-fade-in pb-20">
-              <ResearchResults research={result} platformData={platformData} topKeywords={topKeywords} />
+              {result.isVague ? (
+                <VagueResult
+                  result={result}
+                  onUseSuggestion={(suggestion) => setKeyword(suggestion)}
+                />
+              ) : (
+                <ResearchResults research={result} platformData={platformData} topKeywords={topKeywords} />
+              )}
 
-              <div className="sticky bottom-6 left-0 right-0 p-1 bg-white/80 backdrop-blur-xl border border-primary/20 rounded-[2.5rem] shadow-2xl flex items-center justify-between gap-4 z-50">
-                <div className="pl-8">
-                  <p className="text-xs font-bold text-txt">Research Complete</p>
-                  <p className="text-[10px] font-black text-primary uppercase tracking-widest">Ready to Script</p>
+              {!result.isVague && (
+                <div className="sticky bottom-6 left-0 right-0 p-1 bg-white/80 backdrop-blur-xl border border-primary/20 rounded-[2.5rem] shadow-2xl flex items-center justify-between gap-4 z-50">
+                  <div className="pl-8">
+                    <p className="text-xs font-bold text-txt">Research Complete</p>
+                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Ready to Script</p>
+                  </div>
+                  <button onClick={() => onGoToStudio({ keyword, research: result, platformData, topKeywords, location, depth, researchedAt: new Date().toISOString() })}
+                    className="px-12 py-4 rounded-[2rem] grad-primary text-white text-[13px] font-black uppercase tracking-widest flex items-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-primary/20 cursor-pointer">
+                    <Sparkles className="w-5 h-5" /> Open Script Studio
+                  </button>
                 </div>
-                <button onClick={() => onGoToStudio({ keyword, research: result, platformData, topKeywords, location, depth, researchedAt: new Date().toISOString() })}
-                  className="px-12 py-4 rounded-[2rem] grad-primary text-white text-[13px] font-black uppercase tracking-widest flex items-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-primary/20 cursor-pointer">
-                  <Sparkles className="w-5 h-5" /> Open Script Studio
-                </button>
-              </div>
+              )}
             </div>
           )}
         </div>
@@ -185,7 +194,7 @@ export default function ResearchLab({ onResearchComplete, onGoToStudio, initialK
   );
 }
 
-function ResearchResults({ research, platformData }) {
+function ResearchResults({ research, platformData, topKeywords }) {
   const r = research;
   const ytVideos = (platformData?.youtube || []).sort((a, b) => (b.metrics?.views || 0) - (a.metrics?.views || 0));
   const igPosts = (platformData?.instagram || []).sort((a, b) => (b.metrics?.likes || 0) - (a.metrics?.likes || 0));
@@ -194,6 +203,89 @@ function ResearchResults({ research, platformData }) {
 
   return (
     <div className="space-y-12">
+      <div className="rounded-[3rem] bg-white border border-border p-10 space-y-8 shadow-sm">
+        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+          <div className="space-y-4 max-w-3xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest">Topic Focus</span>
+              <span className="px-3 py-1 rounded-full bg-bg-elevated border border-border text-[10px] font-black uppercase tracking-widest text-txt-muted">
+                Fit {r.relevanceCheck?.score || 0}/100
+              </span>
+            </div>
+            <div>
+              <h4 className="text-3xl font-black text-txt tracking-tight">{r.keyword}</h4>
+              <p className="text-sm text-txt-muted font-medium mt-2">
+                {r.topicFocus?.interpretedTopic || r.keyword}
+              </p>
+            </div>
+            <p className="text-base text-txt-secondary leading-loose font-medium">
+              {r.executiveSummary}
+            </p>
+          </div>
+
+          {r.recommendedStrategy && (
+            <div className="lg:max-w-sm w-full rounded-[2rem] bg-primary/5 border border-primary/10 p-6 space-y-4">
+              <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Best Move</p>
+              <p className="text-lg font-bold text-txt leading-snug">{r.recommendedStrategy.bestAngle}</p>
+              <p className="text-sm text-txt-secondary leading-relaxed font-medium">{r.recommendedStrategy.keyMessage}</p>
+              <div className="flex flex-wrap gap-2 pt-2">
+                <span className="px-3 py-1 rounded-xl bg-white border border-primary/10 text-[10px] font-black uppercase tracking-widest text-primary">
+                  {r.recommendedStrategy.bestPlatform}
+                </span>
+                <span className="px-3 py-1 rounded-xl bg-white border border-primary/10 text-[10px] font-black uppercase tracking-widest text-primary">
+                  {r.recommendedStrategy.bestFormat}
+                </span>
+                <span className="px-3 py-1 rounded-xl bg-white border border-primary/10 text-[10px] font-black uppercase tracking-widest text-primary">
+                  Viral {r.recommendedStrategy.estimatedViralPotential || 0}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <InsightTile label="Why Now" value={r.topicFocus?.whyNow || r.marketLandscape?.summary} tone="primary" />
+          <InsightTile label="Audience Lens" value={r.topicFocus?.audienceLens || r.audienceSentiment?.demographics} tone="accent" />
+          <InsightTile label="Geo Lens" value={r.topicFocus?.geoLens || "Use regional nuance only where it changes demand or behavior."} tone="neutral" />
+        </div>
+      </div>
+
+      {r.sourceEvidence?.length > 0 && (
+        <Section icon={Compass} label="Topic Evidence" color="text-primary">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {r.sourceEvidence.slice(0, 4).map((item, index) => (
+              <EvidenceCard key={`${item.platform}-${index}`} item={item} />
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {r.trendingAngles?.length > 0 && (
+        <Section icon={Flame} label="Angles That Fit This Topic" color="text-orange-500">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {r.trendingAngles.slice(0, 4).map((angle, index) => (
+              <AngleCard key={`${angle.angle}-${index}`} angle={angle} />
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {topKeywords?.length > 0 && (
+        <div className="rounded-[2.5rem] bg-bg-card border border-border p-8 shadow-sm space-y-4">
+          <div className="flex items-center gap-3">
+            <Hash className="w-5 h-5 text-accent" />
+            <h4 className="text-xs font-black text-txt uppercase tracking-[0.2em]">Related Terms From Live Search</h4>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {topKeywords.slice(0, 10).map((kw) => (
+              <span key={kw.keyword} className="px-4 py-2 rounded-xl bg-white border border-border text-[11px] font-bold text-txt-secondary">
+                #{kw.keyword}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       {r.strategyBlueprint && (
         <div className="rounded-[3rem] bg-white border border-border p-10 space-y-10 shadow-sm relative overflow-hidden">
           <div className="absolute top-0 right-0 p-10 opacity-[0.03] pointer-events-none"><Lightbulb className="w-64 h-64" /></div>
@@ -303,6 +395,105 @@ function ResearchResults({ research, platformData }) {
             </div>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function VagueResult({ result, onUseSuggestion }) {
+  return (
+    <div className="rounded-[3rem] bg-white border border-border p-10 shadow-sm space-y-8">
+      <div className="space-y-4">
+        <div className="w-16 h-16 rounded-3xl bg-primary/10 text-primary flex items-center justify-center">
+          <Compass className="w-8 h-8" />
+        </div>
+        <div>
+          <h4 className="text-3xl font-black text-txt tracking-tight">Refine The Search</h4>
+          <p className="text-base text-txt-secondary leading-loose font-medium mt-3">
+            {result.message || "This topic is too broad to produce a precise R&D strategy."}
+          </p>
+        </div>
+      </div>
+
+      {result.suggestions?.length > 0 && (
+        <div className="space-y-4">
+          <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Suggested Searches</p>
+          <div className="flex flex-wrap gap-3">
+            {result.suggestions.map((suggestion) => (
+              <button
+                key={suggestion}
+                onClick={() => onUseSuggestion(suggestion)}
+                className="px-5 py-3 rounded-2xl bg-bg-card border border-border text-sm font-bold text-txt hover:border-primary/30 hover:text-primary transition-all cursor-pointer"
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function InsightTile({ label, value, tone = "neutral" }) {
+  const toneClass = tone === "primary"
+    ? "bg-primary/5 border-primary/10"
+    : tone === "accent"
+      ? "bg-accent/5 border-accent/10"
+      : "bg-bg-elevated/40 border-border";
+
+  return (
+    <div className={`rounded-[2rem] border p-5 space-y-3 ${toneClass}`}>
+      <p className="text-[10px] font-black text-txt-muted uppercase tracking-[0.2em]">{label}</p>
+      <p className="text-sm text-txt-secondary leading-relaxed font-medium">{value}</p>
+    </div>
+  );
+}
+
+function EvidenceCard({ item }) {
+  return (
+    <a
+      href={item.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group p-6 rounded-[2rem] bg-white border border-border hover:border-primary/20 transition-all shadow-sm hover:shadow-xl block"
+    >
+      <div className="flex items-center justify-between gap-4 mb-4">
+        <span className="px-3 py-1 rounded-xl bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest">
+          {item.platform}
+        </span>
+        <span className="text-[10px] font-bold text-txt-muted">{item.publishedAt || "recent"}</span>
+      </div>
+      <p className="text-sm font-bold text-txt leading-relaxed group-hover:text-primary transition-colors">{item.title}</p>
+      <p className="text-xs text-txt-muted font-bold uppercase tracking-widest mt-4">{item.engagementHint}</p>
+      <p className="text-sm text-txt-secondary leading-relaxed font-medium mt-3">{item.whyItMatters}</p>
+    </a>
+  );
+}
+
+function AngleCard({ angle }) {
+  return (
+    <div className="p-6 rounded-[2rem] bg-white border border-border shadow-sm space-y-4">
+      <div className="flex items-center justify-between gap-4">
+        <span className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em]">Viral {angle.viralPotential || 0}</span>
+        <span className="text-[10px] font-bold text-txt-muted uppercase tracking-widest">{angle.suggestedFormat}</span>
+      </div>
+      <div className="space-y-2">
+        <p className="text-base font-bold text-txt leading-snug">{angle.angle}</p>
+        <p className="text-sm text-txt-secondary leading-relaxed font-medium">{angle.description}</p>
+      </div>
+      {angle.hookIdea && (
+        <div className="rounded-2xl bg-bg-elevated/50 border border-border p-4">
+          <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">Hook</p>
+          <p className="text-sm text-txt-secondary leading-relaxed font-medium">{angle.hookIdea}</p>
+        </div>
+      )}
+      <div className="flex flex-wrap gap-2">
+        {(angle.platforms || []).map((platform) => (
+          <span key={platform} className="px-3 py-1 rounded-xl bg-bg-card border border-border text-[10px] font-black uppercase tracking-widest text-txt-muted">
+            {platform}
+          </span>
+        ))}
       </div>
     </div>
   );

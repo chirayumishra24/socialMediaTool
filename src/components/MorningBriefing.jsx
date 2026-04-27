@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, ArrowRight, Zap, Bot, Microscope, Clapperboard, Hash, Briefcase, Wand2, Loader2, Star, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Zap, Bot, Microscope, Wand2, Star } from "lucide-react";
 
 export default function MorningBriefing({ onStartResearch, onGoToStudio }) {
   const [briefings, setBriefings] = useState([]);
@@ -45,23 +45,23 @@ export default function MorningBriefing({ onStartResearch, onGoToStudio }) {
 
   if (loading) {
     return (
-      <div className="p-10 rounded-[3.5rem] bg-white border border-border shadow-premium space-y-6 animate-pulse">
+      <div className="h-full p-10 rounded-[3.5rem] bg-white border border-border shadow-premium space-y-6 animate-pulse">
         <div className="h-4 w-48 bg-bg-elevated rounded-full" />
         <div className="space-y-4">
-          <div className="h-24 bg-bg-elevated rounded-3xl" />
-          <div className="h-24 bg-bg-elevated rounded-3xl" />
+          <div className="h-40 bg-bg-elevated rounded-3xl" />
+          <div className="h-40 bg-bg-elevated rounded-3xl" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-10 rounded-[3.5rem] bg-white border border-border space-y-8 shadow-premium relative overflow-hidden group">
+    <div className="h-full p-8 lg:p-10 rounded-[3.5rem] bg-white border border-border shadow-premium relative overflow-hidden group flex flex-col">
       <div className="absolute top-0 right-0 p-10 opacity-[0.02] pointer-events-none group-hover:rotate-12 transition-transform duration-700">
         <Star className="w-48 h-48" />
       </div>
       
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-border/50 pb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-border/50 pb-8 min-h-[5.5rem]">
         <div className="flex items-center gap-4">
           <div className="p-4 rounded-[1.25rem] bg-accent/10 text-accent shadow-inner">
             <Bot className="w-6 h-6" />
@@ -81,13 +81,13 @@ export default function MorningBriefing({ onStartResearch, onGoToStudio }) {
         </div>
       </div>
 
-      <div className="space-y-6">
+      <div className="mt-8 flex-1 space-y-5">
         {briefings.map((b) => (
-          <div key={b.id} className="p-8 rounded-[2.5rem] bg-bg-elevated/20 border border-border/40 hover:border-primary/30 hover:bg-white hover:shadow-2xl transition-all duration-500 group/card relative overflow-hidden">
+          <div key={b.id} className="p-7 rounded-[2.5rem] bg-bg-elevated/20 border border-border/40 hover:border-primary/30 hover:bg-white hover:shadow-2xl transition-all duration-500 group/card relative overflow-hidden min-h-[20rem] flex flex-col">
             <div className="absolute top-0 left-0 w-1 h-full grad-primary opacity-0 group-hover/card:opacity-100 transition-opacity" />
             
-            <div className="flex flex-col gap-6">
-              <div className="space-y-4">
+            <div className="flex flex-col gap-6 flex-1">
+              <div className="space-y-4 flex-1">
                 <div className="flex flex-wrap items-center gap-3">
                   <span className={`text-[9px] font-black px-2.5 py-1.5 rounded-lg border shadow-sm shrink-0 ${
                     b.impact === "CRITICAL" ? "bg-danger/5 border-danger/20 text-danger" : 
@@ -99,7 +99,7 @@ export default function MorningBriefing({ onStartResearch, onGoToStudio }) {
                   <h5 className="text-[15px] font-black text-txt tracking-tight leading-tight">{b.topic}</h5>
                 </div>
                 
-                <p className="text-xs text-txt-secondary leading-relaxed font-medium">
+                <p className="text-xs text-txt-secondary leading-relaxed font-medium line-clamp-4">
                   {b.summary}
                 </p>
                 
@@ -113,7 +113,7 @@ export default function MorningBriefing({ onStartResearch, onGoToStudio }) {
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-3 pt-2">
+              <div className="grid grid-cols-2 gap-3 pt-2 mt-auto">
                 <button 
                   onClick={() => onStartResearch(b.keyword)}
                   className="px-4 py-3.5 rounded-xl bg-primary text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-primary/20 cursor-pointer"
@@ -136,7 +136,7 @@ export default function MorningBriefing({ onStartResearch, onGoToStudio }) {
         ))}
       </div>
 
-      <button className="w-full py-4 rounded-2xl bg-bg-card border border-border text-[10px] font-black text-txt-muted uppercase tracking-widest hover:text-primary hover:border-primary/20 transition-all flex items-center justify-center gap-2 cursor-pointer">
+      <button className="w-full mt-6 py-4 rounded-2xl bg-bg-card border border-border text-[10px] font-black text-txt-muted uppercase tracking-widest hover:text-primary hover:border-primary/20 transition-all flex items-center justify-center gap-2 cursor-pointer">
         <Zap className="w-4 h-4" /> Refresh Global Intelligence Scan
       </button>
     </div>

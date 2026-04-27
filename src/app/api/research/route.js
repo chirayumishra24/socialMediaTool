@@ -6,27 +6,37 @@ import { searchX } from "@/lib/crawlers/twitter";
 import { searchNews } from "@/lib/crawlers/news";
 import { searchInstagram } from "@/lib/crawlers/instagram";
 
+const STOPWORDS = new Set([
+  "about", "after", "also", "amid", "among", "and", "are", "because", "been", "being",
+  "best", "between", "but", "can", "changes", "from", "have", "into", "latest", "more",
+  "most", "news", "over", "should", "still", "than", "that", "their", "them", "then",
+  "there", "these", "they", "this", "those", "through", "today", "topic", "trends",
+  "very", "what", "when", "where", "which", "while", "with", "would", "year", "your",
+  "2025", "2026",
+]);
+
 export async function POST(request) {
   try {
     const body = await request.json();
     const { keyword, platforms = ["youtube", "reddit", "x", "news", "instagram"], location = "IN", language = "en", depth = "deep" } = body;
+    const cleanKeyword = String(keyword || "").trim();
 
-    if (!keyword) return NextResponse.json({ error: "Missing keyword" }, { status: 400 });
+    if (!cleanKeyword) return NextResponse.json({ error: "Missing keyword" }, { status: 400 });
 
     // Step 1: Crawl platforms in parallel
     const crawlTasks = [];
-    if (platforms.includes("youtube")) crawlTasks.push(searchYouTube(keyword, process.env.YOUTUBE_API_KEY, 10, language).then((d) => ({ youtube: d })));
-    if (platforms.includes("reddit")) crawlTasks.push(searchReddit(keyword, 8).then((d) => ({ reddit: d })));
-    if (platforms.includes("x")) crawlTasks.push(searchX(keyword).then((d) => ({ x: d })));
-    if (platforms.includes("news")) crawlTasks.push(searchNews(keyword).then((d) => ({ news: d })));
-    if (platforms.includes("instagram")) crawlTasks.push(searchInstagram(keyword).then((d) => ({ instagram: d })));
+    if (platforms.includes("youtube")) crawlTasks.push(searchYouTube(cleanKeyword, process.env.YOUTUBE_API_KEY, 10, language).then((d) => ({ youtube: d })));
+    if (platforms.includes("reddit")) crawlTasks.push(searchReddit(cleanKeyword, 8).then((d) => ({ reddit: d })));
+    if (platforms.includes("x")) crawlTasks.push(searchX(cleanKeyword).then((d) => ({ x: d })));
+    if (platforms.includes("news")) crawlTasks.push(searchNews(cleanKeyword).then((d) => ({ news: d })));
+    if (platforms.includes("instagram")) crawlTasks.push(searchInstagram(cleanKeyword).then((d) => ({ instagram: d })));
 
     const crawlResults = await Promise.allSettled(crawlTasks);
     const platformData = {};
     crawlResults.forEach((r) => { if (r.status === "fulfilled") Object.assign(platformData, r.value); });
 
     // Step 2: Extract top keywords from crawled data
-    const topKeywords = extractTopKeywords(platformData);
+    const topKeywords = extractTopKeywords(cleanKeyword, platformData);
 
     // Step 3: Sort videos by views
     if (platformData.youtube) {
@@ -34,14 +44,14 @@ export async function POST(request) {
     }
 
     // Step 4: Run AI research with platform data
-    const research = await runResearch(keyword, { location, language, platformData, depth });
+    const research = await runResearch(cleanKeyword, { location, language, platformData, depth });
 
     return NextResponse.json({
       research,
       platformData,
       topKeywords,
       meta: {
-        keyword, location, language, depth,
+        keyword: cleanKeyword, location, language, depth,
         platformsCrawled: Object.keys(platformData),
         fetchedAt: new Date().toISOString(),
       },
@@ -52,47 +62,96 @@ export async function POST(request) {
   }
 }
 
-function extractTopKeywords(platformData) {
+function extractTopKeywords(keyword, platformData) {
   const tagMap = {};
+  const queryTerms = getQueryTerms(keyword);
 
-  (platformData.youtube || []).forEach((video) => {
-    const views = video.metrics?.views || 0;
-    const tags = video.tags || [];
-    const titleWords = (video.title || "").toLowerCase()
-      .replace(/[^a-z0-9\s]/g, "").split(/\s+/)
-      .filter((w) => w.length > 3);
+  collectKeywordEntries(platformData).forEach((entry) => {
+    const haystack = `${entry.title} ${entry.description} ${(entry.tags || []).join(" ")}`.toLowerCase();
+    const hasTopicContext = queryTerms.length === 0 || queryTerms.some((term) => haystack.includes(term));
+    if (!hasTopicContext) return;
 
-    [...tags, ...titleWords].forEach((tag) => {
-      const key = tag.toLowerCase().trim();
-      if (!key || key.length < 3) return;
-      if (!tagMap[key]) tagMap[key] = { tag: key, totalViews: 0, videoCount: 0, fromTags: false };
-      tagMap[key].totalViews += views;
-      tagMap[key].videoCount += 1;
-      if (tags.includes(tag)) tagMap[key].fromTags = true;
-    });
-  });
+    const words = tokenize(haystack);
+    const tokens = new Set([...(entry.tags || []).map(normalizeToken), ...words]);
 
-  (platformData.reddit || []).forEach((post) => {
-    const score = post.metrics?.likes || 0;
-    const words = (post.title || "").toLowerCase()
-      .replace(/[^a-z0-9\s]/g, "").split(/\s+/)
-      .filter((w) => w.length > 3);
-    words.forEach((w) => {
-      if (!tagMap[w]) tagMap[w] = { tag: w, totalViews: 0, videoCount: 0, fromTags: false };
-      tagMap[w].totalViews += score * 10;
-      tagMap[w].videoCount += 1;
+    tokens.forEach((token) => {
+      if (!token || token.length < 3 || STOPWORDS.has(token)) return;
+      if (!tagMap[token]) tagMap[token] = { tag: token, totalViews: 0, videoCount: 0, fromTags: false, queryOverlap: 0 };
+      tagMap[token].totalViews += entry.weight;
+      tagMap[token].videoCount += 1;
+      if ((entry.tags || []).some((tag) => normalizeToken(tag) === token)) tagMap[token].fromTags = true;
+      if (queryTerms.includes(token)) tagMap[token].queryOverlap += 1;
     });
   });
 
   return Object.values(tagMap)
-    .filter((t) => t.videoCount >= 1)
-    .sort((a, b) => b.totalViews - a.totalViews)
+    .filter((tag) => tag.videoCount >= 1 && (!queryTerms.length || !queryTerms.includes(tag.tag)))
+    .sort((a, b) => {
+      if (b.queryOverlap !== a.queryOverlap) return b.queryOverlap - a.queryOverlap;
+      return b.totalViews - a.totalViews;
+    })
     .slice(0, 20)
     .map((t) => ({
       keyword: t.tag,
       totalViews: t.totalViews,
       appearsIn: t.videoCount,
       isOfficialTag: t.fromTags,
-      score: Math.min(100, Math.round(Math.log10(Math.max(t.totalViews, 1)) * 15)),
+      score: Math.min(100, Math.round(Math.log10(Math.max(t.totalViews, 1)) * 15) + t.queryOverlap * 10),
     }));
+}
+
+function collectKeywordEntries(platformData) {
+  return [
+    ...(platformData.youtube || []).map((video) => ({
+      title: video.title || "",
+      description: video.description || "",
+      tags: video.tags || [],
+      weight: Number(video.metrics?.views || 0) + Number(video.metrics?.likes || 0) * 20,
+    })),
+    ...(platformData.reddit || []).map((post) => ({
+      title: post.title || "",
+      description: post.description || post.subreddit || "",
+      tags: [],
+      weight: Number(post.metrics?.likes || 0) * 15 + Number(post.metrics?.comments || 0) * 10,
+    })),
+    ...(platformData.x || []).map((post) => ({
+      title: post.title || post.description || "",
+      description: post.description || "",
+      tags: extractHashtags(post.title || post.description || ""),
+      weight: Number(post.metrics?.likes || 0) * 20 + Number(post.metrics?.retweets || 0) * 25,
+    })),
+    ...(platformData.instagram || []).map((post) => ({
+      title: post.title || post.description || "",
+      description: post.description || "",
+      tags: extractHashtags(`${post.title || ""} ${post.description || ""}`),
+      weight: Number(post.metrics?.likes || 0) * 20 + Number(post.metrics?.comments || 0) * 25,
+    })),
+    ...(platformData.news || []).map((post) => ({
+      title: post.title || "",
+      description: post.description || post.author || "",
+      tags: [],
+      weight: 100,
+    })),
+  ];
+}
+
+function getQueryTerms(keyword) {
+  return tokenize(String(keyword || ""));
+}
+
+function tokenize(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s#]/g, " ")
+    .split(/\s+/)
+    .map(normalizeToken)
+    .filter((token) => token.length > 2 && !STOPWORDS.has(token));
+}
+
+function normalizeToken(token) {
+  return String(token || "").toLowerCase().replace(/^#/, "").trim();
+}
+
+function extractHashtags(text) {
+  return String(text || "").match(/#[a-z0-9_]+/gi) || [];
 }

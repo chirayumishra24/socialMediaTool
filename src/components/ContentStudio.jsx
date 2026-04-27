@@ -42,9 +42,18 @@ export default function ContentStudio({ researchContext, onClearContext }) {
     setLoading(true); setError(null); setResult(null); setBundleResult(null); setIsSaved(false);
     try {
       const researchSummary = researchContext?.research ? {
-        summary: researchContext.research.executiveSummary || "",
-        angles: researchContext.research.suggestedAngles || [],
-        hooks: researchContext.research.suggestedHooks || [],
+        summary: researchContext.research.executiveSummary
+          || researchContext.research.marketLandscape?.summary
+          || researchContext.research.strategyBlueprint?.concept
+          || "",
+        angles: researchContext.research.suggestedAngles?.length
+          ? researchContext.research.suggestedAngles
+          : researchContext.research.trendingAngles || [],
+        hooks: researchContext.research.suggestedHooks?.length
+          ? researchContext.research.suggestedHooks
+          : (researchContext.research.trendingAngles || []).map((angle) => angle.hookIdea).filter(Boolean),
+        recommendedStrategy: researchContext.research.recommendedStrategy || null,
+        evidence: (researchContext.research.sourceEvidence || []).slice(0, 4),
         topKeywords: (researchContext.topKeywords || []).slice(0, 10).map(k => k.keyword || k),
       } : null;
 
