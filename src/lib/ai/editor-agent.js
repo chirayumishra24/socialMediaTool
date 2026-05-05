@@ -9,7 +9,12 @@ export async function editContent(scriptOrOptions, options = {}) {
   const isObjectInput = typeof scriptOrOptions === "object" && scriptOrOptions !== null;
   const script = isObjectInput ? scriptOrOptions.script || "" : scriptOrOptions || "";
   const mergedOptions = isObjectInput ? { ...scriptOrOptions, ...options } : options;
-  const { format = "youtube_long", audience = "general" } = mergedOptions;
+  const { format = "youtube_long", audience = "general", research = null } = mergedOptions;
+  const researchContext = research ? `
+
+RESEARCH CONTEXT:
+${JSON.stringify(research, null, 2)}
+` : "";
 
   const prompt = `You are a ruthless content editor. Your edits have turned average scripts into viral hits.
 
@@ -19,6 +24,7 @@ ORIGINAL SCRIPT:
 """
 ${script}
 """
+${researchContext}
 
 YOUR EDITING PHILOSOPHY:
 - Every line must EARN its place. If it doesn't hook, inform, or move — rewrite or cut it.
@@ -28,6 +34,8 @@ YOUR EDITING PHILOSOPHY:
 - CTAs should feel like genuine invitations, not sales pitches.
 - Language should sound like a real human talking, not a corporate script.
 - Reference 2025-2026 developments where relevant to feel current.
+- Preserve the requested format. Do not convert the script into a different content type while editing.
+- Use the research context to sharpen specificity, optimize for platform behavior, and judge whether the idea is actually viral-worthy.
 
 Return this JSON:
 {
@@ -37,6 +45,12 @@ Return this JSON:
   "retentionLoops": ["list of specific retention triggers you added and where"],
   "ctaStrength": 0-100,
   "readabilityScore": 0-100,
+  "platformFit": 0-100,
+  "contentTypeMatch": 0-100,
+  "viralReadiness": 0-100,
+  "optimizationSummary": [
+    "specific optimization the editor made for this platform"
+  ],
   "changes": [
     { "type": "hook|retention|cta|clarity|flow|specificity|emotion", "description": "what was changed and WHY it's better" }
   ],

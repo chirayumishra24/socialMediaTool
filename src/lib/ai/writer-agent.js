@@ -60,6 +60,16 @@ const STYLES = {
   educational: "Teacher-like, clear, step-by-step. Use analogies, examples, and progressive complexity. Make complex simple.",
 };
 
+const PERFORMANCE_GOALS = {
+  youtube_long: "Maximize watch time, chapter-level retention, and comment-worthy takeaways.",
+  youtube_short: "Maximize stop rate, completion rate, and rewatches.",
+  instagram_reel: "Maximize saves, shares, and completion rate with visual-first pacing.",
+  instagram_carousel: "Maximize swipe-through rate, saves, and screenshots per slide.",
+  x_thread: "Maximize replies, reposts, and quote-worthy proof points.",
+  linkedin_post: "Maximize dwell time, thoughtful comments, and profile clicks.",
+  blog_article: "Maximize search intent match, time on page, and snippet-friendly clarity.",
+};
+
 export async function generateScript({
   keyword,
   format = "youtube_long",
@@ -72,6 +82,7 @@ export async function generateScript({
 } = {}) {
   const spec = FORMAT_SPECS[format] || FORMAT_SPECS.youtube_long;
   const styleDesc = STYLES[style] || STYLES.professional;
+  const performanceGoal = PERFORMANCE_GOALS[format] || PERFORMANCE_GOALS.youtube_long;
   const today = new Date().toISOString().split("T")[0];
 
   let researchContext = "";
@@ -82,11 +93,27 @@ export async function generateScript({
     if (research.hooks?.length) parts.push(`Hooks: ${research.hooks.map(h => typeof h === "string" ? h : h.hook || h.text || JSON.stringify(h)).join("; ")}`);
     if (research.recommendedStrategy?.bestAngle) parts.push(`Best Angle: ${research.recommendedStrategy.bestAngle}`);
     if (research.recommendedStrategy?.keyMessage) parts.push(`Key Message: ${research.recommendedStrategy.keyMessage}`);
+    if (research.recommendedStrategy?.bestFormat) parts.push(`Best Format: ${research.recommendedStrategy.bestFormat}`);
     if (research.evidence?.length) {
       parts.push(`Evidence: ${research.evidence.map((item) => {
         if (typeof item === "string") return item;
         return `[${item.platform || "source"}] ${item.title || "signal"} - ${item.whyItMatters || item.engagementHint || "relevant current signal"}`;
       }).join("; ")}`);
+    }
+    if (research.trendSignals?.length) {
+      parts.push(`Trend Signals: ${research.trendSignals.map((item) => {
+        if (typeof item === "string") return item;
+        return `${item.keyword || "trend"} (${item.traffic || "unknown"}): ${item.whyItMatters || "current timing signal"}`;
+      }).join("; ")}`);
+    }
+    if (research.winningPatterns?.length) {
+      parts.push(`Winning Patterns: ${research.winningPatterns.map((item) => {
+        if (typeof item === "string") return item;
+        return `${item.pattern || "pattern"} - ${item.whyItWorks || "works"} - Best for ${Array.isArray(item.bestFor) ? item.bestFor.join(", ") : "this format"}`;
+      }).join("; ")}`);
+    }
+    if (research.viralCheck?.score !== undefined) {
+      parts.push(`Viral Check: ${research.viralCheck.score}/100 (${research.viralCheck.verdict || "unknown"}) - ${research.viralCheck.reasoning || "No reasoning provided"}`);
     }
     if (research.topKeywords?.length) parts.push(`Trending Keywords: ${research.topKeywords.join(", ")}`);
     parts.push("═══════════════════════════════════════");
@@ -109,6 +136,7 @@ TONE: ${styleDesc}
 AUDIENCE: ${audience}
 LOCATION: ${location}
 LANGUAGE: ${language === "hi" ? "Hindi" : language === "hinglish" ? "Hinglish" : "English"}
+PERFORMANCE GOAL: ${performanceGoal}
 
 ${researchContext}
 ${brandCtx}
@@ -117,6 +145,14 @@ FORMAT STRUCTURE: ${spec.structure}
 FORMAT NOTES: ${spec.notes}
 
 ═══ QUALITY STANDARDS (NON-NEGOTIABLE) ═══
+
+0. FORMAT LOCK:
+   - Stay completely faithful to the requested format.
+   - Do NOT drift into another content type.
+   - If the format is a Reel or Short, write a tight spoken script with visual cues.
+   - If the format is a Carousel, write slide-by-slide copy only.
+   - If the format is a Thread, write tweet-by-tweet copy only.
+   - If the format is a Blog, write article sections only.
 
 1. HOOK: The first 2-3 lines must be IMPOSSIBLE to ignore. Use one of these proven patterns:
    - Shocking statistic: "97% of parents don't know this about..."
@@ -143,6 +179,15 @@ FORMAT NOTES: ${spec.notes}
 7. CTA: End with a specific, natural call-to-action that feels like a genuine invitation, not a sales pitch.
 
 8. 2026 CURRENCY: Reference at least 1-2 specific 2025-2026 developments, policies, tools, or cultural moments relevant to this topic.
+
+9. MIRROR WHAT IS WORKING:
+   - If research context includes winning patterns, trend signals, or a best angle, use them.
+   - The script should feel like the same TYPE of content that is already performing, while staying original in wording and examples.
+   - If viral readiness is weak, optimize for usefulness and credibility instead of fake hype.
+
+10. OPTIMIZE FOR THE PLATFORM:
+   - Every section should improve the stated performance goal.
+   - Prioritize saves/shares for Instagram, rewatches for Shorts, watch time for YouTube, replies for X, dwell time for LinkedIn, and search clarity for blogs.
 
 Write the COMPLETE script now. Every single line must earn its place. If a line doesn't hook, inform, or move — cut it.`;
 

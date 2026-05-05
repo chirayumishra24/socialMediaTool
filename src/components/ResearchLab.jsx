@@ -287,6 +287,11 @@ function ResearchResults({ research, platformData, topKeywords }) {
                   Viral {r.recommendedStrategy.estimatedViralPotential || 0}
                 </span>
               </div>
+              {r.viralCheck?.reasoning && (
+                <p className="text-xs text-txt-secondary leading-relaxed font-medium">
+                  {r.viralCheck.reasoning}
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -298,11 +303,56 @@ function ResearchResults({ research, platformData, topKeywords }) {
         </div>
       </div>
 
+      {r.viralCheck && (
+        <div className="rounded-[2.5rem] bg-white border border-border p-8 shadow-sm space-y-6">
+          <div className="flex items-center gap-3">
+            <Zap className="w-5 h-5 text-orange-500" />
+            <h4 className="text-xs font-black text-txt uppercase tracking-[0.2em]">Viral Readiness Check</h4>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-[0.8fr_1.2fr] gap-6">
+            <div className="rounded-[2rem] bg-orange-500/5 border border-orange-500/10 p-6 space-y-3">
+              <p className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em]">{r.viralCheck.verdict || "medium"}</p>
+              <p className="text-4xl font-black text-txt">{r.viralCheck.score || 0}</p>
+              <p className="text-sm text-txt-secondary leading-relaxed font-medium">{r.viralCheck.reasoning}</p>
+            </div>
+            <div className="space-y-4">
+              {(r.viralCheck.evidence || []).map((item, index) => (
+                <div key={`${item}-${index}`} className="p-4 rounded-2xl bg-bg-elevated/40 border border-border text-sm text-txt-secondary leading-relaxed font-medium">
+                  {item}
+                </div>
+              ))}
+              {r.viralCheck.caution && (
+                <div className="p-4 rounded-2xl bg-danger/5 border border-danger/10 text-sm text-txt-secondary leading-relaxed font-medium">
+                  {r.viralCheck.caution}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {r.sourceEvidence?.length > 0 && (
         <Section icon={Compass} label="Topic Evidence" color="text-primary">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {r.sourceEvidence.slice(0, 4).map((item, index) => (
               <EvidenceCard key={`${item.platform}-${index}`} item={item} />
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {r.trendSignals?.length > 0 && (
+        <Section icon={Zap} label="Trending Signals & Insights" color="text-orange-500">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {r.trendSignals.slice(0, 4).map((signal, index) => (
+              <div key={`${signal.keyword}-${index}`} className="p-6 rounded-[2rem] bg-white border border-border shadow-sm space-y-4">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em]">{signal.source}</span>
+                  <span className="text-[10px] font-bold text-txt-muted uppercase tracking-widest">{signal.traffic}</span>
+                </div>
+                <p className="text-base font-bold text-txt leading-snug">{signal.keyword}</p>
+                <p className="text-sm text-txt-secondary leading-relaxed font-medium">{signal.whyItMatters}</p>
+              </div>
             ))}
           </div>
         </Section>
@@ -316,6 +366,30 @@ function ResearchResults({ research, platformData, topKeywords }) {
             ))}
           </div>
         </Section>
+      )}
+
+      {r.winningPatterns?.length > 0 && (
+        <div className="rounded-[2.5rem] bg-bg-card border border-border p-8 shadow-sm space-y-6">
+          <div className="flex items-center gap-3">
+            <Repeat2 className="w-5 h-5 text-primary" />
+            <h4 className="text-xs font-black text-txt uppercase tracking-[0.2em]">Winning Content Patterns</h4>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {r.winningPatterns.slice(0, 4).map((pattern, index) => (
+              <div key={`${pattern.pattern}-${index}`} className="p-5 rounded-[1.8rem] bg-white border border-border space-y-3">
+                <p className="text-sm font-bold text-txt leading-snug">{pattern.pattern}</p>
+                <p className="text-sm text-txt-secondary leading-relaxed font-medium">{pattern.whyItWorks}</p>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {(pattern.bestFor || []).map((format) => (
+                    <span key={format} className="px-3 py-1 rounded-xl bg-primary/5 border border-primary/10 text-[10px] font-black uppercase tracking-widest text-primary">
+                      {format}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {topKeywords?.length > 0 && (

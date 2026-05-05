@@ -54,7 +54,6 @@ export default function App() {
           {activeTab === "studio" && (
             <ContentStudio
               researchContext={researchContext}
-              onClearContext={() => setResearchContext(null)}
             />
           )}
           {activeTab === "calendar" && <ContentCalendar />}

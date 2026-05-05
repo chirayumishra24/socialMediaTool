@@ -5,6 +5,7 @@ import { searchReddit } from "@/lib/crawlers/reddit";
 import { searchX } from "@/lib/crawlers/twitter";
 import { searchNews } from "@/lib/crawlers/news";
 import { searchInstagram } from "@/lib/crawlers/instagram";
+import { getTrends } from "@/lib/crawlers/trends";
 
 const STOPWORDS = new Set([
   "about", "after", "also", "amid", "among", "and", "are", "because", "been", "being",
@@ -30,6 +31,7 @@ export async function POST(request) {
     if (platforms.includes("x")) crawlTasks.push(searchX(cleanKeyword).then((d) => ({ x: d })));
     if (platforms.includes("news")) crawlTasks.push(searchNews(cleanKeyword).then((d) => ({ news: d })));
     if (platforms.includes("instagram")) crawlTasks.push(searchInstagram(cleanKeyword).then((d) => ({ instagram: d })));
+    crawlTasks.push(getTrends(cleanKeyword, location === "GLOBAL" ? "US" : location).then((d) => ({ trends: d })));
 
     const crawlResults = await Promise.allSettled(crawlTasks);
     const platformData = {};
@@ -132,6 +134,12 @@ function collectKeywordEntries(platformData) {
       tags: [],
       weight: 100,
     })),
+    ...((platformData.trends?.related || []).concat(platformData.trends?.trending || []).map((trend) => ({
+      title: trend.keyword || "",
+      description: trend.traffic || "",
+      tags: [],
+      weight: trend.isRelevant ? 500 : 150,
+    }))),
   ];
 }
 

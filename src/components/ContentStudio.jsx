@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { MonitorPlay, Smartphone, Clapperboard, Layers, Hash, Briefcase, BookOpen, PenTool, Sparkles, Bot, Tag, Edit3, Loader2, Copy, FileText, Globe, Flame, Wand2, X, Save, CheckCircle2, Eye } from "lucide-react";
+import { MonitorPlay, Smartphone, Clapperboard, Layers, Hash, Briefcase, BookOpen, PenTool, Sparkles, Bot, Tag, Edit3, Loader2, Copy, FileText, Globe, Flame, Wand2, X, Save, CheckCircle2 } from "lucide-react";
 import { saveContent } from "@/lib/storage";
 
 const FORMATS = [
@@ -16,7 +16,7 @@ const FORMATS = [
 
 const STYLES = ["professional", "casual", "hinglish", "story", "data", "provocative", "educational"];
 
-export default function ContentStudio({ researchContext, onClearContext }) {
+export default function ContentStudio({ researchContext }) {
   const [keyword, setKeyword] = useState("");
   const [audience, setAudience] = useState("");
   const [format, setFormat] = useState("youtube_long");
@@ -53,6 +53,9 @@ export default function ContentStudio({ researchContext, onClearContext }) {
           ? researchContext.research.suggestedHooks
           : (researchContext.research.trendingAngles || []).map((angle) => angle.hookIdea).filter(Boolean),
         recommendedStrategy: researchContext.research.recommendedStrategy || null,
+        viralCheck: researchContext.research.viralCheck || null,
+        winningPatterns: researchContext.research.winningPatterns || [],
+        trendSignals: researchContext.research.trendSignals || [],
         evidence: (researchContext.research.sourceEvidence || []).slice(0, 4),
         topKeywords: (researchContext.topKeywords || []).slice(0, 10).map(k => k.keyword || k),
       } : null;
@@ -160,6 +163,23 @@ export default function ContentStudio({ researchContext, onClearContext }) {
                 <Globe className="w-3.5 h-3.5" /> Research Context Loaded
               </h4>
               <p className="text-xs font-bold text-txt leading-relaxed">{researchContext.keyword}</p>
+              <div className="flex flex-wrap gap-2">
+                {researchContext.research?.recommendedStrategy?.bestFormat && (
+                  <span className="text-[9px] font-black text-primary px-2.5 py-1 rounded-lg bg-white/60 border border-primary/10 shadow-sm">
+                    {researchContext.research.recommendedStrategy.bestFormat}
+                  </span>
+                )}
+                {researchContext.research?.viralCheck?.score !== undefined && (
+                  <span className="text-[9px] font-black text-orange-600 px-2.5 py-1 rounded-lg bg-white/60 border border-orange-200 shadow-sm">
+                    Viral {researchContext.research.viralCheck.score}
+                  </span>
+                )}
+                {!!researchContext.research?.trendSignals?.length && (
+                  <span className="text-[9px] font-black text-accent-hover px-2.5 py-1 rounded-lg bg-white/60 border border-accent/10 shadow-sm">
+                    {researchContext.research.trendSignals.length} trend signals
+                  </span>
+                )}
+              </div>
               <div className="flex flex-wrap gap-2 pt-2 border-t border-primary/10">
                 {researchContext.topKeywords?.slice(0, 5).map((kw, i) => (
                   <span key={i} className="text-[9px] font-bold text-primary px-2.5 py-1 rounded-lg bg-white/50 border border-primary/10 shadow-sm">#{kw.keyword || kw}</span>
@@ -292,13 +312,37 @@ export default function ContentStudio({ researchContext, onClearContext }) {
                 {tab === "editing" && (
                   <div className="p-10 space-y-10">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                      {[["Hook", result.editing?.hookScore], ["CTA", result.editing?.ctaStrength], ["Readability", result.editing?.readabilityScore], ["Overall", result.editing?.overallScore]].map(([l, v]) => (
+                      {[["Hook", result.editing?.hookScore], ["Platform", result.editing?.platformFit], ["Format", result.editing?.contentTypeMatch], ["Overall", result.editing?.overallScore]].map(([l, v]) => (
                         <div key={l} className="p-6 rounded-[2rem] bg-bg-elevated/50 border border-border text-center group hover:bg-bg-card transition-all">
                           <p className={`text-4xl font-black transition-transform group-hover:scale-110 ${v >= 80 ? "text-success" : v >= 60 ? "text-warning" : "text-danger"}`}>{v || "—"}</p>
                           <p className="text-[10px] font-black text-txt-muted uppercase tracking-[0.15em] mt-3">{l}</p>
                         </div>
                       ))}
                     </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {[
+                        ["CTA", result.editing?.ctaStrength],
+                        ["Readability", result.editing?.readabilityScore],
+                        ["Viral Ready", result.editing?.viralReadiness],
+                      ].map(([label, value]) => (
+                        <div key={label} className="p-5 rounded-[1.5rem] bg-bg-elevated/30 border border-border/60">
+                          <p className="text-[10px] font-black text-txt-muted uppercase tracking-[0.15em]">{label}</p>
+                          <p className={`text-2xl font-black mt-3 ${value >= 80 ? "text-success" : value >= 60 ? "text-warning" : "text-danger"}`}>{value || "—"}</p>
+                        </div>
+                      ))}
+                    </div>
+                    {!!result.editing?.optimizationSummary?.length && (
+                      <div className="space-y-4">
+                        <h4 className="text-[11px] font-black text-txt uppercase tracking-[0.2em] border-b border-border pb-3">Optimization Summary</h4>
+                        <div className="grid grid-cols-1 gap-4">
+                          {result.editing.optimizationSummary.map((item, index) => (
+                            <div key={`${item}-${index}`} className="p-5 rounded-2xl bg-primary/5 border border-primary/10 text-sm text-txt-secondary leading-relaxed font-medium">
+                              {item}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <div className="space-y-6">
                       <h4 className="text-[11px] font-black text-txt uppercase tracking-[0.2em] border-b border-border pb-3">AI Editorial Audit</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

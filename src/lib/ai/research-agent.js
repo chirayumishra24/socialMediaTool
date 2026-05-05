@@ -1,6 +1,6 @@
 /**
  * SkilizeeAI — Research Agent (2026 Edition)
- * Deep topic R&D focused on CURRENT 2026 trends, news, and signals.
+ * Deep topic R&D focused on current trends, live signals, and viral fit.
  */
 
 import { generateJSON } from "./ai-client";
@@ -14,18 +14,27 @@ const STOPWORDS = new Set([
   "while", "with", "would", "year", "your", "2025", "2026",
 ]);
 
+const FORMAT_HINTS = {
+  youtube: "youtube_long",
+  instagram: "instagram_reel",
+  x: "x_thread",
+  reddit: "linkedin_post",
+  news: "blog_article",
+};
+
 export async function runResearch(keyword, { location = "IN", language = "en", platformData = {}, depth = "deep" } = {}) {
   const cleanedKeyword = normalizeKeyword(keyword);
   const today = new Date().toISOString().split("T")[0];
   const topicSnapshot = buildTopicSnapshot(cleanedKeyword, platformData);
   const evidenceSummary = formatEvidenceForPrompt(topicSnapshot.sourceEvidence);
+  const trendSummary = formatTrendSignalsForPrompt(topicSnapshot.trendSignals);
 
-  const prompt = `You are an elite Content Intelligence Analyst operating in April 2026.
+  const prompt = `You are an elite Content Intelligence Analyst operating on ${today}.
 
 CRITICAL: Today's date is ${today}. ALL analysis must reflect the CURRENT 2026 landscape.
 - Reference only 2025-2026 data, trends, algorithm changes, and cultural shifts.
 - Do NOT reference outdated 2023-2024 trends as if they are current.
-- Mention specific recent events, policy changes, or viral moments from early-to-mid 2026.
+- Mention specific recent events, policy changes, viral moments, and audience behaviors from 2025-2026 where relevant.
 
 TASK: Conduct a ${depth.toUpperCase()}-level research analysis for the EXACT searched topic: "${cleanedKeyword}"
 
@@ -34,9 +43,10 @@ NON-NEGOTIABLE RELEVANCE RULES:
 - Every section must explain why the insight matters for this searched topic specifically.
 - If live crawl evidence is thin or noisy, say that clearly instead of hallucinating confidence.
 - Use the live crawl evidence first. Only use background knowledge to extend or interpret what the evidence suggests.
+- Do not label an idea "viral" unless the evidence genuinely supports that claim.
 
 STEP 0: VAGUE CHECK
-If the keyword is too broad (e.g., "AI", "Marketing"), return ONLY:
+If the keyword is too broad (e.g. "AI", "Marketing"), return ONLY:
 { "isVague": true, "message": "Too broad for precise strategy.", "suggestions": ["specific version 1", "specific version 2", "specific version 3"] }
 
 STEP 1: FULL ANALYSIS (if not vague)
@@ -51,6 +61,9 @@ ${formatTopicSnapshotForPrompt(topicSnapshot)}
 
 REAL-TIME TOPIC EVIDENCE (crawled just now):
 ${evidenceSummary || "No strong live evidence found. Be explicit about low evidence confidence and keep the analysis tightly scoped to the searched topic."}
+
+TREND SIGNALS:
+${trendSummary || "No strong trend signals were found. If virality is weak, say so clearly."}
 
 Return this JSON structure:
 {
@@ -78,6 +91,14 @@ Return this JSON structure:
       "whyItMatters": "how it directly connects to the searched topic"
     }
   ],
+  "trendSignals": [
+    {
+      "keyword": "trend or related query",
+      "traffic": "trend magnitude or signal strength",
+      "source": "google_trends|crawl_pattern|news_cycle",
+      "whyItMatters": "how this signal helps the topic right now"
+    }
+  ],
   "marketLandscape": {
     "saturationLevel": "low|medium|high|oversaturated",
     "saturationScore": 0-100,
@@ -100,14 +121,22 @@ Return this JSON structure:
       "estimatedDemand": "high|medium|low"
     }
   ],
+  "winningPatterns": [
+    {
+      "pattern": "the specific content mechanic that keeps showing up",
+      "whyItWorks": "why audiences respond to it in 2026",
+      "bestFor": ["youtube_short", "instagram_reel"]
+    }
+  ],
   "trendingAngles": [
     {
       "angle": "specific 2026-relevant angle title",
       "description": "why this is trending NOW",
       "platforms": ["youtube", "instagram", "x"],
       "viralPotential": 0-100,
-      "suggestedFormat": "youtube_long|youtube_short|reel|carousel|thread|blog",
-      "hookIdea": "compelling hook idea"
+      "suggestedFormat": "youtube_long|youtube_short|instagram_reel|instagram_carousel|x_thread|linkedin_post|blog_article",
+      "hookIdea": "compelling hook idea",
+      "viralityReason": "the concrete signal behind the score"
     }
   ],
   "suggestedAngles": ["3-5 sharp angle titles that stay on-topic"],
@@ -118,9 +147,16 @@ Return this JSON structure:
     "modernApproach": "Why this works specifically in the current 2026 algorithm + cultural landscape",
     "recommendedTools": ["Tool 1", "Tool 2"]
   },
+  "viralCheck": {
+    "score": 0-100,
+    "verdict": "high|medium|low",
+    "reasoning": "why this topic or angle is or is not likely to travel",
+    "evidence": ["cross-platform proof for the score"],
+    "caution": "what could stop this from becoming a breakout hit"
+  },
   "recommendedStrategy": {
     "bestPlatform": "youtube|instagram|x|linkedin|blog",
-    "bestFormat": "format name",
+    "bestFormat": "youtube_long|youtube_short|instagram_reel|instagram_carousel|x_thread|linkedin_post|blog_article",
     "bestAngle": "the single strongest angle for 2026",
     "estimatedViralPotential": 0-100,
     "keyMessage": "core message in 1 sentence"
@@ -146,14 +182,19 @@ function normalizeResearch(keyword, raw, topicSnapshot) {
     };
   }
 
+  const trendSignals = Array.isArray(raw?.trendSignals) && raw.trendSignals.length
+    ? raw.trendSignals.slice(0, 5).map((item, index) => normalizeTrendSignal(item, topicSnapshot.trendSignals[index]))
+    : topicSnapshot.trendSignals;
+
   const trendingAngles = Array.isArray(raw?.trendingAngles) ? raw.trendingAngles.filter(Boolean) : [];
   const fallbackAngles = topicSnapshot.sourceEvidence.slice(0, 3).map((item) => ({
     angle: item.title,
     description: item.whyItMatters,
     platforms: [item.platform],
     viralPotential: Math.max(55, item.relevanceScore),
-    suggestedFormat: "youtube_short",
+    suggestedFormat: FORMAT_HINTS[item.platform] || "youtube_short",
     hookIdea: `Why is everyone suddenly talking about ${keyword}?`,
+    viralityReason: item.engagementHint,
   }));
   const finalAngles = trendingAngles.length ? trendingAngles : fallbackAngles;
 
@@ -175,6 +216,12 @@ function normalizeResearch(keyword, raw, topicSnapshot) {
     100
   );
 
+  const winningPatterns = Array.isArray(raw?.winningPatterns) && raw.winningPatterns.length
+    ? raw.winningPatterns.slice(0, 4).map(normalizeWinningPattern)
+    : buildWinningPatterns(topicSnapshot, finalAngles);
+
+  const viralCheck = normalizeViralCheck(raw?.viralCheck, topicSnapshot, finalAngles, trendSignals, keyword);
+
   return {
     keyword,
     isVague: false,
@@ -192,11 +239,12 @@ function normalizeResearch(keyword, raw, topicSnapshot) {
       offTopicRisks: Array.isArray(raw?.relevanceCheck?.offTopicRisks) ? raw.relevanceCheck.offTopicRisks : [],
     },
     sourceEvidence,
+    trendSignals,
     marketLandscape: {
       saturationLevel: raw?.marketLandscape?.saturationLevel || "medium",
       saturationScore: clampNumber(raw?.marketLandscape?.saturationScore ?? 60, 0, 100),
       totalEstimatedContent: raw?.marketLandscape?.totalEstimatedContent || "Signal still emerging",
-      growthTrend: raw?.marketLandscape?.growthTrend || "rising",
+      growthTrend: raw?.marketLandscape?.growthTrend || inferGrowthTrend(topicSnapshot, trendSignals),
       summary: raw?.marketLandscape?.summary || topicSnapshot.relevanceSummary,
     },
     audienceSentiment: {
@@ -216,7 +264,8 @@ function normalizeResearch(keyword, raw, topicSnapshot) {
       difficulty: "medium",
       estimatedDemand: "medium",
     }, 4),
-    trendingAngles: finalAngles.slice(0, 5),
+    winningPatterns,
+    trendingAngles: finalAngles.slice(0, 5).map((angle) => normalizeAngle(angle, keyword)),
     suggestedAngles,
     suggestedHooks,
     strategyBlueprint: {
@@ -229,11 +278,16 @@ function normalizeResearch(keyword, raw, topicSnapshot) {
       modernApproach: raw?.strategyBlueprint?.modernApproach || "Current audiences reward specific, evidence-backed takes over generic explainers.",
       recommendedTools: ensureArray(raw?.strategyBlueprint?.recommendedTools, ["Google Trends", "YouTube", "Reddit"], 5),
     },
+    viralCheck,
     recommendedStrategy: {
       bestPlatform: raw?.recommendedStrategy?.bestPlatform || inferBestPlatform(sourceEvidence),
-      bestFormat: raw?.recommendedStrategy?.bestFormat || "youtube_short",
+      bestFormat: raw?.recommendedStrategy?.bestFormat || inferBestFormat(sourceEvidence),
       bestAngle: raw?.recommendedStrategy?.bestAngle || suggestedAngles[0] || `What changed recently around ${keyword}`,
-      estimatedViralPotential: clampNumber(raw?.recommendedStrategy?.estimatedViralPotential ?? 68, 0, 100),
+      estimatedViralPotential: clampNumber(
+        raw?.recommendedStrategy?.estimatedViralPotential ?? viralCheck.score,
+        0,
+        100
+      ),
       keyMessage: raw?.recommendedStrategy?.keyMessage || `Be precise: explain what is happening with ${keyword}, why it matters now, and what people should do next.`,
     },
   };
@@ -272,6 +326,7 @@ function buildTopicSnapshot(keyword, platformData) {
       whyItMatters: buildWhyItMatters(entry, keyword, queryTerms),
       url: entry.url,
       relevanceScore: entry.relevanceScore,
+      signalStrength: entry.signalStrength || 0,
     }));
 
   const platformCounts = sourceEvidence.reduce((acc, item) => {
@@ -280,6 +335,7 @@ function buildTopicSnapshot(keyword, platformData) {
   }, {});
 
   const strongMatchCount = entries.filter((entry) => entry.relevanceScore >= 60).length;
+  const trendSignals = buildTrendSignals(keyword, platformData, sourceEvidence);
   const relevanceSummary = sourceEvidence.length
     ? `Live crawl found ${sourceEvidence.length} strong signals tied to "${keyword}" across ${Object.keys(platformCounts).join(", ")}.`
     : `Live crawl returned limited direct signals for "${keyword}", so confidence should stay moderate until stronger topic-matched evidence appears.`;
@@ -288,6 +344,7 @@ function buildTopicSnapshot(keyword, platformData) {
     keyword,
     queryTerms,
     sourceEvidence,
+    trendSignals,
     strongMatchCount,
     totalSignals: entries.length,
     platformCounts,
@@ -305,6 +362,7 @@ function formatTopicSnapshotForPrompt(snapshot) {
     `- Strong topic matches: ${snapshot.strongMatchCount}`,
     `- Total crawled signals considered: ${snapshot.totalSignals}`,
     `- Platform coverage: ${platformLine || "none"}`,
+    `- Trend signals available: ${snapshot.trendSignals.length}`,
     `- Relevance summary: ${snapshot.relevanceSummary}`,
   ].join("\n");
 }
@@ -312,6 +370,12 @@ function formatTopicSnapshotForPrompt(snapshot) {
 function formatEvidenceForPrompt(evidence) {
   return evidence.map((item) =>
     `- [${item.platform.toUpperCase()}] "${item.title}" | ${item.engagementHint} | ${item.publishedAt} | Why it matters: ${item.whyItMatters}`
+  ).join("\n");
+}
+
+function formatTrendSignalsForPrompt(trendSignals) {
+  return trendSignals.map((item) =>
+    `- [${item.source}] ${item.keyword} | ${item.traffic} | Why it matters: ${item.whyItMatters}`
   ).join("\n");
 }
 
@@ -363,6 +427,33 @@ function collectEntries(platformData) {
       metrics: item.metrics || {},
     })),
   ].filter((entry) => entry.title);
+}
+
+function buildTrendSignals(keyword, platformData, sourceEvidence) {
+  const trendEntries = Array.isArray(platformData.trends?.related) && platformData.trends.related.length
+    ? platformData.trends.related
+    : platformData.trends?.trending || [];
+
+  const normalized = trendEntries
+    .filter((item) => item?.keyword)
+    .slice(0, 5)
+    .map((item) => ({
+      keyword: item.keyword,
+      traffic: item.traffic || "Unknown",
+      source: "google_trends",
+      whyItMatters: item.isRelevant
+        ? `This trend directly overlaps with the searched topic and suggests live demand around ${keyword}.`
+        : `This broader trend provides adjacent context that can sharpen the angle around ${keyword}.`,
+    }));
+
+  if (normalized.length) return normalized;
+
+  return sourceEvidence.slice(0, 3).map((item) => ({
+    keyword: item.title,
+    traffic: item.engagementHint,
+    source: "crawl_pattern",
+    whyItMatters: item.whyItMatters,
+  }));
 }
 
 function scoreEntry(entry, keyword, queryTerms) {
@@ -422,7 +513,7 @@ function normalizeSuggestions(suggestions, keyword) {
 
 function buildExecutiveSummary(keyword, raw, topicSnapshot) {
   const bestAngle = raw?.recommendedStrategy?.bestAngle || raw?.strategyBlueprint?.concept || keyword;
-  const trend = raw?.marketLandscape?.growthTrend || "rising";
+  const trend = raw?.marketLandscape?.growthTrend || inferGrowthTrend(topicSnapshot, topicSnapshot.trendSignals);
   return `${bestAngle} is the clearest opening around "${keyword}" right now. The live crawl suggests ${trend} attention, with the strongest signals coming from ${Object.keys(topicSnapshot.platformCounts).join(", ") || "current platform chatter"}. The opportunity is to publish something more precise and evidence-backed than the generic content already in market.`;
 }
 
@@ -448,6 +539,89 @@ function normalizeEvidenceItem(item, fallback) {
   };
 }
 
+function normalizeTrendSignal(item, fallback) {
+  return {
+    keyword: item?.keyword || fallback?.keyword || "Related trend",
+    traffic: item?.traffic || fallback?.traffic || "Unknown",
+    source: item?.source || fallback?.source || "google_trends",
+    whyItMatters: item?.whyItMatters || fallback?.whyItMatters || "This signal helps explain current attention around the topic.",
+  };
+}
+
+function normalizeWinningPattern(item) {
+  return {
+    pattern: item?.pattern || "specific proof-led hook",
+    whyItWorks: item?.whyItWorks || "It gives audiences a reason to stop, stay, and share.",
+    bestFor: Array.isArray(item?.bestFor) && item.bestFor.length ? item.bestFor.slice(0, 3) : ["youtube_short", "instagram_reel"],
+  };
+}
+
+function normalizeAngle(angle, keyword) {
+  return {
+    angle: angle?.angle || `What changed around ${keyword}`,
+    description: angle?.description || `This angle keeps the conversation tightly tied to ${keyword}.`,
+    platforms: Array.isArray(angle?.platforms) && angle.platforms.length ? angle.platforms.slice(0, 3) : ["youtube"],
+    viralPotential: clampNumber(angle?.viralPotential ?? 62, 0, 100),
+    suggestedFormat: angle?.suggestedFormat || "youtube_short",
+    hookIdea: angle?.hookIdea || `What changed around ${keyword} and why is everyone noticing it now?`,
+    viralityReason: angle?.viralityReason || "Cross-platform signal strength and current audience interest support this angle.",
+  };
+}
+
+function normalizeViralCheck(rawCheck, topicSnapshot, angles, trendSignals, keyword) {
+  const derived = deriveViralCheck(topicSnapshot, angles, trendSignals);
+  const score = clampNumber(rawCheck?.score ?? derived.score, 0, 100);
+
+  return {
+    score,
+    verdict: rawCheck?.verdict || deriveViralVerdict(score),
+    reasoning: rawCheck?.reasoning || derived.reasoning,
+    evidence: ensureArray(rawCheck?.evidence, derived.evidence, 4),
+    caution: rawCheck?.caution || `If the content drifts away from ${keyword} into generic commentary, it will likely lose momentum.`,
+  };
+}
+
+function buildWinningPatterns(topicSnapshot, angles) {
+  const patterns = [];
+  const topPlatforms = Object.entries(topicSnapshot.platformCounts)
+    .sort((a, b) => b[1] - a[1])
+    .map(([platform]) => platform);
+
+  if (topPlatforms.includes("youtube")) {
+    patterns.push({
+      pattern: "proof-first explainer with a strong opening claim",
+      whyItWorks: "YouTube signals reward specificity, watch time, and a clear promise early.",
+      bestFor: ["youtube_long", "youtube_short"],
+    });
+  }
+
+  if (topPlatforms.includes("instagram")) {
+    patterns.push({
+      pattern: "save-worthy framework with a punchy visual hook",
+      whyItWorks: "Instagram reach is stronger when people save or share a concise, useful takeaway.",
+      bestFor: ["instagram_reel", "instagram_carousel"],
+    });
+  }
+
+  if (topPlatforms.includes("x")) {
+    patterns.push({
+      pattern: "strong claim followed by rapid-fire proof points",
+      whyItWorks: "X conversations travel when the first line creates debate and the follow-up earns replies.",
+      bestFor: ["x_thread", "linkedin_post"],
+    });
+  }
+
+  if (!patterns.length) {
+    patterns.push({
+      pattern: "topic-specific hook plus one hard proof point",
+      whyItWorks: "Specificity beats broad commentary in almost every content feed.",
+      bestFor: [angles[0]?.suggestedFormat || "youtube_short"],
+    });
+  }
+
+  return patterns.slice(0, 4);
+}
+
 function deriveRelevanceScore(topicSnapshot) {
   if (!topicSnapshot.sourceEvidence.length) return 42;
   const total = topicSnapshot.sourceEvidence.reduce((sum, item) => sum + Number(item.relevanceScore || 0), 0);
@@ -460,6 +634,57 @@ function deriveVerdict(score) {
   return "low_fit";
 }
 
+function deriveViralCheck(topicSnapshot, angles, trendSignals) {
+  const relevance = deriveRelevanceScore(topicSnapshot);
+  const platformSpread = Math.min(Object.keys(topicSnapshot.platformCounts).length * 22, 100);
+  const evidenceDensity = Math.min(topicSnapshot.sourceEvidence.length * 15, 100);
+  const angleStrength = clampNumber(
+    Math.max(...angles.map((angle) => Number(angle?.viralPotential || 0)), 52),
+    0,
+    100
+  );
+  const trendAlignment = Math.min(trendSignals.length * 20, 100);
+
+  const score = Math.round(
+    relevance * 0.35 +
+    platformSpread * 0.15 +
+    evidenceDensity * 0.15 +
+    angleStrength * 0.2 +
+    trendAlignment * 0.15
+  );
+
+  const evidence = [
+    `${topicSnapshot.sourceEvidence.length} direct topic-matched signals were found in the live crawl.`,
+    `${Object.keys(topicSnapshot.platformCounts).length || 1} platform(s) show current momentum around the topic.`,
+  ];
+
+  if (trendSignals.length) {
+    evidence.push(`${trendSignals.length} trend signal(s) reinforce the timing of this topic.`);
+  }
+
+  return {
+    score,
+    evidence,
+    reasoning: score >= 78
+      ? "The topic shows enough cross-platform proof, timely signals, and clear angle strength to justify a high viral-readiness score."
+      : score >= 58
+        ? "There is real interest here, but the content will only travel if the angle stays sharp and the proof stays strong."
+        : "The topic may still be useful, but the evidence does not support calling it highly viral yet.",
+  };
+}
+
+function deriveViralVerdict(score) {
+  if (score >= 78) return "high";
+  if (score >= 58) return "medium";
+  return "low";
+}
+
+function inferGrowthTrend(topicSnapshot, trendSignals) {
+  if (trendSignals.length >= 3 && topicSnapshot.sourceEvidence.length >= 3) return "rising";
+  if (topicSnapshot.sourceEvidence.length >= 2) return "stable";
+  return "declining";
+}
+
 function inferBestPlatform(sourceEvidence) {
   const counts = sourceEvidence.reduce((acc, item) => {
     acc[item.platform] = (acc[item.platform] || 0) + 1;
@@ -467,6 +692,11 @@ function inferBestPlatform(sourceEvidence) {
   }, {});
 
   return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] || "youtube";
+}
+
+function inferBestFormat(sourceEvidence) {
+  const bestPlatform = inferBestPlatform(sourceEvidence);
+  return FORMAT_HINTS[bestPlatform] || "youtube_short";
 }
 
 function clampNumber(value, min, max) {

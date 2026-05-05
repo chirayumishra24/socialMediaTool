@@ -16,10 +16,22 @@ export async function POST(req) {
     }
 
     if (bundle) {
-      const scripts = await generateBundle({
+      const rawScripts = await generateBundle({
         keyword, style, audience, research, location, brandVoice,
         formats: bundleFormats
       });
+      const optimizedScripts = await Promise.all(
+        Object.entries(rawScripts).map(async ([bundleFormat, rawScript]) => {
+          const editing = await editContent({
+            script: rawScript,
+            format: bundleFormat,
+            audience,
+            research,
+          });
+          return [bundleFormat, editing?.editedScript || rawScript];
+        })
+      );
+      const scripts = Object.fromEntries(optimizedScripts);
 
       return NextResponse.json({
         bundle: true,
@@ -40,7 +52,7 @@ export async function POST(req) {
     const seo = await generateSEO({ keyword, format, script, location });
 
     // 3. Editorial Review
-    const editing = await editContent({ script, format, audience });
+    const editing = await editContent({ script, format, audience, research });
 
     const finalScript = editing?.editedScript || script;
 
