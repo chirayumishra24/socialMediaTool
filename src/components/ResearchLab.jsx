@@ -11,6 +11,16 @@ const PLATFORMS_LIST = [
   { id: "news", label: "News", icon: Newspaper },
 ];
 
+const SOURCE_TARGETS = [
+  { id: "youtube_long", label: "YouTube Long", icon: MonitorPlay, platform: "youtube" },
+  { id: "youtube_short", label: "YouTube Shorts", icon: Play, platform: "youtube" },
+  { id: "instagram_reel", label: "IG Reels", icon: Camera, platform: "instagram" },
+  { id: "instagram_post", label: "IG Posts", icon: Camera, platform: "instagram" },
+  { id: "x", label: "X / Twitter", icon: Hash, platform: "x" },
+  { id: "reddit", label: "Reddit", icon: MessageSquare, platform: "reddit" },
+  { id: "news", label: "News", icon: Newspaper, platform: "news" },
+];
+
 const DEPTHS = [
   { id: "quick", label: "Quick Scan", desc: "~30s — basic overview", icon: Zap },
   { id: "standard", label: "Standard", desc: "~60s — balanced analysis", icon: BarChart2 },
@@ -28,23 +38,39 @@ export default function ResearchLab({ onResearchComplete, onGoToStudio, initialK
   const [keyword, setKeyword] = useState(initialKeyword || "");
   useEffect(() => { if (initialKeyword) setKeyword(initialKeyword); }, [initialKeyword]);
 
-  const [platforms, setPlatforms] = useState(["youtube", "instagram", "x", "reddit", "news"]);
-  const [depth, setDepth] = useState("deep");
+  const [sourceMode, setSourceMode] = useState("all");
+  const [platformTargets, setPlatformTargets] = useState([]);
+  const [depth, setDepth] = useState("standard");
   const [location, setLocation] = useState("IN");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [platformData, setPlatformData] = useState(null);
   const [topKeywords, setTopKeywords] = useState(null);
   const [error, setError] = useState(null);
+  const activePlatforms = sourceMode === "all"
+    ? PLATFORMS_LIST.map((platform) => platform.id)
+    : derivePlatformsFromTargets(platformTargets);
 
   const handleResearch = useCallback(async () => {
     if (!keyword.trim()) return;
+    if (sourceMode === "custom" && platformTargets.length === 0) {
+      setError("Select at least one source before running R&D.");
+      return;
+    }
     setLoading(true); setError(null); setResult(null); setPlatformData(null); setTopKeywords(null);
     try {
+      const requestedPlatforms = sourceMode === "all" ? PLATFORMS_LIST.map((platform) => platform.id) : derivePlatformsFromTargets(platformTargets);
       const res = await fetch("/api/research", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ keyword, platforms, location, depth, language: "en" }),
+        body: JSON.stringify({
+          keyword,
+          platforms: requestedPlatforms,
+          platformTargets: sourceMode === "all" ? [] : platformTargets,
+          location,
+          depth,
+          language: "en",
+        }),
       });
       if (!res.ok) { const e = await res.json(); throw new Error(e.error || "Research failed"); }
       const data = await res.json();
@@ -55,18 +81,35 @@ export default function ResearchLab({ onResearchComplete, onGoToStudio, initialK
       let savedResearch = null;
       try {
         const { saveResearch } = require("@/lib/storage");
-        savedResearch = saveResearch({ keyword, research: data.research, platformData: data.platformData, topKeywords: data.topKeywords || [], location, depth });
+        savedResearch = saveResearch({
+          keyword,
+          research: data.research,
+          platformData: data.platformData,
+          topKeywords: data.topKeywords || [],
+          location,
+          depth,
+          sourceMode,
+          platformTargets,
+        });
       } catch {}
 
       onResearchComplete?.({
         id: savedResearch?.id, keyword,
         research: data.research, platformData: data.platformData,
-        topKeywords: data.topKeywords || [], location, depth,
+        topKeywords: data.topKeywords || [], location, depth, sourceMode, platformTargets,
         researchedAt: new Date().toISOString(),
       });
     } catch (e) { setError(e.message); }
     finally { setLoading(false); }
-  }, [depth, keyword, location, onResearchComplete, platforms]);
+  }, [depth, keyword, location, onResearchComplete, platformTargets, sourceMode]);
+
+  const toggleTarget = (targetId) => {
+    setPlatformTargets((current) => (
+      current.includes(targetId)
+        ? current.filter((item) => item !== targetId)
+        : [...current, targetId]
+    ));
+  };
 
   return (
     <div className="p-6 lg:p-10 max-w-7xl mx-auto space-y-8 animate-fade-in">
@@ -116,6 +159,39 @@ export default function ResearchLab({ onResearchComplete, onGoToStudio, initialK
               </div>
             </Field>
 
+            <Field label="Source Scope">
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { id: "all", label: "All Platforms" },
+                    { id: "custom", label: "Specific Sources" },
+                  ].map((option) => (
+                    <button
+                      key={option.id}
+                      onClick={() => setSourceMode(option.id)}
+                      className={`px-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-wider border-2 transition-all cursor-pointer ${sourceMode === option.id ? "bg-primary/10 text-primary border-primary" : "bg-bg-elevated border-border text-txt-muted hover:text-txt"}`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+
+                {sourceMode === "custom" && (
+                  <div className="grid grid-cols-2 gap-2">
+                    {SOURCE_TARGETS.map((target) => (
+                      <button
+                        key={target.id}
+                        onClick={() => toggleTarget(target.id)}
+                        className={`px-3 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-all cursor-pointer flex items-center justify-center gap-2 ${platformTargets.includes(target.id) ? "bg-accent/10 border-accent/25 text-accent-hover" : "bg-bg-elevated border-border text-txt-muted hover:text-txt hover:border-primary/20"}`}
+                      >
+                        <target.icon className="w-3.5 h-3.5" /> {target.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Field>
+
             <button onClick={handleResearch} disabled={loading || !keyword.trim()}
               className={`w-full py-4 rounded-[2rem] text-sm font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 ${loading ? "bg-primary/20 text-primary-hover cursor-wait" : "grad-primary text-white cursor-pointer shadow-xl shadow-primary/20 hover:scale-[0.98] active:scale-95"}`}>
               {loading ? <><Loader2 className="w-5 h-5 animate-spin" /> Crawling 2026 Signals...</> : <><Sparkles className="w-5 h-5" /> Run Research</>}
@@ -128,11 +204,20 @@ export default function ResearchLab({ onResearchComplete, onGoToStudio, initialK
             </h4>
             <div className="flex flex-wrap gap-2">
               {PLATFORMS_LIST.map(p => (
-                <div key={p.id} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border flex items-center gap-2 ${platforms.includes(p.id) ? "bg-white border-accent/20 text-accent" : "opacity-30 border-border grayscale"}`}>
+                <div key={p.id} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border flex items-center gap-2 ${activePlatforms.includes(p.id) ? "bg-white border-accent/20 text-accent" : "opacity-30 border-border grayscale"}`}>
                   <p.icon className="w-3 h-3" /> {p.label}
                 </div>
               ))}
             </div>
+            {sourceMode === "custom" && platformTargets.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-2 border-t border-accent/10">
+                {SOURCE_TARGETS.filter((target) => platformTargets.includes(target.id)).map((target) => (
+                  <span key={target.id} className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-white border border-accent/20 text-accent-hover">
+                    {target.label}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -153,7 +238,7 @@ export default function ResearchLab({ onResearchComplete, onGoToStudio, initialK
               <div className="w-24 h-24 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto mb-8 ring-8 ring-primary/5 animate-bounce"><Search className="w-10 h-10" /></div>
               <h3 className="text-2xl font-bold text-txt mb-8 tracking-tight">Crawling 2026 Signals...</h3>
               <div className="space-y-4 w-80 mx-auto">
-                {platforms.map((p, i) => (
+                {activePlatforms.map((p, i) => (
                   <div key={p} className="flex items-center justify-between text-[11px] font-black text-txt-muted uppercase tracking-wider">
                     <span>{PLATFORMS_LIST.find(pl => pl.id === p)?.label} Agent</span>
                     <div className="w-2 h-2 rounded-full bg-primary animate-ping" style={{ animationDelay: `${i * 0.2}s` }} />
@@ -171,7 +256,14 @@ export default function ResearchLab({ onResearchComplete, onGoToStudio, initialK
                   onUseSuggestion={(suggestion) => setKeyword(suggestion)}
                 />
               ) : (
-                <ResearchResults research={result} platformData={platformData} topKeywords={topKeywords} />
+                <ResearchResults
+                  research={result}
+                  platformData={platformData}
+                  topKeywords={topKeywords}
+                  sourceMode={sourceMode}
+                  platformTargets={platformTargets}
+                  onUseSuggestion={(suggestion) => setKeyword(suggestion)}
+                />
               )}
 
               {!result.isVague && (
@@ -194,7 +286,7 @@ export default function ResearchLab({ onResearchComplete, onGoToStudio, initialK
   );
 }
 
-function ResearchResults({ research, platformData, topKeywords }) {
+function ResearchResults({ research, platformData, topKeywords, sourceMode, platformTargets, onUseSuggestion }) {
   const r = research;
   const ytVideos = (platformData?.youtube || []).sort((a, b) => (b.metrics?.views || 0) - (a.metrics?.views || 0));
   const igPosts = (platformData?.instagram || []).sort((a, b) => (b.metrics?.likes || 0) - (a.metrics?.likes || 0));
@@ -202,6 +294,23 @@ function ResearchResults({ research, platformData, topKeywords }) {
   const featuredIgPosts = igVideoPosts.length > 0 ? igVideoPosts : igPosts;
   const xPosts = (platformData?.x || []).sort((a, b) => (b.metrics?.likes || 0) - (a.metrics?.likes || 0));
   const newsPosts = (platformData?.news || []).sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+  const selectedTargets = sourceMode === "custom"
+    ? SOURCE_TARGETS.filter((target) => platformTargets.includes(target.id))
+    : [];
+  const selectedTargetIds = selectedTargets.map((target) => target.id);
+  const youtubeLabel = selectedTargetIds.includes("youtube_short")
+    ? "YouTube Shorts"
+    : selectedTargetIds.includes("youtube_long")
+      ? "YouTube Long"
+      : "YouTube Videos";
+  const instagramLabel = selectedTargetIds.includes("instagram_post")
+    ? "Instagram Posts"
+    : selectedTargetIds.includes("instagram_reel")
+      ? "Instagram Reels"
+      : "Instagram Links";
+  const summaryLabel = selectedTargets.length > 0
+    ? "Showing the source mix you selected before the deeper strategy."
+    : "YouTube appears first, Instagram links second, and the rest of the research stack follows below.";
 
   return (
     <div className="space-y-12">
@@ -217,10 +326,19 @@ function ResearchResults({ research, platformData, topKeywords }) {
                 Fit {r.relevanceCheck?.score || 0}/100
               </span>
             </div>
-            <h4 className="text-3xl lg:text-4xl font-black text-txt tracking-tight leading-tight">Top video signals first, then the deeper strategy.</h4>
+            <h4 className="text-3xl lg:text-4xl font-black text-txt tracking-tight leading-tight">Live source signals first, then the deeper strategy.</h4>
             <p className="text-sm text-txt-secondary font-medium leading-relaxed">
-              YouTube appears first, Instagram video links second, and the rest of the research stack follows below.
+              {summaryLabel}
             </p>
+            {selectedTargets.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-2">
+                {selectedTargets.map((target) => (
+                  <span key={target.id} className="px-3 py-1 rounded-full bg-accent/10 text-accent-hover text-[10px] font-black uppercase tracking-widest">
+                    Focus: {target.label}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
           {r.recommendedStrategy && (
             <div className="rounded-[2rem] bg-accent/5 border border-accent/15 px-5 py-4 space-y-2 lg:max-w-sm w-full">
@@ -232,7 +350,7 @@ function ResearchResults({ research, platformData, topKeywords }) {
         </div>
 
         {ytVideos.length > 0 && (
-          <Section icon={MonitorPlay} label="YouTube Videos" color="text-red-500">
+          <Section icon={MonitorPlay} label={youtubeLabel} color="text-red-500">
             <div className="grid grid-cols-1 xl:grid-cols-[1.15fr_0.85fr] gap-6">
               <FeaturedVideoCard data={ytVideos[0]} />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -245,7 +363,7 @@ function ResearchResults({ research, platformData, topKeywords }) {
         )}
 
         {featuredIgPosts.length > 0 && (
-          <Section icon={Camera} label="Instagram Video Links" color="text-pink-500">
+          <Section icon={Camera} label={instagramLabel} color="text-pink-500">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {featuredIgPosts.slice(0, 4).map((post, index) => (
                 <InstagramLinkCard key={`${post.id || index}-ig`} data={post} />
@@ -302,6 +420,57 @@ function ResearchResults({ research, platformData, topKeywords }) {
           <InsightTile label="Geo Lens" value={r.topicFocus?.geoLens || "Use regional nuance only where it changes demand or behavior."} tone="neutral" />
         </div>
       </div>
+
+      {r.topicRecommendation && (
+        <div className="rounded-[2.5rem] bg-white border border-border p-8 shadow-sm space-y-6">
+          <div className="flex items-center gap-3">
+            <Flame className="w-5 h-5 text-primary" />
+            <h4 className="text-xs font-black text-txt uppercase tracking-[0.2em]">Topic Verdict</h4>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-[0.9fr_1.1fr] gap-6">
+            <div className="rounded-[2rem] bg-primary/5 border border-primary/10 p-6 space-y-4">
+              <div className="flex flex-wrap gap-2">
+                <VerdictPill label={r.topicRecommendation.isTrending ? "Trending" : "Not Trending"} tone={r.topicRecommendation.isTrending ? "success" : "neutral"} />
+                <VerdictPill label={r.topicRecommendation.isViral ? "Viral" : "Not Viral"} tone={r.topicRecommendation.isViral ? "warning" : "neutral"} />
+              </div>
+              <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">{formatVerdict(r.topicRecommendation.verdict)}</p>
+              <p className="text-sm text-txt-secondary leading-relaxed font-medium">{r.topicRecommendation.reasoning}</p>
+            </div>
+            <div className="space-y-4">
+              {r.topicRecommendation.verdict !== "strong_topic" && (
+                <div className="rounded-[2rem] bg-accent/5 border border-accent/10 p-5 space-y-3">
+                  <p className="text-[10px] font-black text-accent uppercase tracking-[0.2em]">Suggested Better Topic</p>
+                  <p className="text-base font-bold text-txt">{r.topicRecommendation.suggestedTopic}</p>
+                  <p className="text-sm text-txt-secondary leading-relaxed font-medium">{r.topicRecommendation.suggestedTopicWhy}</p>
+                  <button
+                    onClick={() => onUseSuggestion?.(r.topicRecommendation.suggestedTopic)}
+                    className="px-5 py-3 rounded-2xl bg-white border border-accent/20 text-[11px] font-black uppercase tracking-wider text-accent-hover hover:border-accent/40 transition-all cursor-pointer"
+                  >
+                    Use This Topic
+                  </button>
+                </div>
+              )}
+              {r.topicRecommendation.alternativeTopics?.length > 0 && (
+                <div className="space-y-3">
+                  <p className="text-[10px] font-black text-txt-muted uppercase tracking-[0.2em]">Related Topic Ideas</p>
+                  <div className="grid grid-cols-1 gap-3">
+                    {r.topicRecommendation.alternativeTopics.slice(0, 3).map((item, index) => (
+                      <button
+                        key={`${item.topic}-${index}`}
+                        onClick={() => onUseSuggestion?.(item.topic)}
+                        className="text-left p-4 rounded-2xl bg-bg-elevated/40 border border-border hover:border-primary/20 hover:bg-white transition-all cursor-pointer"
+                      >
+                        <p className="text-sm font-bold text-txt">{item.topic}</p>
+                        <p className="text-xs text-txt-secondary leading-relaxed font-medium mt-2">{item.whyNow}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {r.viralCheck && (
         <div className="rounded-[2.5rem] bg-white border border-border p-8 shadow-sm space-y-6">
@@ -558,6 +727,27 @@ function InsightTile({ label, value, tone = "neutral" }) {
   );
 }
 
+function VerdictPill({ label, tone = "neutral" }) {
+  const toneClass = tone === "success"
+    ? "bg-success/10 border-success/20 text-success"
+    : tone === "warning"
+      ? "bg-orange-500/10 border-orange-500/20 text-orange-600"
+      : "bg-bg-elevated border-border text-txt-muted";
+
+  return (
+    <span className={`px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-widest ${toneClass}`}>
+      {label}
+    </span>
+  );
+}
+
+function formatVerdict(verdict) {
+  if (verdict === "strong_topic") return "Strong Topic";
+  if (verdict === "needs_better_angle") return "Needs Better Angle";
+  if (verdict === "pick_related_topic") return "Pick Related Topic";
+  return "Topic Review";
+}
+
 function EvidenceCard({ item }) {
   return (
     <a
@@ -666,6 +856,8 @@ function MediaCard({ data, compact = false }) {
 }
 
 function InstagramLinkCard({ data }) {
+  const isVideo = data.isVideo || !!data.videoUrl || String(data.contentFormat || "").toLowerCase().includes("reel") || String(data.contentFormat || "").toLowerCase().includes("video");
+
   return (
     <a href={data.url} target="_blank" rel="noopener noreferrer" className="group rounded-[2rem] border border-border bg-white p-5 shadow-sm hover:shadow-xl hover:border-pink-500/25 transition-all block">
       <div className="flex items-start gap-4">
@@ -677,14 +869,16 @@ function InstagramLinkCard({ data }) {
               <Camera className="w-8 h-8" />
             </div>
           )}
-          <div className="absolute top-2 right-2 h-7 w-7 rounded-full bg-black/60 text-white flex items-center justify-center">
-            <Play className="w-3.5 h-3.5 fill-white" />
-          </div>
+          {isVideo && (
+            <div className="absolute top-2 right-2 h-7 w-7 rounded-full bg-black/60 text-white flex items-center justify-center">
+              <Play className="w-3.5 h-3.5 fill-white" />
+            </div>
+          )}
         </div>
         <div className="flex-1 min-w-0 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             <span className="px-2.5 py-1 rounded-full bg-pink-500/10 text-pink-500 text-[9px] font-black uppercase tracking-widest">
-              {data.isFallback ? "Instagram Idea" : "Instagram Reel"}
+              {data.isFallback ? "Instagram Idea" : isVideo ? "Instagram Reel" : "Instagram Post"}
             </span>
             <span className="text-[10px] font-black uppercase tracking-widest text-txt-muted">{data.author}</span>
           </div>
@@ -767,4 +961,12 @@ function fmtDate(dateStr) {
     if (diffD < 7) return `${diffD}d ago`;
     return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
   } catch { return dateStr; }
+}
+
+function derivePlatformsFromTargets(targetIds) {
+  return [...new Set(
+    SOURCE_TARGETS
+      .filter((target) => targetIds.includes(target.id))
+      .map((target) => target.platform)
+  )];
 }

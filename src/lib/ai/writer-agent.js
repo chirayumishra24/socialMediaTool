@@ -79,6 +79,7 @@ export async function generateScript({
   location = "IN",
   language = "en",
   brandVoice = null,
+  tier = "pro",
 } = {}) {
   const spec = FORMAT_SPECS[format] || FORMAT_SPECS.youtube_long;
   const styleDesc = STYLES[style] || STYLES.professional;
@@ -191,7 +192,7 @@ FORMAT NOTES: ${spec.notes}
 
 Write the COMPLETE script now. Every single line must earn its place. If a line doesn't hook, inform, or move — cut it.`;
 
-  return generate(prompt, { tier: "pro" });
+  return generate(prompt, { tier });
 }
 
 export async function generateBundle(options) {

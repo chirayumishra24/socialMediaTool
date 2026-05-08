@@ -9,11 +9,12 @@ export async function editContent(scriptOrOptions, options = {}) {
   const isObjectInput = typeof scriptOrOptions === "object" && scriptOrOptions !== null;
   const script = isObjectInput ? scriptOrOptions.script || "" : scriptOrOptions || "";
   const mergedOptions = isObjectInput ? { ...scriptOrOptions, ...options } : options;
-  const { format = "youtube_long", audience = "general", research = null } = mergedOptions;
-  const researchContext = research ? `
+  const { format = "youtube_long", audience = "general", research = null, tier = "flash" } = mergedOptions;
+  const summarizedResearch = summarizeResearch(research);
+  const researchContext = summarizedResearch ? `
 
 RESEARCH CONTEXT:
-${JSON.stringify(research, null, 2)}
+${JSON.stringify(summarizedResearch, null, 2)}
 ` : "";
 
   const prompt = `You are a ruthless content editor. Your edits have turned average scripts into viral hits.
@@ -65,5 +66,26 @@ SCORING RULES:
 
 Be honest with scores. Most scripts land 65-80. Only give 90+ if it's genuinely exceptional.`;
 
-  return generateJSON(prompt, "pro");
+  return generateJSON(prompt, tier);
+}
+
+function summarizeResearch(research) {
+  if (!research || typeof research !== "object") return null;
+
+  return {
+    summary: research.summary || research.executiveSummary || "",
+    topAngles: (research.angles || research.suggestedAngles || []).slice(0, 4),
+    topHooks: (research.hooks || research.suggestedHooks || []).slice(0, 4),
+    recommendedStrategy: research.recommendedStrategy || null,
+    viralCheck: research.viralCheck || null,
+    trendSignals: (research.trendSignals || []).slice(0, 3),
+    evidence: (research.evidence || research.sourceEvidence || []).slice(0, 3).map((item) => {
+      if (typeof item === "string") return item;
+      return {
+        platform: item.platform,
+        title: item.title,
+        whyItMatters: item.whyItMatters || item.engagementHint || "",
+      };
+    }),
+  };
 }

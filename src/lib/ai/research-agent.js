@@ -154,6 +154,17 @@ Return this JSON structure:
     "evidence": ["cross-platform proof for the score"],
     "caution": "what could stop this from becoming a breakout hit"
   },
+  "topicRecommendation": {
+    "isTrending": true,
+    "isViral": false,
+    "verdict": "strong_topic|needs_better_angle|pick_related_topic",
+    "reasoning": "plain-English explanation of whether this searched topic is worth pursuing right now",
+    "suggestedTopic": "a better related topic if the current one is weak, otherwise repeat the current topic or best angle",
+    "suggestedTopicWhy": "why this related topic is more timely or likely to perform",
+    "alternativeTopics": [
+      { "topic": "related topic idea", "whyNow": "why this one is stronger right now" }
+    ]
+  },
   "recommendedStrategy": {
     "bestPlatform": "youtube|instagram|x|linkedin|blog",
     "bestFormat": "youtube_long|youtube_short|instagram_reel|instagram_carousel|x_thread|linkedin_post|blog_article",
@@ -168,7 +179,8 @@ Be hyper-specific.
 Tie every recommendation back to "${cleanedKeyword}".
 If evidence is mixed, say exactly where it is mixed.`;
 
-  const raw = await generateJSON(prompt, depth === "quick" ? "flash" : "pro");
+  const tier = depth === "deep" ? "pro" : "flash";
+  const raw = await generateJSON(prompt, tier);
   return normalizeResearch(cleanedKeyword, raw, topicSnapshot);
 }
 
@@ -221,6 +233,14 @@ function normalizeResearch(keyword, raw, topicSnapshot) {
     : buildWinningPatterns(topicSnapshot, finalAngles);
 
   const viralCheck = normalizeViralCheck(raw?.viralCheck, topicSnapshot, finalAngles, trendSignals, keyword);
+  const topicRecommendation = normalizeTopicRecommendation(
+    raw?.topicRecommendation,
+    keyword,
+    topicSnapshot,
+    trendSignals,
+    finalAngles,
+    viralCheck
+  );
 
   return {
     keyword,
@@ -279,6 +299,7 @@ function normalizeResearch(keyword, raw, topicSnapshot) {
       recommendedTools: ensureArray(raw?.strategyBlueprint?.recommendedTools, ["Google Trends", "YouTube", "Reddit"], 5),
     },
     viralCheck,
+    topicRecommendation,
     recommendedStrategy: {
       bestPlatform: raw?.recommendedStrategy?.bestPlatform || inferBestPlatform(sourceEvidence),
       bestFormat: raw?.recommendedStrategy?.bestFormat || inferBestFormat(sourceEvidence),
@@ -581,6 +602,29 @@ function normalizeViralCheck(rawCheck, topicSnapshot, angles, trendSignals, keyw
   };
 }
 
+function normalizeTopicRecommendation(rawRecommendation, keyword, topicSnapshot, trendSignals, angles, viralCheck) {
+  const fallback = deriveTopicRecommendation(keyword, topicSnapshot, trendSignals, angles, viralCheck);
+  const alternativeTopics = Array.isArray(rawRecommendation?.alternativeTopics) && rawRecommendation.alternativeTopics.length
+    ? rawRecommendation.alternativeTopics
+      .filter(Boolean)
+      .slice(0, 4)
+      .map((item) => ({
+        topic: item?.topic || fallback.suggestedTopic,
+        whyNow: item?.whyNow || fallback.suggestedTopicWhy,
+      }))
+    : fallback.alternativeTopics;
+
+  return {
+    isTrending: typeof rawRecommendation?.isTrending === "boolean" ? rawRecommendation.isTrending : fallback.isTrending,
+    isViral: typeof rawRecommendation?.isViral === "boolean" ? rawRecommendation.isViral : fallback.isViral,
+    verdict: rawRecommendation?.verdict || fallback.verdict,
+    reasoning: rawRecommendation?.reasoning || fallback.reasoning,
+    suggestedTopic: rawRecommendation?.suggestedTopic || fallback.suggestedTopic,
+    suggestedTopicWhy: rawRecommendation?.suggestedTopicWhy || fallback.suggestedTopicWhy,
+    alternativeTopics,
+  };
+}
+
 function buildWinningPatterns(topicSnapshot, angles) {
   const patterns = [];
   const topPlatforms = Object.entries(topicSnapshot.platformCounts)
@@ -677,6 +721,107 @@ function deriveViralVerdict(score) {
   if (score >= 78) return "high";
   if (score >= 58) return "medium";
   return "low";
+}
+
+function deriveTopicRecommendation(keyword, topicSnapshot, trendSignals, angles, viralCheck) {
+  const growthTrend = inferGrowthTrend(topicSnapshot, trendSignals);
+  const isTrending = growthTrend === "rising" || trendSignals.length >= 3;
+  const isViral = viralCheck.score >= 78;
+  const bestAlternative = pickBestAlternativeTopic(keyword, trendSignals, angles, topicSnapshot);
+
+  if (isTrending && isViral) {
+    return {
+      isTrending: true,
+      isViral: true,
+      verdict: "strong_topic",
+      reasoning: `This topic is both trending and viral enough to pursue now. The live crawl shows timely momentum and the angle strength is already high.`,
+      suggestedTopic: keyword,
+      suggestedTopicWhy: "The current topic already has enough momentum. Improve the angle rather than changing the topic.",
+      alternativeTopics: buildAlternativeTopics(keyword, trendSignals, angles, topicSnapshot).slice(0, 3),
+    };
+  }
+
+  if (isTrending || viralCheck.score >= 58) {
+    return {
+      isTrending,
+      isViral,
+      verdict: "needs_better_angle",
+      reasoning: `There is some live interest here, but the searched topic needs a sharper angle to perform better. A more specific related topic is likely to convert into stronger content.`,
+      suggestedTopic: bestAlternative.topic,
+      suggestedTopicWhy: bestAlternative.whyNow,
+      alternativeTopics: buildAlternativeTopics(keyword, trendSignals, angles, topicSnapshot).slice(0, 3),
+    };
+  }
+
+  return {
+    isTrending: false,
+    isViral: false,
+    verdict: "pick_related_topic",
+    reasoning: `This searched topic does not show enough current trend or viral proof yet. A stronger related topic would be safer for content creation right now.`,
+    suggestedTopic: bestAlternative.topic,
+    suggestedTopicWhy: bestAlternative.whyNow,
+    alternativeTopics: buildAlternativeTopics(keyword, trendSignals, angles, topicSnapshot).slice(0, 4),
+  };
+}
+
+function buildAlternativeTopics(keyword, trendSignals, angles, topicSnapshot) {
+  const seen = new Set([String(keyword || "").toLowerCase()]);
+  const alternatives = [];
+
+  trendSignals.forEach((signal) => {
+    const topic = String(signal?.keyword || "").trim();
+    if (!topic) return;
+    const normalized = topic.toLowerCase();
+    if (seen.has(normalized)) return;
+    seen.add(normalized);
+    alternatives.push({
+      topic,
+      whyNow: signal?.whyItMatters || `This related trend has fresher timing signals than ${keyword}.`,
+    });
+  });
+
+  angles.forEach((angle) => {
+    const topic = String(angle?.angle || "").trim();
+    if (!topic) return;
+    const normalized = topic.toLowerCase();
+    if (seen.has(normalized)) return;
+    seen.add(normalized);
+    alternatives.push({
+      topic,
+      whyNow: angle?.viralityReason || angle?.description || `This angle is more specific and timely than the current topic.`,
+    });
+  });
+
+  topicSnapshot.sourceEvidence.forEach((item) => {
+    const topic = String(item?.title || "").trim();
+    if (!topic) return;
+    const normalized = topic.toLowerCase();
+    if (seen.has(normalized)) return;
+    seen.add(normalized);
+    alternatives.push({
+      topic,
+      whyNow: item?.whyItMatters || `This live signal is more grounded than the current search topic.`,
+    });
+  });
+
+  if (!alternatives.length) {
+    alternatives.push(
+      {
+        topic: `${keyword} latest 2026 changes`,
+        whyNow: `This makes the topic more time-bound and easier to tie to current signals.`,
+      },
+      {
+        topic: `${keyword} for schools`,
+        whyNow: "This narrows the audience and usually creates a stronger content angle.",
+      }
+    );
+  }
+
+  return alternatives.slice(0, 5);
+}
+
+function pickBestAlternativeTopic(keyword, trendSignals, angles, topicSnapshot) {
+  return buildAlternativeTopics(keyword, trendSignals, angles, topicSnapshot)[0];
 }
 
 function inferGrowthTrend(topicSnapshot, trendSignals) {

@@ -3,6 +3,8 @@ import { generateBundle, generateScript } from "@/lib/ai/writer-agent";
 import { generateSEO } from "@/lib/ai/seo-agent";
 import { editContent } from "@/lib/ai/editor-agent";
 
+export const maxDuration = 300;
+
 export async function POST(req) {
   try {
     const {
@@ -15,20 +17,29 @@ export async function POST(req) {
       return NextResponse.json({ error: "Missing keyword" }, { status: 400 });
     }
 
+    const generationTier = format === "blog_article" ? "pro" : "flash";
+
     if (bundle) {
       const rawScripts = await generateBundle({
         keyword, style, audience, research, location, brandVoice,
-        formats: bundleFormats
+        formats: bundleFormats,
+        tier: "flash",
       });
       const optimizedScripts = await Promise.all(
         Object.entries(rawScripts).map(async ([bundleFormat, rawScript]) => {
-          const editing = await editContent({
-            script: rawScript,
-            format: bundleFormat,
-            audience,
-            research,
-          });
-          return [bundleFormat, editing?.editedScript || rawScript];
+          try {
+            const editing = await editContent({
+              script: rawScript,
+              format: bundleFormat,
+              audience,
+              research,
+              tier: "flash",
+            });
+            return [bundleFormat, editing?.editedScript || rawScript];
+          } catch (error) {
+            console.warn(`Bundle edit failed for ${bundleFormat}:`, error.message);
+            return [bundleFormat, rawScript];
+          }
         })
       );
       const scripts = Object.fromEntries(optimizedScripts);
@@ -45,14 +56,26 @@ export async function POST(req) {
 
     // 1. Generate Script
     const script = await generateScript({
-      keyword, format, style, audience, research, location, brandVoice
+      keyword, format, style, audience, research, location, brandVoice, tier: generationTier
     });
 
-    // 2. Generate SEO
-    const seo = await generateSEO({ keyword, format, script, location });
+    // 2. Run supporting AI work in parallel and fail open if either step breaks.
+    const [seoResult, editingResult] = await Promise.allSettled([
+      generateSEO({ keyword, format, script, location, tier: "flash" }),
+      editContent({ script, format, audience, research, tier: "flash" }),
+    ]);
 
-    // 3. Editorial Review
-    const editing = await editContent({ script, format, audience, research });
+    const seo = seoResult.status === "fulfilled" ? seoResult.value : null;
+    const editing = editingResult.status === "fulfilled" ? editingResult.value : null;
+    const partialFailures = [];
+    if (seoResult.status === "rejected") {
+      console.warn("SEO generation failed:", seoResult.reason?.message || seoResult.reason);
+      partialFailures.push("seo");
+    }
+    if (editingResult.status === "rejected") {
+      console.warn("Editorial review failed:", editingResult.reason?.message || editingResult.reason);
+      partialFailures.push("editing");
+    }
 
     const finalScript = editing?.editedScript || script;
 
@@ -64,6 +87,7 @@ export async function POST(req) {
       metadata: {
         keyword, format, style, audience, location,
         hasResearchContext: !!research,
+        partialFailures,
         timestamp: new Date().toISOString()
       }
     });

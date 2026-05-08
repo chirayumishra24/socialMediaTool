@@ -12,6 +12,7 @@ export async function generateSEO({
   location = "IN",
   language = "en",
   platforms = ["youtube"],
+  tier = "flash",
 } = {}) {
   const today = new Date().toISOString().split("T")[0];
 
@@ -68,5 +69,5 @@ RULES:
 3. Consider ${location} audience timezone and cultural context
 4. Reflect 2026 algorithm preferences (YouTube values watch time, IG values saves, X values replies)`;
 
-  return generateJSON(prompt, "pro");
+  return generateJSON(prompt, tier);
 }

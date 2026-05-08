@@ -7,6 +7,8 @@ import { searchNews } from "@/lib/crawlers/news";
 import { searchInstagram } from "@/lib/crawlers/instagram";
 import { getTrends } from "@/lib/crawlers/trends";
 
+export const maxDuration = 300;
+
 const STOPWORDS = new Set([
   "about", "after", "also", "amid", "among", "and", "are", "because", "been", "being",
   "best", "between", "but", "can", "changes", "from", "have", "into", "latest", "more",
@@ -19,7 +21,14 @@ const STOPWORDS = new Set([
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { keyword, platforms = ["youtube", "reddit", "x", "news", "instagram"], location = "IN", language = "en", depth = "deep" } = body;
+    const {
+      keyword,
+      platforms = ["youtube", "reddit", "x", "news", "instagram"],
+      platformTargets = [],
+      location = "IN",
+      language = "en",
+      depth = "deep",
+    } = body;
     const cleanKeyword = String(keyword || "").trim();
 
     if (!cleanKeyword) return NextResponse.json({ error: "Missing keyword" }, { status: 400 });
@@ -36,25 +45,27 @@ export async function POST(request) {
     const crawlResults = await Promise.allSettled(crawlTasks);
     const platformData = {};
     crawlResults.forEach((r) => { if (r.status === "fulfilled") Object.assign(platformData, r.value); });
+    const filteredPlatformData = filterPlatformData(platformData, platformTargets);
 
     // Step 2: Extract top keywords from crawled data
-    const topKeywords = extractTopKeywords(cleanKeyword, platformData);
+    const topKeywords = extractTopKeywords(cleanKeyword, filteredPlatformData);
 
     // Step 3: Sort videos by views
-    if (platformData.youtube) {
-      platformData.youtube = platformData.youtube.sort((a, b) => (b.metrics?.views || 0) - (a.metrics?.views || 0));
+    if (filteredPlatformData.youtube) {
+      filteredPlatformData.youtube = filteredPlatformData.youtube.sort((a, b) => (b.metrics?.views || 0) - (a.metrics?.views || 0));
     }
 
     // Step 4: Run AI research with platform data
-    const research = await runResearch(cleanKeyword, { location, language, platformData, depth });
+    const research = await runResearch(cleanKeyword, { location, language, platformData: filteredPlatformData, depth });
 
     return NextResponse.json({
       research,
-      platformData,
+      platformData: filteredPlatformData,
       topKeywords,
       meta: {
         keyword: cleanKeyword, location, language, depth,
-        platformsCrawled: Object.keys(platformData),
+        platformsCrawled: Object.keys(filteredPlatformData).filter((key) => hasUsefulPlatformData(filteredPlatformData[key])),
+        platformTargets,
         fetchedAt: new Date().toISOString(),
       },
     });
@@ -162,4 +173,70 @@ function normalizeToken(token) {
 
 function extractHashtags(text) {
   return String(text || "").match(/#[a-z0-9_]+/gi) || [];
+}
+
+function filterPlatformData(platformData, platformTargets) {
+  const targets = Array.isArray(platformTargets) ? platformTargets.filter(Boolean) : [];
+  if (targets.length === 0) return platformData;
+
+  return {
+    ...platformData,
+    youtube: filterYouTubeEntries(platformData.youtube || [], targets),
+    instagram: filterInstagramEntries(platformData.instagram || [], targets),
+    x: targets.includes("x") ? (platformData.x || []) : [],
+    reddit: targets.includes("reddit") ? (platformData.reddit || []) : [],
+    news: targets.includes("news") ? (platformData.news || []) : [],
+    trends: { related: [], trending: [], region: platformData.trends?.region || null },
+  };
+}
+
+function filterYouTubeEntries(entries, targets) {
+  if (targets.includes("youtube")) return entries;
+  const wantsShorts = targets.includes("youtube_short");
+  const wantsLong = targets.includes("youtube_long");
+  if (!wantsShorts && !wantsLong) return [];
+
+  return entries.filter((entry) => {
+    const videoType = classifyYouTubeVideo(entry.duration);
+    if (videoType === "short") return wantsShorts;
+    if (videoType === "long") return wantsLong;
+    return wantsLong;
+  });
+}
+
+function filterInstagramEntries(entries, targets) {
+  if (targets.includes("instagram")) return entries;
+  const wantsReels = targets.includes("instagram_reel");
+  const wantsPosts = targets.includes("instagram_post");
+  if (!wantsReels && !wantsPosts) return [];
+
+  return entries.filter((entry) => {
+    const isReel = entry.isVideo || !!entry.videoUrl || String(entry.contentFormat || "").toLowerCase().includes("reel") || String(entry.contentFormat || "").toLowerCase().includes("video");
+    if (isReel) return wantsReels;
+    return wantsPosts;
+  });
+}
+
+function classifyYouTubeVideo(durationText) {
+  const seconds = parseDurationToSeconds(durationText);
+  if (seconds === null) return "unknown";
+  return seconds <= 60 ? "short" : "long";
+}
+
+function parseDurationToSeconds(durationText) {
+  const parts = String(durationText || "")
+    .split(":")
+    .map((part) => Number(part))
+    .filter((part) => !Number.isNaN(part));
+
+  if (parts.length < 2) return null;
+  if (parts.length === 2) return (parts[0] * 60) + parts[1];
+  if (parts.length === 3) return (parts[0] * 3600) + (parts[1] * 60) + parts[2];
+  return null;
+}
+
+function hasUsefulPlatformData(value) {
+  if (Array.isArray(value)) return value.length > 0;
+  if (!value || typeof value !== "object") return false;
+  return Object.values(value).some((entry) => Array.isArray(entry) ? entry.length > 0 : !!entry);
 }
