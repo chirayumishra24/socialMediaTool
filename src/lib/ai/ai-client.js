@@ -1,11 +1,13 @@
 /**
- * SkilizeeAI — Unified Gemini 3.1 Pro Client
- * Central AI wrapper with retry logic, JSON mode, and model selection.
+ * SkilizeeAI — Unified AI Client (2026 Edition)
+ * Gemini for research/SEO/editing, GPT-4.1 for script generation.
  */
 
 import { GoogleGenAI } from "@google/genai";
+import OpenAI from "openai";
 
 let _ai = null;
+let _openai = null;
 
 function getAI() {
   if (!_ai) {
@@ -16,8 +18,17 @@ function getAI() {
   return _ai;
 }
 
+function getOpenAI() {
+  if (!_openai) {
+    const key = process.env.OPENAI_API_KEY;
+    if (!key) throw new Error("OPENAI_API_KEY not set — required for script generation (GPT-4.1)");
+    _openai = new OpenAI({ apiKey: key });
+  }
+  return _openai;
+}
+
 /**
- * Generate content with Gemini.
+ * Generate content with Gemini (used for research, SEO, editing).
  * @param {string} prompt
  * @param {"pro"|"flash"} tier — "pro" = Gemini 3.1 Pro, "flash" = fast model
  * @param {boolean} jsonMode — enforce JSON output
@@ -45,14 +56,58 @@ export async function generate(prompt, { tier = "pro", jsonMode = false, maxRetr
       return text;
     } catch (err) {
       lastError = err;
-      console.error(`AI attempt ${attempt + 1} failed:`, err.message);
+      console.error(`Gemini attempt ${attempt + 1} failed:`, err.message);
       if (attempt < maxRetries) {
-        await sleep(1000 * (attempt + 1)); // Exponential backoff
+        await sleep(1000 * (attempt + 1));
       }
     }
   }
 
-  throw new Error(`AI generation failed after ${maxRetries + 1} attempts: ${lastError?.message}`);
+  throw new Error(`Gemini generation failed after ${maxRetries + 1} attempts: ${lastError?.message}`);
+}
+
+/**
+ * Generate content with GPT-4.1 (used for script generation).
+ * @param {string} prompt
+ * @param {object} options
+ * @param {number} options.maxRetries
+ * @param {number} options.temperature — 0.7 default for creative writing
+ * @param {number} options.maxTokens — cap output length
+ */
+export async function generateGPT(prompt, { maxRetries = 2, temperature = 0.7, maxTokens = 8192 } = {}) {
+  const client = getOpenAI();
+
+  let lastError;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await client.chat.completions.create({
+        model: "gpt-5.4-mini",
+        messages: [
+          { role: "system", content: "You are an elite content strategist and script writer. Write production-ready scripts that are specific, human, and platform-optimized." },
+          { role: "user", content: prompt },
+        ],
+        temperature,
+        max_completion_tokens: maxTokens,
+      });
+
+      return response.choices[0]?.message?.content || "";
+    } catch (err) {
+      lastError = err;
+      // Log the full error to help debug 500 errors in the terminal
+      console.error(`GPT-5.4-mini Error (Attempt ${attempt + 1}):`, {
+        message: err.message,
+        status: err.status,
+        type: err.type,
+        code: err.code
+      });
+      
+      if (attempt < maxRetries) {
+        await sleep(1000 * (attempt + 1));
+      }
+    }
+  }
+
+  throw new Error(`GPT-5.4-mini failed: ${lastError?.message}`);
 }
 
 /**

@@ -1,9 +1,10 @@
 /**
  * SkilizeeAI — Writer Agent (2026 Edition)
  * Generates dramatically better, more human, platform-optimized scripts.
+ * Uses GPT-4.1 for superior script quality.
  */
 
-import { generate } from "./ai-client";
+import { generateGPT } from "./ai-client";
 
 const FORMAT_SPECS = {
   youtube_long: {
@@ -79,7 +80,6 @@ export async function generateScript({
   location = "IN",
   language = "en",
   brandVoice = null,
-  tier = "pro",
 } = {}) {
   const spec = FORMAT_SPECS[format] || FORMAT_SPECS.youtube_long;
   const styleDesc = STYLES[style] || STYLES.professional;
@@ -192,7 +192,7 @@ FORMAT NOTES: ${spec.notes}
 
 Write the COMPLETE script now. Every single line must earn its place. If a line doesn't hook, inform, or move — cut it.`;
 
-  return generate(prompt, { tier });
+  return generateGPT(prompt, { temperature: 0.7, maxTokens: 8192 });
 }
 
 export async function generateBundle(options) {

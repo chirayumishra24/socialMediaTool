@@ -17,13 +17,11 @@ export async function POST(req) {
       return NextResponse.json({ error: "Missing keyword" }, { status: 400 });
     }
 
-    const generationTier = format === "blog_article" ? "pro" : "flash";
 
     if (bundle) {
       const rawScripts = await generateBundle({
         keyword, style, audience, research, location, brandVoice,
         formats: bundleFormats,
-        tier: "flash",
       });
       const optimizedScripts = await Promise.all(
         Object.entries(rawScripts).map(async ([bundleFormat, rawScript]) => {
@@ -56,7 +54,7 @@ export async function POST(req) {
 
     // 1. Generate Script
     const script = await generateScript({
-      keyword, format, style, audience, research, location, brandVoice, tier: generationTier
+      keyword, format, style, audience, research, location, brandVoice
     });
 
     // 2. Run supporting AI work in parallel and fail open if either step breaks.
