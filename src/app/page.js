@@ -13,12 +13,14 @@ import Analytics from "@/components/Analytics";
 import AdminPanel from "@/components/AdminPanel";
 import Login from "@/components/Login";
 import AccessDenied from "@/components/AccessDenied";
+import LandingPage from "@/components/LandingPage";
 import { AuthProvider, useAuth } from "@/lib/AuthContext";
 
 function AppContent({ defaultTab = "dashboard" }) {
   const { user, loading, hasAccess } = useAuth();
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [researchContext, setResearchContext] = useState(null);
+  const [showLogin, setShowLogin] = useState(false);
 
   const handleResearchComplete = (ctx) => setResearchContext(ctx);
 
@@ -48,7 +50,20 @@ function AppContent({ defaultTab = "dashboard" }) {
   }
 
   if (!user) {
-    return <Login />;
+    if (showLogin) {
+      return (
+        <div className="relative">
+          <button
+            onClick={() => setShowLogin(false)}
+            className="absolute top-6 left-6 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all z-50 cursor-pointer"
+          >
+            ← Back to Home
+          </button>
+          <Login />
+        </div>
+      );
+    }
+    return <LandingPage onSignInClick={() => setShowLogin(true)} />;
   }
 
   if (!hasAccess) {
