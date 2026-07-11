@@ -90,12 +90,12 @@ export default function Dashboard({ onNavigate, onStartResearch, onGoToStudio })
                   <Sparkles className="h-4 w-4 text-amber-300" />
                   Executive Hub
                 </div>
-                <div className="space-y-4">
-                  <h1 className="text-4xl md:text-5xl xl:text-6xl font-black tracking-[-0.05em] leading-[0.96] text-white">
+                <div className="space-y-2">
+                  <h1 className="text-2xl md:text-3xl xl:text-4xl font-extrabold tracking-tight leading-tight text-white">
                     {settings.schoolName}
-                    <span className="block text-white/72">Institutional intelligence, staged for action.</span>
+                    <span className="block text-lg md:text-xl font-bold text-white/80 mt-1">Institutional intelligence, staged for action.</span>
                   </h1>
-                  <p className="max-w-2xl text-sm md:text-base text-white/72 leading-relaxed font-medium">
+                  <p className="max-w-2xl text-xs md:text-sm text-white/70 leading-relaxed font-semibold">
                     {settings.schoolVision}. The hub is showing live research momentum, production pressure, and performance signals so leadership can decide what to publish next.
                   </p>
                 </div>
@@ -105,7 +105,7 @@ export default function Dashboard({ onNavigate, onStartResearch, onGoToStudio })
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/55">Signal Radar</p>
-                    <p className="mt-2 text-sm font-bold text-white">Attention is shifting toward clarity and trust.</p>
+                    <p className="mt-2 text-xs font-bold text-white">Attention is shifting toward clarity and trust.</p>
                   </div>
                   <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/6">
                     <Radar className="h-6 w-6 text-amber-300" />
@@ -125,7 +125,7 @@ export default function Dashboard({ onNavigate, onStartResearch, onGoToStudio })
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/55">Live Command Signal</p>
-                    <p className="mt-3 text-xl md:text-2xl font-black tracking-tight text-white leading-tight">
+                    <p className="mt-2 text-base md:text-lg font-bold tracking-tight text-white leading-tight">
                       {signalFeed[activeSignal]}
                     </p>
                   </div>
@@ -169,7 +169,7 @@ export default function Dashboard({ onNavigate, onStartResearch, onGoToStudio })
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-[0.22em] text-txt-muted">Leadership Pulse</p>
-                  <h3 className="mt-2 text-2xl font-black tracking-tight text-txt">Operational Snapshot</h3>
+                  <h3 className="mt-1.5 text-lg font-bold text-txt">Operational Snapshot</h3>
                 </div>
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10 text-accent">
                   <Target className="h-5 w-5" />
@@ -190,7 +190,7 @@ export default function Dashboard({ onNavigate, onStartResearch, onGoToStudio })
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">Production Pressure</p>
-                  <p className="mt-2 text-2xl font-black tracking-tight">Move the next best topic into script.</p>
+                  <p className="mt-1.5 text-lg font-bold text-white">Move the next best topic into script.</p>
                 </div>
                 <CircleDashed className="h-5 w-5 text-amber-300" />
               </div>
@@ -219,14 +219,14 @@ export default function Dashboard({ onNavigate, onStartResearch, onGoToStudio })
           <div className="flex items-center justify-between gap-4 min-h-[5.5rem]">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.22em] text-txt-muted">Priority Queue</p>
-              <h3 className="mt-2 text-2xl font-black tracking-tight text-txt">What leadership should move next</h3>
+              <h3 className="mt-1.5 text-lg font-bold text-txt">What leadership should move next</h3>
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/5 text-primary">
               <Layers3 className="h-5 w-5" />
             </div>
           </div>
 
-          <div className="mt-6 flex-1 space-y-4">
+          <div className="mt-6 flex-1 space-y-3">
             {priorityQueue.length > 0 ? (
               priorityQueue.map((item) => {
                 const stage = item.status || "pending";
@@ -234,25 +234,23 @@ export default function Dashboard({ onNavigate, onStartResearch, onGoToStudio })
                   <button
                     key={item.id}
                     onClick={() => onStartResearch(item.keyword)}
-                    className="w-full text-left rounded-[2rem] border border-border bg-bg-card p-5 hover:border-primary/20 hover:shadow-premium transition-all cursor-pointer min-h-[12rem] flex flex-col"
+                    className="w-full text-left rounded-2xl border border-border bg-bg-card p-4 hover:border-primary/20 hover:shadow-premium transition-all cursor-pointer flex flex-row items-center gap-4"
                   >
-                    <div className="flex items-start justify-between gap-4 flex-1">
-                      <div className="space-y-3 min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className={`rounded-full border px-3 py-1 text-[9px] font-black uppercase tracking-[0.18em] ${STATUS_STYLES[stage] || STATUS_STYLES.pending}`}>
-                            {stage}
-                          </span>
-                          <span className="text-[10px] font-black uppercase tracking-[0.18em] text-txt-muted">
-                            {item.depth || "deep"} cycle
-                          </span>
-                        </div>
-                        <p className="text-base font-black tracking-tight text-txt leading-snug">{item.keyword}</p>
-                        <p className="text-sm text-txt-secondary leading-relaxed line-clamp-3">
-                          {item.research?.executiveSummary || item.research?.marketLandscape?.summary || "Open this topic to continue the analysis and sharpen the angle."}
-                        </p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className={`rounded-full border px-2.5 py-0.5 text-[8px] font-black uppercase tracking-wider ${STATUS_STYLES[stage] || STATUS_STYLES.pending}`}>
+                          {stage}
+                        </span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-txt-muted">
+                          {item.depth || "deep"} cycle
+                        </span>
                       </div>
-                      <ArrowRight className="h-4 w-4 text-txt-muted shrink-0 mt-1" />
+                      <p className="text-sm font-bold text-txt truncate">{item.keyword}</p>
+                      <p className="text-xs text-txt-secondary truncate mt-0.5">
+                        {item.research?.executiveSummary || item.research?.marketLandscape?.summary || "Open this topic to continue the analysis and sharpen the angle."}
+                      </p>
                     </div>
+                    <ArrowRight className="h-4 w-4 text-txt-muted shrink-0" />
                   </button>
                 );
               })
@@ -272,7 +270,7 @@ export default function Dashboard({ onNavigate, onStartResearch, onGoToStudio })
           <div className="flex items-center justify-between gap-4 min-h-[5.5rem]">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.22em] text-txt-muted">Performance Pulse</p>
-              <h3 className="mt-2 text-2xl font-black tracking-tight text-txt">Where traction is already showing</h3>
+              <h3 className="mt-1.5 text-lg font-bold text-txt">Where traction is already showing</h3>
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-success/10 text-success">
               <BarChart3 className="h-5 w-5" />
@@ -332,11 +330,11 @@ export default function Dashboard({ onNavigate, onStartResearch, onGoToStudio })
       </section>
 
       <section className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-        <div className="xl:col-span-7 rounded-[3rem] bg-white border border-border p-6 shadow-premium space-y-6">
+        <div className="xl:col-span-7 rounded-[3rem] bg-white border border-border p-6 shadow-premium space-y-5">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.22em] text-txt-muted">Studio Momentum</p>
-              <h3 className="mt-2 text-2xl font-black tracking-tight text-txt">Most recent production outputs</h3>
+              <h3 className="mt-1.5 text-lg font-bold text-txt">Most recent production outputs</h3>
             </div>
             <button
               onClick={() => onNavigate("studio")}
@@ -345,43 +343,43 @@ export default function Dashboard({ onNavigate, onStartResearch, onGoToStudio })
               Open Studio
             </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-3">
             {latestContent.length > 0 ? (
               latestContent.map((item) => (
-                <div key={item.id} className="rounded-[2rem] border border-border bg-bg-card p-5 space-y-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="h-11 w-11 rounded-2xl bg-primary/6 text-primary flex items-center justify-center">
+                <div key={item.id} className="rounded-2xl border border-border bg-bg-card p-4 flex flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="h-10 w-10 rounded-xl bg-primary/6 text-primary flex items-center justify-center shrink-0">
                       <Video className="h-5 w-5" />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.18em] text-txt-muted">
-                      {item.format.replaceAll("_", " ")}
-                    </span>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-base font-black tracking-tight text-txt leading-snug">{item.keyword}</p>
-                    <p className="text-sm text-txt-secondary leading-relaxed line-clamp-3">
-                      {item.script || "Script draft saved in the studio."}
-                    </p>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-bold text-txt truncate">{item.keyword}</p>
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-txt-muted bg-slate-100 px-2 py-0.5 rounded-md">
+                          {item.format.replaceAll("_", " ")}
+                        </span>
+                      </div>
+                      <p className="text-xs text-txt-secondary truncate mt-0.5">
+                        {item.script || "Script draft saved in the studio."}
+                      </p>
+                    </div>
                   </div>
                   <button
                     onClick={() => onGoToStudio({ keyword: item.keyword, research: item.research || null, format: item.format })}
-                    className="w-full rounded-[1.3rem] bg-primary text-white px-4 py-3 text-[10px] font-black uppercase tracking-[0.18em] flex items-center justify-center gap-2 hover:bg-primary-hover cursor-pointer"
+                    className="shrink-0 rounded-xl bg-primary text-white px-3.5 py-2 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 hover:bg-primary-hover cursor-pointer"
                   >
-                    Continue Draft
-                    <ArrowRight className="h-4 w-4" />
+                    Draft
+                    <ArrowRight className="h-3.5 w-3.5" />
                   </button>
                 </div>
               ))
             ) : (
-              <div className="md:col-span-3">
-                <EmptyPanel
-                  icon={Video}
-                  title="No studio drafts yet"
-                  description="Generated scripts will surface here for faster executive review."
-                  actionLabel="Create First Draft"
-                  onClick={() => onNavigate("studio")}
-                />
-              </div>
+              <EmptyPanel
+                icon={Video}
+                title="No studio drafts yet"
+                description="Generated scripts will surface here for faster executive review."
+                actionLabel="Create First Draft"
+                onClick={() => onNavigate("studio")}
+              />
             )}
           </div>
         </div>
@@ -390,7 +388,7 @@ export default function Dashboard({ onNavigate, onStartResearch, onGoToStudio })
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.22em] text-txt-muted">Decision Shortcuts</p>
-              <h3 className="mt-2 text-2xl font-black tracking-tight text-txt">Move from signal to action faster</h3>
+              <h3 className="mt-1.5 text-lg font-bold text-txt">Move from signal to action faster</h3>
             </div>
             <BrainCircuit className="h-5 w-5 text-primary" />
           </div>
