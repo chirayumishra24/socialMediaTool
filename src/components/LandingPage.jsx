@@ -4,12 +4,13 @@ import React, { useEffect, useRef, useState } from "react";
 import { 
   ArrowRight, Zap, BarChart3, PenTool, Globe, Sparkles, 
   MessageSquare, ShieldCheck, UserCheck, Radio, Calendar, 
-  Headphones, Star, ChevronRight 
+  Headphones, Star, ChevronDown, Check, Play, HelpCircle
 } from "lucide-react";
 
 export default function LandingPage({ onSignInClick }) {
   const canvasRef = useRef(null);
   const [activeShowcase, setActiveShowcase] = useState("social");
+  const [openFaq, setOpenFaq] = useState(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -22,15 +23,15 @@ export default function LandingPage({ onSignInClick }) {
     let height = (canvas.height = window.innerHeight);
 
     const particles = [];
-    const particleCount = 65;
-    const connectionDistance = 140;
+    const particleCount = 75;
+    const connectionDistance = 150;
 
     class Particle {
       constructor() {
         this.x = Math.random() * width;
         this.y = Math.random() * height;
-        this.vx = (Math.random() - 0.5) * 0.4;
-        this.vy = (Math.random() - 0.5) * 0.4;
+        this.vx = (Math.random() - 0.5) * 0.45;
+        this.vy = (Math.random() - 0.5) * 0.45;
         this.radius = Math.random() * 2 + 1;
       }
 
@@ -166,6 +167,25 @@ export default function LandingPage({ onSignInClick }) {
     }
   ];
 
+  const faqs = [
+    {
+      q: "How does the Single Sign-On (SSO) work?",
+      a: "Once you log into Skilizee.io using your administrator-approved email and password, a secure authorization token is stored in your browser. When you switch to the LinkedIn or Podcast tools, the system automatically authenticates you without requiring password inputs again."
+    },
+    {
+      q: "Can I manage different permissions for my team members?",
+      a: "Yes! As an administrator, you have access to the Admin Panel. From there, you can add new members, update passwords, and explicitly assign which tools (LinkedIn, Social Media, or Podcast) each member can access."
+    },
+    {
+      q: "How does the LinkedIn profile auditing feature work?",
+      a: "Our profile auditor evaluates your current LinkedIn headline, summary, and experience sections using Gemini AI. It suggests immediate changes to maximize professional keyword indexing. All audits are saved in a snapshot history log so you can compare progress."
+    },
+    {
+      q: "Is it safe to run multiple micro-frontends on different hosting accounts?",
+      a: "Absolutely. Both projects share the same secure Firestore database backend. By adding your database credentials to the Vercel project settings, user accounts and role changes immediately sync across domains."
+    }
+  ];
+
   const currentTool = tools.find(t => t.id === activeShowcase);
 
   return (
@@ -201,7 +221,7 @@ export default function LandingPage({ onSignInClick }) {
       </header>
 
       {/* Hero Section */}
-      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-16 pb-24 text-center">
+      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-16 pb-12 text-center">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 mb-8">
           <Zap className="w-4 h-4 text-indigo-500 animate-pulse" />
           <span className="text-[10px] font-extrabold text-indigo-600 uppercase tracking-wider">All-In-One Creator Suite</span>
@@ -216,26 +236,67 @@ export default function LandingPage({ onSignInClick }) {
           Access your premium AI tools under a single sign-on experience. Automate LinkedIn outreach, draft social updates, and record studio-grade podcasts from a unified console.
         </p>
 
-        {/* Tab Selection */}
-        <div className="flex flex-wrap items-center justify-center gap-3 mb-16 max-w-3xl mx-auto p-2 bg-slate-100/50 border border-slate-200/30 rounded-3xl backdrop-blur-xl">
-          {tools.map(tool => {
-            const Icon = tool.icon;
-            const isSelected = activeShowcase === tool.id;
-            return (
-              <button
-                key={tool.id}
-                onClick={() => setActiveShowcase(tool.id)}
-                className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
-                  isSelected 
-                    ? "bg-[#0F2942] text-white shadow-xl shadow-slate-900/10" 
-                    : "text-slate-650 hover:bg-slate-100 hover:text-slate-800"
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                {tool.title}
-              </button>
-            );
-          })}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
+          <button
+            onClick={onSignInClick}
+            className="w-full sm:w-auto px-8 py-4 bg-[#0F2942] hover:bg-slate-800 text-white rounded-2xl text-sm font-bold shadow-xl transition-all flex items-center justify-center gap-2.5 group cursor-pointer active:scale-98"
+          >
+            Launch Executive Suite
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </button>
+          <a
+            href="#tools-section"
+            className="w-full sm:w-auto px-8 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl text-sm font-bold border border-slate-200/50 hover:border-slate-350 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+          >
+            Explore Tools
+          </a>
+        </div>
+
+        {/* Social Proof Logo Grid */}
+        <div className="max-w-5xl mx-auto border-t border-slate-200/50 pt-10 pb-16">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">
+            TRUSTED BY PROFESSIONAL CREATORS & MANAGERS AT
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16 opacity-50 grayscale hover:grayscale-0 transition-all duration-300">
+            <span className="text-sm font-black text-slate-650 tracking-tight">LINKEDIN</span>
+            <span className="text-sm font-black text-slate-650 tracking-tight">SPOTIFY</span>
+            <span className="text-sm font-black text-slate-650 tracking-tight">VERCEL</span>
+            <span className="text-sm font-black text-slate-650 tracking-tight">DRIBBBLE</span>
+            <span className="text-sm font-black text-slate-650 tracking-tight">PRODUCT HUNT</span>
+          </div>
+        </div>
+
+        {/* Tab Selection Section */}
+        <div id="tools-section" className="scroll-mt-24 pt-8">
+          <div className="text-center max-w-xl mx-auto mb-10">
+            <h3 className="text-xl md:text-3xl font-black text-slate-900 leading-tight">
+              One Workspace. Three Specialized Engines.
+            </h3>
+            <p className="text-xs text-slate-400 mt-2 font-bold leading-relaxed">
+              Toggle the tabs below to preview the features, layout structure, and action points of each Skilizee module.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-12 max-w-3xl mx-auto p-2 bg-slate-100/50 border border-slate-200/30 rounded-3xl backdrop-blur-xl">
+            {tools.map(tool => {
+              const Icon = tool.icon;
+              const isSelected = activeShowcase === tool.id;
+              return (
+                <button
+                  key={tool.id}
+                  onClick={() => setActiveShowcase(tool.id)}
+                  className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+                    isSelected 
+                      ? "bg-[#0F2942] text-white shadow-xl shadow-slate-900/10" 
+                      : "text-slate-650 hover:bg-slate-100 hover:text-slate-800"
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  {tool.title}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Showcase Area */}
@@ -295,6 +356,100 @@ export default function LandingPage({ onSignInClick }) {
 
           </div>
         )}
+
+        {/* Testimonials Section */}
+        <section className="py-16 max-w-6xl mx-auto text-left">
+          <div className="text-center max-w-xl mx-auto mb-12">
+            <h3 className="text-xl md:text-3xl font-black text-slate-900 leading-tight">
+              Loved by Top Content Creators
+            </h3>
+            <p className="text-xs text-slate-400 mt-2 font-bold leading-relaxed">
+              Read how writers, podcast producers, and campaign coordinators use Skilizee to streamline content workflows.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="p-8 rounded-[2rem] bg-white border border-slate-200/50 shadow-lg shadow-slate-150/30 flex flex-col justify-between">
+              <div className="space-y-4">
+                <div className="flex gap-1 text-amber-500">
+                  <Star className="w-4 h-4 fill-current" /><Star className="w-4 h-4 fill-current" /><Star className="w-4 h-4 fill-current" /><Star className="w-4 h-4 fill-current" /><Star className="w-4 h-4 fill-current" />
+                </div>
+                <p className="text-xs text-slate-600 font-bold leading-relaxed">
+                  "The profile auditor is brilliant. Evaluate your headline once, click apply improvements, and you're set. My LinkedIn organic reach grew by over 300% in a month."
+                </p>
+              </div>
+              <div className="flex items-center gap-3 pt-6 border-t border-slate-100 mt-6">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-xs font-black text-[#0077b5]">
+                  JD
+                </div>
+                <div>
+                  <h4 className="text-xs font-black text-slate-800">John Doe</h4>
+                  <p className="text-[10px] text-slate-400 font-bold">Growth Advisor, LinkedIn Authority</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-8 rounded-[2rem] bg-white border border-slate-200/50 shadow-lg shadow-slate-150/30 flex flex-col justify-between">
+              <div className="space-y-4">
+                <div className="flex gap-1 text-amber-500">
+                  <Star className="w-4 h-4 fill-current" /><Star className="w-4 h-4 fill-current" /><Star className="w-4 h-4 fill-current" /><Star className="w-4 h-4 fill-current" /><Star className="w-4 h-4 fill-current" />
+                </div>
+                <p className="text-xs text-slate-600 font-bold leading-relaxed">
+                  "Skilizee completely automated my content workflow. I run trend research, compile post drafts inside the studio, cast podcast voice actors, and schedule it all in under an hour."
+                </p>
+              </div>
+              <div className="flex items-center gap-3 pt-6 border-t border-slate-100 mt-6">
+                <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-xs font-black text-purple-650">
+                  AS
+                </div>
+                <div>
+                  <h4 className="text-xs font-black text-slate-800">Alice Smith</h4>
+                  <p className="text-[10px] text-slate-400 font-bold">Podcast Producer & Campaign Lead</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ Section */}
+        <section className="py-16 max-w-4xl mx-auto text-left">
+          <div className="text-center max-w-xl mx-auto mb-12">
+            <h3 className="text-xl md:text-3xl font-black text-slate-900 leading-tight">
+              Frequently Asked Questions
+            </h3>
+            <p className="text-xs text-slate-400 mt-2 font-bold leading-relaxed">
+              Everything you need to know about credentials, platform security, and user roles.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {faqs.map((faq, i) => {
+              const isOpen = openFaq === i;
+              return (
+                <div 
+                  key={i} 
+                  className="bg-white border border-slate-200/50 rounded-2xl overflow-hidden transition-all shadow-sm"
+                >
+                  <button
+                    onClick={() => setOpenFaq(isOpen ? null : i)}
+                    className="w-full px-6 py-5 flex items-center justify-between font-black text-xs text-slate-800 hover:text-slate-900 cursor-pointer"
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <HelpCircle className="w-4 h-4 text-indigo-500 shrink-0" />
+                      {faq.q}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  {isOpen && (
+                    <div className="px-6 pb-5 text-xs text-slate-500 leading-relaxed font-semibold border-t border-slate-50 pt-4">
+                      {faq.a}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
 
         {/* Global Security / Admin Section */}
         <div className="max-w-4xl mx-auto border-t border-slate-200/60 pt-16 text-center">
