@@ -93,21 +93,14 @@ export async function generateGPT(prompt, { maxRetries = 2, temperature = 0.7, m
       return response.choices[0]?.message?.content || "";
     } catch (err) {
       lastError = err;
-      // Log the full error to help debug 500 errors in the terminal
-      console.error(`GPT-5.4-mini Error (Attempt ${attempt + 1}):`, {
-        message: err.message,
-        status: err.status,
-        type: err.type,
-        code: err.code
-      });
-      
+      console.error(`GPT-5.4-mini attempt ${attempt + 1} failed:`, err.message);
       if (attempt < maxRetries) {
         await sleep(1000 * (attempt + 1));
       }
     }
   }
 
-  throw new Error(`GPT-5.4-mini failed: ${lastError?.message}`);
+  throw new Error(`GPT-5.4-mini generation failed after ${maxRetries + 1} attempts: ${lastError?.message}`);
 }
 
 /**

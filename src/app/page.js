@@ -10,9 +10,14 @@ import ContentCalendar from "@/components/ContentCalendar";
 import ApprovalBoard from "@/components/ApprovalBoard";
 import DiscoverHub from "@/components/DiscoverHub";
 import Analytics from "@/components/Analytics";
+import AdminPanel from "@/components/AdminPanel";
+import Login from "@/components/Login";
+import AccessDenied from "@/components/AccessDenied";
+import { AuthProvider, useAuth } from "@/lib/AuthContext";
 
-export default function App() {
-  const [activeTab, setActiveTab] = useState("dashboard");
+function AppContent({ defaultTab = "dashboard" }) {
+  const { user, loading, hasAccess } = useAuth();
+  const [activeTab, setActiveTab] = useState(defaultTab);
   const [researchContext, setResearchContext] = useState(null);
 
   const handleResearchComplete = (ctx) => setResearchContext(ctx);
@@ -26,6 +31,29 @@ export default function App() {
     handleResearchComplete({ keyword });
     setActiveTab("research");
   };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#F8FAFC]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-[#0F2942] flex items-center justify-center text-white animate-pulse">
+            <svg className="w-6 h-6 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+            </svg>
+          </div>
+          <p className="text-sm text-slate-400 font-semibold animate-pulse">Loading Skilizee.ai...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Login />;
+  }
+
+  if (!hasAccess) {
+    return <AccessDenied />;
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
@@ -62,8 +90,17 @@ export default function App() {
             <DiscoverHub onStartResearch={handleStartResearch} />
           )}
           {activeTab === "analytics" && <Analytics />}
+          {activeTab === "admin" && user.isAdmin && <AdminPanel />}
         </main>
       </div>
     </div>
+  );
+}
+
+export default function App({ defaultTab = "dashboard" }) {
+  return (
+    <AuthProvider>
+      <AppContent defaultTab={defaultTab} />
+    </AuthProvider>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { Home, Search, BarChart2, Microscope, Video, ListChecks, BrainCircuit, Activity, Calendar } from "lucide-react";
+import { Home, Search, BarChart2, Microscope, Video, ListChecks, BrainCircuit, Activity, Calendar, ShieldCheck, LogOut } from "lucide-react";
+import { useAuth } from "@/lib/AuthContext";
 
 const NAV_GROUPS = [
   {
@@ -28,6 +29,18 @@ const NAV_GROUPS = [
 ];
 
 export default function Sidebar({ activeTab, onTabChange }) {
+  const { user, logout } = useAuth();
+
+  const groups = [...NAV_GROUPS];
+  if (user?.isAdmin) {
+    groups.push({
+      title: "ADMINISTRATION",
+      items: [
+        { id: "admin", label: "Admin Panel", icon: ShieldCheck }
+      ]
+    });
+  }
+
   return (
     <aside className="w-[80px] lg:w-[280px] bg-white border-r border-slate-100 flex flex-col shrink-0 h-screen sticky top-0 z-50">
       {/* Branding */}
@@ -45,7 +58,7 @@ export default function Sidebar({ activeTab, onTabChange }) {
 
       {/* Navigation */}
       <div className="flex-1 px-4 space-y-8 overflow-y-auto custom-scroll">
-        {NAV_GROUPS.map((group) => (
+        {groups.map((group) => (
           <div key={group.title} className="space-y-2">
             <h3 className="hidden lg:block px-4 text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-4">
               {group.title}
@@ -71,6 +84,19 @@ export default function Sidebar({ activeTab, onTabChange }) {
           </div>
         ))}
       </div>
+
+      {/* Logout Action */}
+      {user && (
+        <div className="px-4 py-2 border-t border-slate-50">
+          <button
+            onClick={logout}
+            className="w-full flex items-center gap-4 px-5 py-4 rounded-[1.25rem] text-[14px] text-rose-500 hover:bg-rose-50 hover:text-rose-700 transition-all duration-300 cursor-pointer"
+          >
+            <LogOut className="w-5 h-5 shrink-0" />
+            <span className="hidden lg:block font-bold">Log Out</span>
+          </button>
+        </div>
+      )}
 
       {/* System Status - ENGINE HEALTHY */}
       <div className="p-8 border-t border-slate-50">
