@@ -4,13 +4,85 @@ import React, { useEffect, useRef, useState } from "react";
 import { 
   ArrowRight, Zap, BarChart3, PenTool, Globe, Sparkles, 
   MessageSquare, ShieldCheck, UserCheck, Radio, Calendar, 
-  Headphones, Star, ChevronDown, Check, Play, HelpCircle
+  Headphones, Star, ChevronDown, Check, HelpCircle, Gift
 } from "lucide-react";
 
 export default function LandingPage({ onSignInClick }) {
   const canvasRef = useRef(null);
   const [activeShowcase, setActiveShowcase] = useState("social");
   const [openFaq, setOpenFaq] = useState(null);
+  
+  // Fun features state
+  const [wordIndex, setWordIndex] = useState(0);
+  const [liveCreators, setLiveCreators] = useState(1482);
+  const [showBlastEffect, setShowBlastEffect] = useState(false);
+  const confettiArrayRef = useRef([]);
+
+  const rotatingWords = ["Social Copywriter", "LinkedIn Growth", "AI Podcast Studio", "Campaign Analytics"];
+
+  useEffect(() => {
+    // 1. Word rotation interval
+    const wordInterval = setInterval(() => {
+      setWordIndex((prev) => (prev + 1) % rotatingWords.length);
+    }, 2500);
+
+    // 2. Simulated live creators ticker
+    const creatorInterval = setInterval(() => {
+      setLiveCreators((prev) => prev + Math.floor(Math.random() * 5) - 2);
+    }, 4000);
+
+    return () => {
+      clearInterval(wordInterval);
+      clearInterval(creatorInterval);
+    };
+  }, []);
+
+  // Play a soft synth chime using Web Audio API (zero dependencies)
+  const playSoundEffect = (freq = 587.33) => {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime); // Chime tone
+      
+      gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.2);
+
+      osc.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      osc.start();
+      osc.stop(audioCtx.currentTime + 1.2);
+    } catch (e) {
+      console.warn("AudioContext not supported or blocked by user gesture:", e);
+    }
+  };
+
+  // Confetti Blast function
+  const triggerConfettiBlast = () => {
+    playSoundEffect(880); // Play high chime sound
+    setShowBlastEffect(true);
+    setTimeout(() => setShowBlastEffect(false), 2000);
+
+    // Spawn 120 colorful confetti particles in the active canvas
+    const colors = ["#ff007f", "#00f0ff", "#ffde00", "#7000ff", "#00ff66"];
+    for (let i = 0; i < 120; i++) {
+      confettiArrayRef.current.push({
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2.5,
+        vx: (Math.random() - 0.5) * 12,
+        vy: (Math.random() - 0.7) * 15 - 5,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        size: Math.random() * 8 + 6,
+        rotation: Math.random() * 360,
+        rotationSpeed: (Math.random() - 0.5) * 8,
+        gravity: 0.35,
+        opacity: 1
+      });
+    }
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -23,15 +95,15 @@ export default function LandingPage({ onSignInClick }) {
     let height = (canvas.height = window.innerHeight);
 
     const particles = [];
-    const particleCount = 75;
-    const connectionDistance = 150;
+    const particleCount = 65;
+    const connectionDistance = 140;
 
     class Particle {
       constructor() {
         this.x = Math.random() * width;
         this.y = Math.random() * height;
-        this.vx = (Math.random() - 0.5) * 0.45;
-        this.vy = (Math.random() - 0.5) * 0.45;
+        this.vx = (Math.random() - 0.5) * 0.4;
+        this.vy = (Math.random() - 0.5) * 0.4;
         this.radius = Math.random() * 2 + 1;
       }
 
@@ -65,6 +137,7 @@ export default function LandingPage({ onSignInClick }) {
     const animate = () => {
       ctx.clearRect(0, 0, width, height);
 
+      // 1. Draw connecting lines
       for (let i = 0; i < particles.length; i++) {
         for (let j = i + 1; j < particles.length; j++) {
           const dx = particles[i].x - particles[j].x;
@@ -83,10 +156,35 @@ export default function LandingPage({ onSignInClick }) {
         }
       }
 
+      // 2. Draw default background particles
       particles.forEach((p) => {
         p.update();
         p.draw();
       });
+
+      // 3. Draw and update active Confetti Blast
+      const confettiArray = confettiArrayRef.current;
+      for (let i = confettiArray.length - 1; i >= 0; i--) {
+        const c = confettiArray[i];
+        c.vy += c.gravity;
+        c.x += c.vx;
+        c.y += c.vy;
+        c.rotation += c.rotationSpeed;
+        c.opacity -= 0.012;
+
+        if (c.opacity <= 0) {
+          confettiArray.splice(i, 1);
+          continue;
+        }
+
+        ctx.save();
+        ctx.translate(c.x, c.y);
+        ctx.rotate((c.rotation * Math.PI) / 180);
+        ctx.fillStyle = c.color;
+        ctx.globalAlpha = c.opacity;
+        ctx.fillRect(-c.size / 2, -c.size / 2, c.size, c.size);
+        ctx.restore();
+      }
 
       animationFrameId = requestAnimationFrame(animate);
     };
@@ -100,7 +198,6 @@ export default function LandingPage({ onSignInClick }) {
   }, []);
 
   const ssoToken = typeof window !== "undefined" ? localStorage.getItem("skilizee_sso") : "";
-  
   const linkedinUrl = process.env.NEXT_PUBLIC_LINKEDIN_URL || "https://linkedin-tool-one.vercel.app";
   const finalLinkedinUrl = ssoToken ? `${linkedinUrl}?sso=${ssoToken}` : linkedinUrl;
 
@@ -222,14 +319,43 @@ export default function LandingPage({ onSignInClick }) {
 
       {/* Hero Section */}
       <main className="relative z-10 max-w-7xl mx-auto px-6 pt-16 pb-12 text-center">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 mb-8">
-          <Zap className="w-4 h-4 text-indigo-500 animate-pulse" />
-          <span className="text-[10px] font-extrabold text-indigo-600 uppercase tracking-wider">All-In-One Creator Suite</span>
+        {/* Dynamic Ticker Badge */}
+        <div className="inline-flex flex-wrap items-center justify-center gap-2 px-4 py-2 rounded-full bg-white border border-indigo-100 shadow-md shadow-indigo-500/5 mb-8">
+          <span className="flex h-2 w-2 relative">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+          <span className="text-[10px] font-black text-slate-600">
+            <strong className="text-indigo-600 font-extrabold">{liveCreators.toLocaleString()}</strong> creators live scripting updates
+          </span>
+          <span className="text-slate-350">|</span>
+          <button 
+            onClick={triggerConfettiBlast}
+            className="flex items-center gap-1 text-[10px] font-black text-indigo-600 hover:text-indigo-700 cursor-pointer outline-none focus:ring-0 active:scale-95 transition-transform"
+          >
+            <Gift className="w-3.5 h-3.5 text-indigo-500" />
+            <span>Surprise Me</span>
+          </button>
         </div>
 
-        <h2 className="text-4xl md:text-7xl font-black tracking-tight text-slate-900 max-w-5xl mx-auto leading-tight md:leading-none mb-6">
+        {/* Dynamic Rotator Title */}
+        <h2 className="text-4xl md:text-7.5xl font-black tracking-tight text-slate-900 max-w-5xl mx-auto leading-tight md:leading-[1.05] mb-6">
           Connect Your Brand. <br />
-          <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-pink-500 bg-clip-text text-transparent">Scale Your Organic Growth.</span>
+          Scale Your{" "}
+          <span className="relative inline-block overflow-hidden h-[1.1em] align-top text-left w-[360px] md:w-[650px] transition-all">
+            {rotatingWords.map((word, idx) => (
+              <span
+                key={idx}
+                className={`absolute left-0 top-0 w-full transition-all duration-700 bg-gradient-to-r from-indigo-600 via-violet-600 to-pink-500 bg-clip-text text-transparent transform ${
+                  wordIndex === idx 
+                    ? "translate-y-0 opacity-100" 
+                    : "translate-y-8 opacity-0 pointer-events-none"
+                }`}
+              >
+                {word}
+              </span>
+            ))}
+          </span>
         </h2>
 
         <p className="text-slate-500 text-base md:text-lg max-w-2xl mx-auto font-medium mb-12 leading-relaxed">
@@ -238,7 +364,10 @@ export default function LandingPage({ onSignInClick }) {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
           <button
-            onClick={onSignInClick}
+            onClick={() => {
+              playSoundEffect(523.25); // Launch sound
+              onSignInClick();
+            }}
             className="w-full sm:w-auto px-8 py-4 bg-[#0F2942] hover:bg-slate-800 text-white rounded-2xl text-sm font-bold shadow-xl transition-all flex items-center justify-center gap-2.5 group cursor-pointer active:scale-98"
           >
             Launch Executive Suite
@@ -284,7 +413,10 @@ export default function LandingPage({ onSignInClick }) {
               return (
                 <button
                   key={tool.id}
-                  onClick={() => setActiveShowcase(tool.id)}
+                  onClick={() => {
+                    playSoundEffect(isSelected ? 392 : 440);
+                    setActiveShowcase(tool.id);
+                  }}
                   className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
                     isSelected 
                       ? "bg-[#0F2942] text-white shadow-xl shadow-slate-900/10" 
