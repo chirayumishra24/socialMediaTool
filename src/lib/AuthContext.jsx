@@ -76,6 +76,9 @@ export function AuthProvider({ children }) {
     setUser(null);
     localStorage.removeItem("skilizee_user");
     localStorage.removeItem("skilizee_sso");
+    if (typeof window !== "undefined") {
+      window.location.href = "/?login=true";
+    }
   };
 
   const refreshUser = async () => {
