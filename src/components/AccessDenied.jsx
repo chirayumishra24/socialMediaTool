@@ -17,7 +17,7 @@ export default function AccessDenied() {
       id: "social_media",
       name: "Social Media Tool (AI Agent)",
       desc: "Executive Hub, news discovery & content studio",
-      url: process.env.NEXT_PUBLIC_SOCIAL_MEDIA_URL || "http://localhost:3000",
+      url: process.env.NEXT_PUBLIC_SOCIAL_MEDIA_URL || "https://social-media-tool-three.vercel.app",
       icon: MessageSquare,
       color: "bg-blue-50 text-blue-600 border-blue-100"
     },
@@ -25,7 +25,7 @@ export default function AccessDenied() {
       id: "linkedin",
       name: "LinkedIn Growth Tool",
       desc: "AI profile auditing & organic publishing calendar",
-      url: process.env.NEXT_PUBLIC_LINKEDIN_URL || "http://localhost:3001",
+      url: process.env.NEXT_PUBLIC_LINKEDIN_URL || "https://linkedin-tool-one.vercel.app",
       icon: LinkedInIcon,
       color: "bg-[#0077b5]/5 text-[#0077b5] border-[#0077b5]/10"
     },
