@@ -10,7 +10,12 @@ import {
   Settings,
   Mail,
   Bell,
-  LogOut
+  LogOut,
+  Instagram,
+  Linkedin,
+  Youtube,
+  Music,
+  Mic
 } from "lucide-react";
 import Dashboard from "@/components/Dashboard";
 import ResearchLab from "@/components/ResearchLab";
@@ -131,10 +136,19 @@ function AppContent({ defaultTab = "dashboard" }) {
 
       {/* Right Floating Social Pill */}
       <div className="absolute right-0 top-1/2 -translate-y-1/2 z-20 hidden md:flex flex-col gap-3.5 bg-white/80 backdrop-blur-md border border-slate-200/55 p-3 rounded-l-2xl shadow-xl">
-        <SocialIcon color="bg-gradient-to-tr from-yellow-500 via-pink-500 to-purple-600" icon="📸" label="Instagram" />
-        <SocialIcon color="bg-black" icon="🎵" label="TikTok" />
-        <SocialIcon color="bg-[#0077b5]" icon="💼" label="LinkedIn" />
-        <SocialIcon color="bg-[#ff0000]" icon="🎥" label="YouTube" />
+        <SocialIcon color="bg-gradient-to-tr from-yellow-500 via-pink-500 to-purple-600" icon={Instagram} label="Instagram" onClick={() => setActiveTab("analytics")} />
+        <SocialIcon color="bg-black" icon={Music} label="TikTok" onClick={() => setActiveTab("analytics")} />
+        <SocialIcon color="bg-[#0077b5]" icon={Linkedin} label="LinkedIn" onClick={() => {
+          const url = process.env.NEXT_PUBLIC_LINKEDIN_URL || "https://linkedin-tool-one.vercel.app";
+          const sso = typeof window !== "undefined" ? localStorage.getItem("skilizee_sso") : null;
+          window.location.href = sso ? `${url}?sso=${sso}` : url;
+        }} />
+        <SocialIcon color="bg-[#ff0000]" icon={Youtube} label="YouTube" onClick={() => setActiveTab("analytics")} />
+        <SocialIcon color="bg-indigo-600" icon={Mic} label="Podcast Studio" onClick={() => {
+          const url = "https://podcast-tool-ccis.vercel.app/";
+          const sso = typeof window !== "undefined" ? localStorage.getItem("skilizee_sso") : null;
+          window.location.href = sso ? `${url}?sso=${sso}` : url;
+        }} />
       </div>
 
       {/* Content wrapper with integrated header */}
@@ -232,14 +246,15 @@ function SidebarBtn({ icon: Icon, label, active = false, onClick }) {
 }
 
 /* Floating social icon helper component */
-function SocialIcon({ color, icon, label }) {
+function SocialIcon({ color, icon: Icon, label, onClick }) {
   return (
-    <div
+    <button
+      onClick={onClick}
       title={label}
-      className={`w-9 h-9 rounded-full ${color} text-white flex items-center justify-center text-sm shadow-md hover:scale-110 transition-transform cursor-pointer`}
+      className={`w-9 h-9 rounded-xl ${color} text-white flex items-center justify-center shadow-md hover:scale-115 hover:rotate-3 transition-all cursor-pointer border-0`}
     >
-      {icon}
-    </div>
+      <Icon className="w-4.5 h-4.5 shrink-0" />
+    </button>
   );
 }
 
