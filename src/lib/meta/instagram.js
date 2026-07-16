@@ -195,3 +195,74 @@ export async function syncInstagramPost({ publishedUrl = "", postId = "" } = {})
     },
   };
 }
+
+export async function fetchInstagramProfileFromMeta(username) {
+  const config = getInstagramSyncConfig();
+  if (!config.ready) {
+    throw new Error(`Missing Meta configuration: ${config.missing.join(", ")}`);
+  }
+
+  const cleanUser = String(username || "").toLowerCase().trim().replace(/^@/, "");
+  if (!cleanUser) throw new Error("Username is required for Meta profile fetch.");
+
+  // 1. Fetch connected account basic info to confirm username match
+  console.log(`[Meta API] Fetching account info for ID: ${config.instagramAccountId}`);
+  const userPayload = await graphRequest(`/${config.instagramAccountId}`, {
+    fields: "biography,followers_count,follows_count,media_count,name,profile_picture_url,username,website",
+  });
+
+  const connectedUsername = String(userPayload.username || "").toLowerCase().trim();
+  if (connectedUsername !== cleanUser) {
+    throw new Error(`Connected account is @${connectedUsername}, but requested @${cleanUser}`);
+  }
+
+  // 2. Fetch recent media posts
+  console.log(`[Meta API] Fetching recent media for @${connectedUsername}`);
+  const mediaPayload = await graphRequest(`/${config.instagramAccountId}/media`, {
+    fields: "caption,comments_count,id,like_count,media_product_type,media_type,media_url,permalink,thumbnail_url,timestamp",
+    limit: 12,
+  });
+
+  const rawPosts = mediaPayload?.data || [];
+
+  // Map into standard Dashboard post format
+  const posts = rawPosts.map((p) => {
+    let contentType = "Static Image";
+    if (p.media_type === "VIDEO") {
+      contentType = "Reel / Video";
+    } else if (p.media_type === "CAROUSEL_ALBUM") {
+      contentType = "Carousel";
+    }
+
+    return {
+      id: p.id,
+      caption: p.caption || "",
+      contentType,
+      likes: Number(p.like_count || 0),
+      comments: Number(p.comments_count || 0),
+      views: 0, // Public views not available without specific organic media insights
+      timestamp: p.timestamp || null,
+      thumbnail: p.media_url || p.thumbnail_url || "",
+      url: p.permalink || "",
+      hashtags: (p.caption || "").match(/#[\w]+/g) || [],
+      engagementLevel: Number(p.like_count || 0) > 1000 ? "High" : "Medium",
+    };
+  });
+
+  return {
+    profile: {
+      username: connectedUsername,
+      fullName: userPayload.name || connectedUsername,
+      bio: userPayload.biography || "",
+      followers: Number(userPayload.followers_count || 0),
+      following: Number(userPayload.follows_count || 0),
+      postCount: Number(userPayload.media_count || posts.length),
+      profilePic: userPayload.profile_picture_url || "",
+      isVerified: false,
+      externalUrl: userPayload.website || "",
+      category: "Business",
+    },
+    posts,
+    source: "Meta Graph API",
+  };
+}

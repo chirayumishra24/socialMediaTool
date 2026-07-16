@@ -96,7 +96,7 @@ export default function InstagramAnalyzer() {
     };
   }, [username, profileData]);
 
-  // ─── Scrape Handler (Client-side extension cache lookup) ───
+  // ─── Scrape Handler (Client-side extension cache lookup + Meta API fallback) ───
   const handleScrape = useCallback(async () => {
     const cleanUser = username.toLowerCase().trim();
     if (!cleanUser) {
@@ -111,6 +111,7 @@ export default function InstagramAnalyzer() {
     setManualMode(false);
 
     try {
+      // 1. Check local extension sync cache first
       const cacheStr = localStorage.getItem("skilizee_ig_sync_cache");
       let data = null;
       if (cacheStr) {
@@ -125,10 +126,29 @@ export default function InstagramAnalyzer() {
         setProfileData(ensureAnalytics(data));
         console.log("[IG Analyzer] Loaded synced profile data successfully!");
       } else {
-        console.log("[IG Analyzer] Cache miss. Forcing manual input mode.");
-        setError(`No cached extension data found for @${cleanUser}. Please open Instagram, visit the profile page, and click "Sync to Dashboard" in the Chrome Extension popup first!`);
-        setManualMode(true);
-        setManualProfile((prev) => ({ ...prev, username: cleanUser }));
+        // 2. Cache miss — fetch from server (checks Meta API & server cache)
+        console.log("[IG Analyzer] Extension cache miss. Fetching from server...");
+        const res = await fetch("/api/meta/instagram/scrape", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: cleanUser }),
+        });
+        
+        console.log(`[IG Analyzer] Server scrape response status: ${res.status}`);
+        const serverData = await res.json();
+        console.log("[IG Analyzer] Server scrape response data:", serverData);
+        
+        if (!res.ok) throw new Error(serverData.error || "Scrape failed");
+
+        if (serverData.needsManualInput) {
+          console.log("[IG Analyzer] Server requested manual entry fallback");
+          setError(`No cached extension data or connected Meta account found for @${cleanUser}. Please sync using the Chrome Extension first!`);
+          setManualMode(true);
+          setManualProfile((prev) => ({ ...prev, username: cleanUser }));
+        } else {
+          setProfileData(ensureAnalytics(serverData));
+          console.log("[IG Analyzer] Loaded profile data from server/Meta Graph API successfully!");
+        }
       }
     } catch (err) {
       console.error("[IG Analyzer] Scrape handler exception:", err);

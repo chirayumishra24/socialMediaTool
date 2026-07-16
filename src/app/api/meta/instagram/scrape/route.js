@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { scrapeProfile, buildManualProfile } from "@/lib/crawlers/profile-scraper";
+import { fetchInstagramProfileFromMeta, getInstagramSyncStatus } from "@/lib/meta/instagram";
 import fs from "fs";
 import path from "path";
 
@@ -71,6 +72,23 @@ export async function POST(req) {
 
     const cleanUsername = username.toLowerCase().trim();
     writeDebugLog(`Cleaned username: "${cleanUsername}"`);
+
+    // Try fetching from official Meta API if credentials are ready
+    try {
+      const syncStatus = getInstagramSyncStatus();
+      if (syncStatus.ready) {
+        writeDebugLog(`Meta credentials are ready. Fetching profile for @${cleanUsername} from Meta API...`);
+        const metaData = await fetchInstagramProfileFromMeta(cleanUsername);
+        writeDebugLog(`Successfully retrieved @${cleanUsername} from Meta Graph API`);
+        return NextResponse.json(
+          { ok: true, ...metaData }, 
+          { headers: corsHeaders }
+        );
+      }
+    } catch (metaErr) {
+      writeDebugLog(`Meta Graph API lookup skipped/failed: ${metaErr.message}`);
+    }
+
     writeDebugLog("Current global.igCache keys:", Object.keys(global.igCache));
 
     // Check if the Chrome extension recently synced this profile
