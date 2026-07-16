@@ -71,7 +71,11 @@ export default function InstagramAnalyzer() {
 
   // ─── Scrape Handler ─────────────────────────────────────
   const handleScrape = useCallback(async () => {
-    if (!username.trim()) return;
+    if (!username.trim()) {
+      console.warn("[IG Analyzer] Username is empty");
+      return;
+    }
+    console.log(`[IG Analyzer] Starting scrape for: ${username}`);
     setError("");
     setScraping(true);
     setProfileData(null);
@@ -79,26 +83,34 @@ export default function InstagramAnalyzer() {
     setManualMode(false);
 
     try {
+      console.log("[IG Analyzer] Fetching /api/meta/instagram/scrape...");
       const res = await fetch("/api/meta/instagram/scrape", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: username.trim() }),
       });
+      console.log(`[IG Analyzer] Scrape response status: ${res.status}`);
       const data = await res.json();
+      console.log("[IG Analyzer] Scrape response data:", data);
+      
       if (!res.ok) throw new Error(data.error || "Scrape failed");
 
       if (data.needsManualInput) {
+        console.log("[IG Analyzer] Backend requested manual input fallback");
         setManualMode(true);
         setManualProfile((prev) => ({ ...prev, username: username.trim() }));
       } else {
+        console.log("[IG Analyzer] Scrape successful, setting profileData");
         setProfileData(data);
       }
     } catch (err) {
+      console.error("[IG Analyzer] Scrape handler exception:", err);
       setError(err.message);
       setManualMode(true);
       setManualProfile((prev) => ({ ...prev, username: username.trim() }));
     } finally {
       setScraping(false);
+      console.log("[IG Analyzer] Scrape process finished");
     }
   }, [username]);
 
