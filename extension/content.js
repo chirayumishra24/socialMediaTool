@@ -306,15 +306,19 @@ async function performScrape() {
       const thumbnail = imgEl ? imgEl.src : "";
       const contentType = href.includes('/reel/') ? "Reel / Video" : "Static Image";
 
-      // Tier 3: Trigger hover/mouseenter to let Instagram render overlay dynamically
-      let likes = 0;
-      let comments = 0;
-      try {
-        const hovered = await hoverAndScrapePost(el);
-        likes = hovered.likes;
-        comments = hovered.comments;
-      } catch (hoverErr) {
-        console.warn("[Skilizee Crawler] Post hover scrape failed:", hoverErr);
+      // Tier 1: Try parsing from image alt text directly (extremely fast & reliable)
+      const alt = imgEl ? (imgEl.getAttribute('alt') || "") : "";
+      let { likes, comments } = parseStatsFromAlt(alt);
+
+      // Tier 2: If alt text didn't yield values, try hover simulation with 150ms delay
+      if (likes === 0 && comments === 0) {
+        try {
+          const hovered = await hoverAndScrapePost(el);
+          likes = hovered.likes;
+          comments = hovered.comments;
+        } catch (hoverErr) {
+          console.warn("[Skilizee Crawler] Post hover scrape failed:", hoverErr);
+        }
       }
 
       const views = contentType === "Reel / Video" ? likes * 4 : 0;
@@ -672,8 +676,8 @@ async function hoverAndScrapePost(el) {
   el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
   el.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
   
-  // Wait 60ms for DOM overlay rendering
-  await new Promise(resolve => setTimeout(resolve, 60));
+  // Wait 150ms for DOM overlay rendering
+  await new Promise(resolve => setTimeout(resolve, 150));
   
   let likes = 0;
   let comments = 0;
@@ -712,9 +716,47 @@ async function hoverAndScrapePost(el) {
     }
   }
 
+  // Fallback: search any leaf text node under the element containing numbers using tree-walker
+  if (likes === 0 && comments === 0) {
+    const textNodes = [];
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    let node;
+    while (node = walker.nextNode()) {
+      const text = node.textContent.trim();
+      const num = parseInstagramNumber(text);
+      if (num > 0 && /^\d+[\d,.]*[kkm]?$/i.test(text)) {
+        textNodes.push(num);
+      }
+    }
+    if (textNodes.length >= 2) {
+      likes = textNodes[0];
+      comments = textNodes[1];
+    } else if (textNodes.length === 1) {
+      likes = textNodes[0];
+    }
+  }
+
   // Mouse leave cleanup
   el.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
   el.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true }));
+
+  return { likes, comments };
+}
+
+function parseStatsFromAlt(alt) {
+  let likes = 0;
+  let comments = 0;
+  if (!alt) return { likes, comments };
+
+  const likesMatch = alt.match(/([\d,.]+[KkMm]?)\s*likes/i);
+  if (likesMatch) {
+    likes = parseInstagramNumber(likesMatch[1]);
+  }
+
+  const commentsMatch = alt.match(/([\d,.]+[KkMm]?)\s*comments/i);
+  if (commentsMatch) {
+    comments = parseInstagramNumber(commentsMatch[1]);
+  }
 
   return { likes, comments };
 }
