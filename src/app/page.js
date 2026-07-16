@@ -12,7 +12,9 @@ import {
   Bell,
   LogOut,
   Music,
-  Mic
+  Mic,
+  Sparkles,
+  FlaskConical
 } from "lucide-react";
 
 function Instagram(props) {
@@ -84,6 +86,7 @@ import ApprovalBoard from "@/components/ApprovalBoard";
 import DiscoverHub from "@/components/DiscoverHub";
 import Analytics from "@/components/Analytics";
 import AdminPanel from "@/components/AdminPanel";
+import InstagramAnalyzer from "@/components/InstagramAnalyzer";
 import Login from "@/components/Login";
 import AccessDenied from "@/components/AccessDenied";
 import LandingPage from "@/components/LandingPage";
@@ -175,7 +178,9 @@ function AppContent({ defaultTab = "dashboard" }) {
         <nav className="flex flex-row lg:flex-col items-center gap-1 sm:gap-3 lg:gap-6">
           <SidebarBtn icon={Home} label="Home" active={activeTab === "dashboard"} onClick={() => setActiveTab("dashboard")} />
           <SidebarBtn icon={TrendingUp} label="Trends" active={activeTab === "discover"} onClick={() => setActiveTab("discover")} />
+          <SidebarBtn icon={FlaskConical} label="R&D Lab" active={activeTab === "research"} onClick={() => setActiveTab("research")} />
           <SidebarBtn icon={BarChart3} label="Analytics" active={activeTab === "analytics"} onClick={() => setActiveTab("analytics")} />
+          <SidebarBtn icon={Sparkles} label="IG Audit" active={activeTab === "instagram-analyzer"} onClick={() => setActiveTab("instagram-analyzer")} />
           <SidebarBtn icon={Video} label="Content" active={activeTab === "studio"} onClick={() => setActiveTab("studio")} />
           <SidebarBtn icon={Users} label="Audience" active={activeTab === "audience"} onClick={() => setActiveTab("analytics")} />
           {user.isAdmin && (
@@ -222,6 +227,7 @@ function AppContent({ defaultTab = "dashboard" }) {
               {activeTab === "analytics" && "Campaign Analytics Hub"}
               {activeTab === "research" && "R&D Lab Cycles"}
               {activeTab === "studio" && "Production Content Studio"}
+              {activeTab === "instagram-analyzer" && "Instagram Profile Analyzer"}
               {activeTab === "admin" && "Administrative Portal"}
             </h1>
             <p className="text-sm font-semibold text-slate-500 mt-0.5">
@@ -279,6 +285,7 @@ function AppContent({ defaultTab = "dashboard" }) {
             <DiscoverHub onStartResearch={handleStartResearch} />
           )}
           {activeTab === "analytics" && <Analytics />}
+          {activeTab === "instagram-analyzer" && <InstagramAnalyzer />}
           {activeTab === "admin" && user.isAdmin && <AdminPanel />}
         </div>
 

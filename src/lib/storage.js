@@ -7,6 +7,7 @@ import { useMemo, useSyncExternalStore } from "react";
 const KEYS = {
   research: "skilizee_research",
   content: "skilizee_content",
+  ig_analysis: "skilizee_ig_analysis",
 };
 
 const STORAGE_EVENT = "skilizee-storage-updated";
@@ -260,4 +261,36 @@ export function usePerformanceInsights() {
 export function useSettingsSnapshot() {
   return { schoolName: "Skilizee Academy", schoolVision: "Shaping the future of education" };
 }
+
+// ═══ INSTAGRAM ANALYSES ═══
+export function saveAnalysis(data) {
+  const all = getAnalysisHistory();
+  const entry = {
+    ...data,
+    id: data.id || genId(),
+    savedAt: data.savedAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  
+  const existingIndex = all.findIndex(a => a.id === entry.id || a.profile?.username === entry.profile?.username);
+  if (existingIndex >= 0) {
+    all[existingIndex] = entry;
+  } else {
+    all.unshift(entry);
+  }
+  
+  if (all.length > 20) all.length = 20; // Cap at 20 historical audits
+  writeJSON(KEYS.ig_analysis, all);
+  return entry;
+}
+
+export function getAnalysisHistory() {
+  return readJSON(KEYS.ig_analysis);
+}
+
+export function useAnalysisHistory() {
+  const rawValue = useStorageString(KEYS.ig_analysis, "[]");
+  return useMemo(() => parseArraySnapshot(rawValue), [rawValue]);
+}
+
 
