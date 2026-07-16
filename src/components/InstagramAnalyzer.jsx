@@ -80,7 +80,7 @@ export default function InstagramAnalyzer() {
           const cache = JSON.parse(cacheStr);
           if (cache[cleanUser] && !profileData) {
             console.log(`[IG Analyzer] Auto-loading newly synced data for @${cleanUser}`);
-            setProfileData(cache[cleanUser]);
+            setProfileData(ensureAnalytics(cache[cleanUser]));
             setError("");
             setManualMode(false);
           }
@@ -122,7 +122,7 @@ export default function InstagramAnalyzer() {
       }
 
       if (data) {
-        setProfileData(data);
+        setProfileData(ensureAnalytics(data));
         console.log("[IG Analyzer] Loaded synced profile data successfully!");
       } else {
         console.log("[IG Analyzer] Cache miss. Forcing manual input mode.");
@@ -156,7 +156,7 @@ export default function InstagramAnalyzer() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed");
-      setProfileData(data);
+      setProfileData(ensureAnalytics(data));
       setManualMode(false);
     } catch (err) {
       setError(err.message);
@@ -798,4 +798,53 @@ function formatNum(n) {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return String(n);
+}
+
+function ensureAnalytics(data) {
+  if (!data) return null;
+  if (data.analysis && typeof data.analysis.avgLikes === "number") return data;
+
+  const posts = data.posts || [];
+  const profile = data.profile || {};
+
+  const totalLikes = posts.reduce((s, p) => s + (Number(p.likes) || 0), 0);
+  const totalComments = posts.reduce((s, p) => s + (Number(p.comments) || 0), 0);
+  const totalViews = posts.reduce((s, p) => s + (Number(p.views) || 0), 0);
+
+  const avgLikes = posts.length ? Math.round(totalLikes / posts.length) : 0;
+  const avgComments = posts.length ? Math.round(totalComments / posts.length) : 0;
+  const avgViews = posts.length ? Math.round(totalViews / posts.length) : 0;
+
+  const followers = Number(profile.followers) || 1;
+  const engagementRate = (((avgLikes + avgComments) / followers) * 100).toFixed(2);
+
+  const reels = posts.filter((p) => p.contentType === "Reel / Video").length;
+  const carousels = posts.filter((p) => p.contentType === "Carousel").length;
+  const staticPosts = posts.filter((p) => p.contentType === "Static Image").length;
+
+  const topFormat = reels >= carousels && reels >= staticPosts ? "Reels" : carousels >= staticPosts ? "Carousels" : "Static Images";
+
+  let postingFrequency = "Unknown";
+  const timestamps = posts.map((p) => p.timestamp || p.date).filter(Boolean).sort();
+  if (timestamps.length >= 2) {
+    const daySpan = Math.max(1, (new Date(timestamps[timestamps.length - 1]) - new Date(timestamps[0])) / (1000 * 60 * 60 * 24));
+    postingFrequency = `~${((timestamps.length / daySpan) * 7).toFixed(1)} posts/week`;
+  }
+
+  const sorted = [...posts].sort((a, b) => ((Number(b.likes) || 0) + (Number(b.comments) || 0)) - ((Number(a.likes) || 0) + (Number(a.comments) || 0)));
+
+  return {
+    ...data,
+    analysis: {
+      avgLikes,
+      avgComments,
+      avgViews,
+      engagementRate,
+      formatDistribution: { reels, carousels, static: staticPosts },
+      topFormat,
+      postingFrequency,
+      bestPerformingPost: sorted[0] || null,
+      worstPerformingPost: sorted[sorted.length - 1] || null,
+    }
+  };
 }
