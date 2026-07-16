@@ -78,11 +78,24 @@ export default function InstagramAnalyzer() {
       if (cacheStr && cleanUser) {
         try {
           const cache = JSON.parse(cacheStr);
-          if (cache[cleanUser] && !profileData) {
-            console.log(`[IG Analyzer] Auto-loading newly synced data for @${cleanUser}`);
+          if (cache[cleanUser]) {
+            console.log(`[IG Analyzer] Reloading newly synced data for @${cleanUser}`);
             setProfileData(ensureAnalytics(cache[cleanUser]));
+            setStrategy(null); // Clear active strategy cache
             setError("");
             setManualMode(false);
+
+            // Clear matching username history entries from persistent storage
+            try {
+              const historyStr = localStorage.getItem("skilizee_ig_analysis");
+              if (historyStr) {
+                const history = JSON.parse(historyStr);
+                const filtered = history.filter(h => h.profile?.username?.toLowerCase() !== cleanUser);
+                localStorage.setItem("skilizee_ig_analysis", JSON.stringify(filtered));
+              }
+            } catch (histErr) {
+              console.error("[IG Analyzer] Error purging matching history cache:", histErr);
+            }
           }
         } catch (e) {
           console.error("[IG Analyzer] Error parsing cache:", e);
@@ -94,7 +107,7 @@ export default function InstagramAnalyzer() {
     return () => {
       window.removeEventListener("skilizee_cache_updated", handleCacheUpdate);
     };
-  }, [username, profileData]);
+  }, [username]);
 
   // ─── Scrape Handler (Client-side extension cache lookup + Meta API fallback) ───
   const handleScrape = useCallback(async () => {
