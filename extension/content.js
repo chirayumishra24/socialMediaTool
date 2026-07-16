@@ -23,6 +23,11 @@ function performScrape() {
   }
 
   const username = urlParts[0];
+  const invalidRoutes = ["p", "reel", "reels", "explore", "stories", "direct", "developer", "emails", "accounts"];
+  
+  if (invalidRoutes.includes(username.toLowerCase())) {
+    throw new Error("Please navigate to an Instagram profile page (e.g. https://www.instagram.com/skillizee.io) instead of a specific post, reel, or page.");
+  }
 
   // Try extracting stats from selectors
   let followers = 0;

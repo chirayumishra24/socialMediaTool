@@ -64,39 +64,45 @@ export async function scrapeProfile(username) {
  * Build profile data from manually entered stats (UI fallback).
  */
 export function buildManualProfile(manualData) {
+  // Check if payload is from the Chrome Extension (which has a nested structure)
+  const isExtension = manualData.profile && Array.isArray(manualData.posts);
+  
+  const rawProfile = isExtension ? manualData.profile : manualData;
+  const rawPosts = isExtension ? manualData.posts : (manualData.recentPosts || []);
+
   const profile = {
-    username: manualData.username || "",
-    fullName: manualData.fullName || "",
-    bio: manualData.bio || "",
-    followers: parseInt(manualData.followers) || 0,
-    following: parseInt(manualData.following) || 0,
-    postCount: parseInt(manualData.postCount) || 0,
-    profilePic: "",
-    isVerified: false,
-    externalUrl: manualData.externalUrl || "",
-    category: manualData.category || "",
+    username: rawProfile.username || "",
+    fullName: rawProfile.fullName || "",
+    bio: rawProfile.bio || "",
+    followers: parseInt(rawProfile.followers) || 0,
+    following: parseInt(rawProfile.following) || 0,
+    postCount: parseInt(rawProfile.postCount) || 0,
+    profilePic: rawProfile.profilePic || "",
+    isVerified: !!rawProfile.isVerified,
+    externalUrl: rawProfile.externalUrl || "",
+    category: rawProfile.category || "",
   };
 
-  // Build synthetic posts from manual descriptions
-  const posts = (manualData.recentPosts || []).map((p, i) => ({
-    id: `manual_${i}`,
+  // Build posts mapping
+  const posts = rawPosts.map((p, i) => ({
+    id: p.id || `manual_${i}`,
     caption: p.caption || "",
     contentType: p.contentType || "Static Image",
     likes: parseInt(p.likes) || 0,
     comments: parseInt(p.comments) || 0,
     views: parseInt(p.views) || 0,
-    timestamp: p.date || null,
-    thumbnail: "",
-    hashtags: (p.caption || "").match(/#[\w]+/g) || [],
-    url: "",
-    engagementLevel: (parseInt(p.likes) || 0) > 5000 ? "Very High" : (parseInt(p.likes) || 0) > 1000 ? "High" : (parseInt(p.likes) || 0) > 200 ? "Medium" : "Low",
+    timestamp: p.timestamp || p.date || null,
+    thumbnail: p.thumbnail || "",
+    hashtags: p.hashtags || (p.caption || "").match(/#[\w]+/g) || [],
+    url: p.url || "",
+    engagementLevel: p.engagementLevel || (parseInt(p.likes) > 5000 ? "Very High" : parseInt(p.likes) > 1000 ? "High" : parseInt(p.likes) > 200 ? "Medium" : "Low"),
   }));
 
   return {
     profile,
     posts,
     analysis: computeAnalytics(posts, profile),
-    source: "manual",
+    source: isExtension ? "extension" : "manual",
   };
 }
 
