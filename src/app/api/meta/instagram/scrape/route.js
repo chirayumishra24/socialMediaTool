@@ -28,7 +28,7 @@ export async function POST(req) {
     // Mode A: Chrome Extension uploading scraped profile payload
     if (body.manual) {
       const data = buildManualProfile(body.manual);
-      const username = String(body.manual.username || "").toLowerCase().trim();
+      const username = String(body.manual.profile?.username || body.manual.username || "").toLowerCase().trim();
       if (username) {
         global.igCache[username] = {
           ...data,
