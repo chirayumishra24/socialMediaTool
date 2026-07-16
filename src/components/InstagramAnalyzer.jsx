@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Search,
   Loader2,
@@ -69,13 +69,41 @@ export default function InstagramAnalyzer() {
     goal4: "Establish personal brand as edtech founder",
   });
 
-  // ─── Scrape Handler ─────────────────────────────────────
+  // Listen for real-time Chrome Extension sync events
+  useEffect(() => {
+    const handleCacheUpdate = () => {
+      console.log("[IG Analyzer] Received skilizee_cache_updated event");
+      const cacheStr = localStorage.getItem("skilizee_ig_sync_cache");
+      const cleanUser = username.toLowerCase().trim();
+      if (cacheStr && cleanUser) {
+        try {
+          const cache = JSON.parse(cacheStr);
+          if (cache[cleanUser] && !profileData) {
+            console.log(`[IG Analyzer] Auto-loading newly synced data for @${cleanUser}`);
+            setProfileData(cache[cleanUser]);
+            setError("");
+            setManualMode(false);
+          }
+        } catch (e) {
+          console.error("[IG Analyzer] Error parsing cache:", e);
+        }
+      }
+    };
+
+    window.addEventListener("skilizee_cache_updated", handleCacheUpdate);
+    return () => {
+      window.removeEventListener("skilizee_cache_updated", handleCacheUpdate);
+    };
+  }, [username, profileData]);
+
+  // ─── Scrape Handler (Client-side extension cache lookup) ───
   const handleScrape = useCallback(async () => {
-    if (!username.trim()) {
+    const cleanUser = username.toLowerCase().trim();
+    if (!cleanUser) {
       console.warn("[IG Analyzer] Username is empty");
       return;
     }
-    console.log(`[IG Analyzer] Starting scrape for: ${username}`);
+    console.log(`[IG Analyzer] Checking local extension sync storage cache for: ${cleanUser}`);
     setError("");
     setScraping(true);
     setProfileData(null);
@@ -83,31 +111,30 @@ export default function InstagramAnalyzer() {
     setManualMode(false);
 
     try {
-      console.log("[IG Analyzer] Fetching /api/meta/instagram/scrape...");
-      const res = await fetch("/api/meta/instagram/scrape", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: username.trim() }),
-      });
-      console.log(`[IG Analyzer] Scrape response status: ${res.status}`);
-      const data = await res.json();
-      console.log("[IG Analyzer] Scrape response data:", data);
-      
-      if (!res.ok) throw new Error(data.error || "Scrape failed");
+      const cacheStr = localStorage.getItem("skilizee_ig_sync_cache");
+      let data = null;
+      if (cacheStr) {
+        const cache = JSON.parse(cacheStr);
+        if (cache[cleanUser]) {
+          data = cache[cleanUser];
+          console.log("[IG Analyzer] Cache hit from extension storage:", data);
+        }
+      }
 
-      if (data.needsManualInput) {
-        console.log("[IG Analyzer] Backend requested manual input fallback");
-        setManualMode(true);
-        setManualProfile((prev) => ({ ...prev, username: username.trim() }));
-      } else {
-        console.log("[IG Analyzer] Scrape successful, setting profileData");
+      if (data) {
         setProfileData(data);
+        console.log("[IG Analyzer] Loaded synced profile data successfully!");
+      } else {
+        console.log("[IG Analyzer] Cache miss. Forcing manual input mode.");
+        setError(`No cached extension data found for @${cleanUser}. Please open Instagram, visit the profile page, and click "Sync to Dashboard" in the Chrome Extension popup first!`);
+        setManualMode(true);
+        setManualProfile((prev) => ({ ...prev, username: cleanUser }));
       }
     } catch (err) {
       console.error("[IG Analyzer] Scrape handler exception:", err);
       setError(err.message);
       setManualMode(true);
-      setManualProfile((prev) => ({ ...prev, username: username.trim() }));
+      setManualProfile((prev) => ({ ...prev, username: cleanUser }));
     } finally {
       setScraping(false);
       console.log("[IG Analyzer] Scrape process finished");

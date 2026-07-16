@@ -40,33 +40,15 @@ document.getElementById("sync-btn").addEventListener("click", async () => {
 
     showStatus(`Extracted @${payload.profile.username}! Syncing...`, "success");
 
-    // Try posting to localhost ports 3000, 3001, and 3002
-    const ports = [3000, 3001, 3002];
-    let success = false;
-    let errMessage = "";
-
-    for (const port of ports) {
-      try {
-        const res = await fetch(`http://localhost:${port}/api/meta/instagram/scrape`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ manual: payload }),
-        });
-
-        if (res.ok) {
-          success = true;
-          break;
-        }
-      } catch (err) {
-        errMessage = err.message;
+    // Save directly to extension storage under key "ig_profile_{username}"
+    const username = payload.profile.username.toLowerCase().trim();
+    chrome.storage.local.set({ [`ig_profile_${username}`]: payload }, () => {
+      if (chrome.runtime.lastError) {
+        showStatus(`Failed to save data: ${chrome.runtime.lastError.message}`, "error");
+      } else {
+        showStatus(`Successfully synced @${payload.profile.username}! Open your Skilizee Dashboard to see stats.`, "success");
       }
-    }
-
-    if (success) {
-      showStatus(`Successfully synced @${payload.profile.username}! Open your Skilizee Dashboard to see stats.`, "success");
-    } else {
-      showStatus(`Could not connect to Skilizee Dashboard server. Ensure your dev server is running on localhost.`, "error");
-    }
+    });
   });
 });
 

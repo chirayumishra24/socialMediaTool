@@ -5,7 +5,8 @@
   "description": "Scrapes Instagram profile info and sends it directly to your Skilizee Agent Dashboard.",
   "permissions": [
     "activeTab",
-    "scripting"
+    "scripting",
+    "storage"
   ],
   "host_permissions": [
     "https://www.instagram.com/*",
@@ -18,7 +19,12 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://www.instagram.com/*"],
+      "matches": [
+        "https://www.instagram.com/*",
+        "http://localhost:3000/*",
+        "http://localhost:3001/*",
+        "http://localhost:3002/*"
+      ],
       "js": ["content.js"]
     }
   ]

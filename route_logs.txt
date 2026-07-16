@@ -1,0 +1,394 @@
+[2026-07-16T10:02:51.118Z] Received POST request
+{
+  "manual": {
+    "profile": {
+      "username": "skillizee.io",
+      "fullName": "SkilliZee",
+      "bio": "skillizee.io\nskillizee.io\nOptions",
+      "followers": 825,
+      "following": 6,
+      "postCount": 312,
+      "profilePic": "https://scontent.cdninstagram.com/v/t51.82787-19/514510459_17921690523098323_2520038565024459694_n.jpg?stp=dst-jpg_s100x100_tt6&_nc_cat=104&ccb=7-5&_nc_sid=bf7eb4&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLnd3dy4xMDgwLkMzIn0%3D&_nc_ohc=i_3p7_5hY8QQ7kNvwH2nIMM&_nc_oc=AdqUgJZiWmvDUnexyJQFgEdHVeY9X0PabmLpSnG75DuJB7SwyNGHg7cDz2gnXKvoxB9X0zlVnQwR5SSvw-TA1I7u&_nc_zt=24&_nc_ht=scontent.cdninstagram.com&_nc_gid=wLX2V9T8YuGEeBylgpnvXg&_nc_ss=7b6a8&oh=00_AQCUx-4TCKY_UABEuEw3qnncfoEnTJgtTyoUqqWXpZe0TA&oe=6A5E62CE",
+      "isVerified": false,
+      "externalUrl": "https://www.instagram.com/skillizee.io/",
+      "category": "Creator"
+    },
+    "posts": [
+      {
+        "id": "_skillizee.io_p_DZhGXHpM1Nj_",
+        "caption": "Photo by SkilliZee on June 13, 2026. May be an image of ‎text that says \"‎Be part of 8700+ community communityofstudents of students buildingtheirstartups building startups PRO SkilliZee REAL SKILLS. REAL STARTUPS. REAL FUNDING. Students learn. Build. Pitch. And funded. SkilliZee PITCH DAY Idea Investors.In Impact. Learn alSkills elevant. ready. Build Startups urnideas nto 章 SkilliZee STARTUP FUNDING AWARDED ₹ु7,50,000 SEVENLAKHFIFTY THOUSAND RUPEESP PLUS ملدد Pitch to ealInvestors nvestors Practice.P Present. Persuade. inrestar Get alFunding Webackyou eback Students have received ₹7.5 LAKHS in funding for their startups Expert Mentors Hands- -on Learning Investor Network YOUR STARTUP JOURNEY STARTS HERE! RealWorld Real World Exposure ENROLL NOW seats available‎\"‎.",
+        "contentType": "Static Image",
+        "likes": 81,
+        "comments": 13,
+        "views": 0,
+        "timestamp": "2026-07-16T10:02:48.114Z",
+        "thumbnail": "https://instagram.fjdh1-6.fna.fbcdn.net/v/t51.82787-15/723197180_17970778359098323_883011953389345595_n.heic?stp=dst-jpg_e35_s1080x1080_tt6&_nc_cat=108&_nc_map=urlgen_bucketless&ig_cache_key=MzkxODQ0MTEyNzgyMzQ5NjAzNQ%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkZFRUQueHBpZHMuMTQ0MC5zZHIucmVndWxhcl9waG90by5DMyJ9&_nc_ohc=yQLBN_VhgD4Q7kNvwHPWlqA&_nc_oc=AdqckGbukH4Lwatl37p2R3I-DOepxhsGeqHhOrxOOES5gOCw2NhbVKBNpKYJFXiIIQkQNGui0SZtyJdtXAOAud4d&_nc_ad=z-m&_nc_cid=1174&_nc_zt=23&_nc_ht=instagram.fjdh1-6.fna&_nc_gid=4uKI_lousggsOVbfe88J6w&_nc_ss=7a22e&oh=00_AQDU1x16swgeeDzOl1OTfh0ZNvpG6GCr0Gt8-IaYwCf2Lg&oe=6A5E7E08",
+        "url": "https://www.instagram.com/skillizee.io/p/DZhGXHpM1Nj/",
+        "hashtags": [],
+        "engagementLevel": "Medium"
+      },
+      {
+        "id": "_smc.connect_reel_DRMkswIEUaQ_",
+        "caption": "It wasn’t just an event - it was a collective heartbeat.\nEvery cheer, every moment, every frame at @smc.connect … @cambridgecourtgroupofschools made it unforgettable🌻\n\n8th of November was epic , see you until next time 🔥\n\n#smc #sortmycollege #smcconnect #studentssupport #cambridgecourtgroupofschools #entrepreneurlife #creator",
+        "contentType": "Reel / Video",
+        "likes": 378,
+        "comments": 25,
+        "views": 3024,
+        "timestamp": "2026-07-16T10:02:48.114Z",
+        "thumbnail": "https://instagram.fjdh1-5.fna.fbcdn.net/v/t51.82787-15/582080511_17916222975220635_137022919493000646_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=103&_nc_map=urlgen_bucketless&ig_cache_key=Mzc2ODU0ODM5MzIwODU5NjExMjE3OTE2MjIyOTcyMjIwNjM1.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjcyMC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=Ds98mTi6dzYQ7kNvwHPSKR0&_nc_oc=AdrEWDckwOtB75o6WCC2vG6pMBlMgrmLtqgZjX5FJdKctCRjC4YzJaVueu4EXhrvqzPXt6Q57vt5XUqbdOfC5VAJ&_nc_ad=z-m&_nc_cid=1174&_nc_zt=23&_nc_ht=instagram.fjdh1-5.fna&_nc_gid=4uKI_lousggsOVbfe88J6w&_nc_ss=7a22e&oh=00_AQDstctnSxvmj2Wqv-a2wR50aWtu3TSSQvpglmNm54oDvg&oe=6A5E7EE5",
+        "url": "https://www.instagram.com/smc.connect/reel/DRMkswIEUaQ/",
+        "hashtags": [],
+        "engagementLevel": "High"
+      },
+      {
+        "id": "_aarnarawat_official_reel_DRcNizmAXI8_",
+        "caption": "A day of clarity, confidence and conversations that matter. This session was more than just a gathering — it was a moment of growth.\n\nIt offered clarity, courage and a fresh perspective to our students and watching them engage so deeply was such a proud moment.\n\nHere are the moments that captured the spirit of this powerful session. Grateful to our entire community for making this experience so meaningful. ✨\n\n#aarnarawat #skillizee #ankurwarikoo #metaskills #youthdevelopment #growthmindset #skillsforlife",
+        "contentType": "Reel / Video",
+        "likes": 282,
+        "comments": 24,
+        "views": 2256,
+        "timestamp": "2026-07-16T10:02:48.114Z",
+        "thumbnail": "https://instagram.fjdh1-1.fna.fbcdn.net/v/t51.82787-15/720125767_17973590727104396_1822906717697451388_n.jpg?stp=dst-jpg_e35_p972x972_sh2.08_tt6&_nc_cat=109&_nc_map=urlgen_bucketless&ig_cache_key=Mzc3Mjk1MDE1NDI5NDk0ODQxMjE3OTczNTkwNzIxMTA0Mzk2.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEyMTUuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=FJO3z2KPCfkQ7kNvwGC3plz&_nc_oc=AdrKIpNGk4-qDUjbwJxjj2b8NlZnXJBoyekzJrewE0hQGemfy5f1kJsyD2SlgRjUTjFO-2Jwb5E5EWMjzu1AcnFv&_nc_ad=z-m&_nc_cid=1174&_nc_zt=23&_nc_ht=instagram.fjdh1-1.fna&_nc_gid=4uKI_lousggsOVbfe88J6w&_nc_ss=7a22e&oh=00_AQBOnJIT8VCod2ZLucawzZxQvFBOIoN2LY7rpBnIHaH3cg&oe=6A5E803D",
+        "url": "https://www.instagram.com/aarnarawat_official/reel/DRcNizmAXI8/",
+        "hashtags": [],
+        "engagementLevel": "High"
+      },
+      {
+        "id": "_skillizee.io_reel_DavEhknsrGm_",
+        "caption": "Calling all innovators, dreamers, and visionaries 💡\n\nReady to take your ideas to new heights?\n\nJoin us for the ultimate creative journey where imagination knows no bounds and innovation is celebrated. Whether you're a seasoned entrepreneur or a budding inventor, IDEATHON 3.0 is your platform to shine!\n\nGet ready to ignite your creativity, collaborate with like-minded individuals, and turn your boldest ideas into reality. From groundbreaking startups to game-changing solutions, the possibilities are endless at IDEATHON 3.0.\n\n#skillizee #ideathon #trendingreels #reels",
+        "contentType": "Reel / Video",
+        "likes": 168,
+        "comments": 29,
+        "views": 1344,
+        "timestamp": "2026-07-16T10:02:48.114Z",
+        "thumbnail": "https://instagram.fjdh1-1.fna.fbcdn.net/v/t51.82787-15/747038347_17975655435098323_3559658655674881809_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=107&_nc_map=urlgen_bucketless&ig_cache_key=Mzk0MDM4ODA5ODIyMTk3ODAyMjE3OTc1NjU1NDMyMDk4MzIz.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjYwOC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=QPawPnuV4igQ7kNvwHN9oa3&_nc_oc=AdqQ4MCJg6S4C1lGaSoybM6skiX7qOYYNJvfpnxTWVtqqIaspiLv3f8B7wMcoIGZOTUBlyj3peUX6sVSNZh5HIVS&_nc_ad=z-m&_nc_cid=1174&_nc_zt=23&_nc_ht=instagram.fjdh1-1.fna&_nc_gid=4uKI_lousggsOVbfe88J6w&_nc_ss=7a22e&oh=00_AQAAtG6A7Px5akvvk-eq56ZQkBhPo9nozcD3bw6KYRGYYw&oe=6A5E857E",
+        "url": "https://www.instagram.com/skillizee.io/reel/DavEhknsrGm/",
+        "hashtags": [],
+        "engagementLevel": "Medium"
+      },
+      {
+        "id": "_skillizee.io_reel_DasTNhUshRE_",
+        "caption": "More than just pasta ✨\n\nThrough the Gustora × SkilliZee Internship, students stepped into the shoes of entrepreneurs—discovering how a food brand is built through innovation, creativity, marketing, and smart business thinking.\n\n#skillizee #internship #futureready #gustora",
+        "contentType": "Reel / Video",
+        "likes": 297,
+        "comments": 22,
+        "views": 2376,
+        "timestamp": "2026-07-16T10:02:48.114Z",
+        "thumbnail": "https://instagram.fjdh1-1.fna.fbcdn.net/v/t51.82787-15/744537806_17975477484098323_3272333615536343913_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=100&_nc_map=urlgen_bucketless&ig_cache_key=MzkzOTYwODI2NjA1OTk0NTAyODE3OTc1NDc3NDgxMDk4MzIz.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjYwOC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=lUT57JGGctcQ7kNvwGHJRvf&_nc_oc=AdpbSmLSVdiTcspvK6O4Jo-P2b0kKRlNELe76nZhbHkkeUIxHFxrhMuq4CRYF3FXXOrD8I96IHjZXiIPyPjMiPdR&_nc_ad=z-m&_nc_cid=1174&_nc_zt=23&_nc_ht=instagram.fjdh1-1.fna&_nc_gid=4uKI_lousggsOVbfe88J6w&_nc_ss=7a22e&oh=00_AQAU9AqaGphnmoqfwaDxyKzlKGjpSEhci6jYg3GfcNjoGQ&oe=6A5E8005",
+        "url": "https://www.instagram.com/skillizee.io/reel/DasTNhUshRE/",
+        "hashtags": [],
+        "engagementLevel": "High"
+      },
+      {
+        "id": "_skillizee.io_reel_DafeNB2sLWI_",
+        "caption": "From idea to brand ✨\n\nAs part of the Salty × SkilliZee Internship, our students built their very own jewellery brands—combining creativity, branding, marketing and entrepreneurial thinking into one capstone project.\n\n#skillizee #learningbydoing #futureready #internship #studentproject",
+        "contentType": "Reel / Video",
+        "likes": 182,
+        "comments": 34,
+        "views": 1456,
+        "timestamp": "2026-07-16T10:02:48.114Z",
+        "thumbnail": "https://instagram.fjdh1-2.fna.fbcdn.net/v/t51.82787-15/733992836_17974695264098323_8847166424259021051_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=106&_nc_map=urlgen_bucketless&ig_cache_key=MzkzNTk5NzQzNjA4NDkyNTgzMjE3OTc0Njk1MjU4MDk4MzIz.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjYwOC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=UXBRILg86ogQ7kNvwHWpV7R&_nc_oc=AdpD57dn0xNvng6J8Yt4HoAyScS_INLDaHeRkszdbOakFN6PZJymNryObT4kHdKcCOfErVN_IekJUCAge6PGh1T-&_nc_ad=z-m&_nc_cid=1174&_nc_zt=23&_nc_ht=instagram.fjdh1-2.fna&_nc_gid=4uKI_lousggsOVbfe88J6w&_nc_ss=7a22e&oh=00_AQApfUJM5OaiBX__PoIswASwa6zqLJuDnU0v9Mcf92DO7A&oe=6A5E9944",
+        "url": "https://www.instagram.com/skillizee.io/reel/DafeNB2sLWI/",
+        "hashtags": [],
+        "engagementLevel": "Medium"
+      },
+      {
+        "id": "_skillizee.io_reel_DaaSGLosWRp_",
+        "caption": "Ready to turn ideas into impact?\n\nSomething big is about to spark. \nStay tuned. 💡\n\n#skillizee #comingsoon #ideathon #ccis #cambridgecourtgroupofschools",
+        "contentType": "Reel / Video",
+        "likes": 395,
+        "comments": 31,
+        "views": 3160,
+        "timestamp": "2026-07-16T10:02:48.114Z",
+        "thumbnail": "https://instagram.fjdh1-3.fna.fbcdn.net/v/t51.71878-15/734846026_1030852636322619_7505501890073910376_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=108&_nc_map=urlgen_bucketless&ig_cache_key=MzkzNDUzNjgxNDEwOTQ4NDEzNw%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjY0MC5zZHIudmlkZW9fbmZyYW1lX2NvdmVyX2ZyYW1lLkMzIn0%3D&_nc_ohc=RDDK_LrbxNoQ7kNvwGtiVYN&_nc_oc=AdrHKfY1B2YnySteBWLcQJWKzN_xC0WmWxzxF_xBlzs-un3vRZBNdZSZ8uNV1MezkkiC-w0lwjpy61eq-BM3NFFI&_nc_ad=z-m&_nc_cid=1174&_nc_zt=23&_nc_ht=instagram.fjdh1-3.fna&_nc_gid=4uKI_lousggsOVbfe88J6w&_nc_ss=7a22e&oh=00_AQD1uhRB6R_RYL5cYcsAvKncCBY93bVVEaGAdpszuuGJCQ&oe=6A5E9137",
+        "url": "https://www.instagram.com/skillizee.io/reel/DaaSGLosWRp/",
+        "hashtags": [],
+        "engagementLevel": "High"
+      },
+      {
+        "id": "_skillizee.io_reel_DaXvxRLPtmk_",
+        "caption": "Learning how a real food brand is built!\n\nOur students are beginning their Gustora Pasta Internship, exploring business, innovation, marketing and entrepreneurship through real-world experiences. 🚀\n\n#skillizee #ccis #gustorapasta #internship",
+        "contentType": "Reel / Video",
+        "likes": 79,
+        "comments": 14,
+        "views": 632,
+        "timestamp": "2026-07-16T10:02:48.114Z",
+        "thumbnail": "https://instagram.fjdh1-2.fna.fbcdn.net/v/t51.82787-15/735150026_17974261935098323_2692455166686036943_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=105&_nc_map=urlgen_bucketless&ig_cache_key=MzkzMzgyMjg5MzQxNDA3ODg4NDE3OTc0MjYxOTMyMDk4MzIz.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjYwOC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=EyupOKnOe4EQ7kNvwEhDQrr&_nc_oc=AdqITRN_0P7FhzTXOjokNMKFJrx6QqrKJQj9hcJeAhvw3TtTsvpkGA8QohAntqMSSzouPfmPfS-Xwg2nWveMfX-J&_nc_ad=z-m&_nc_cid=1174&_nc_zt=23&_nc_ht=instagram.fjdh1-2.fna&_nc_gid=4uKI_lousggsOVbfe88J6w&_nc_ss=7a22e&oh=00_AQAAAVN2KpuQsfc-YEavNH8BsyHOynv6jNtojOpBjVPSww&oe=6A5E99F9",
+        "url": "https://www.instagram.com/skillizee.io/reel/DaXvxRLPtmk/",
+        "hashtags": [],
+        "engagementLevel": "Medium"
+      },
+      {
+        "id": "_skillizee.io_p_DaNZGOKmhV9_",
+        "caption": "Photo by SkilliZee on June 30, 2026. May be an image of magazine, microphone and text that says \"SkilliZee PRO Real Real kills. Rea Warld Re teal Impact 1mp MASTER PUBLIC SPEAKING SPEAK WITH CONFIDENCE & CHARISMA 自品\".",
+        "contentType": "Static Image",
+        "likes": 192,
+        "comments": 26,
+        "views": 0,
+        "timestamp": "2026-07-16T10:02:48.114Z",
+        "thumbnail": "https://instagram.fjdh1-1.fna.fbcdn.net/v/t51.82787-15/731025113_17973578913098323_2120830210873053164_n.heic?stp=dst-jpg_e35_p1080x1080_tt6&_nc_cat=106&_nc_map=urlgen_bucketless&ig_cache_key=MzkzMDg5Mjc3MDk5MTU0NTc4Mg%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNBUk9VU0VMX0lURU0ueHBpZHMuMTQ0MC5zZHIucmVndWxhcl9waG90by5DMyJ9&_nc_ohc=XlukXUB1kKYQ7kNvwHJI0SO&_nc_oc=AdpJhZMZCwziJJNYLp3FLT1oK4ebTxaGN3zHDT1yiJdIlvLLQz7ZFqgdEmqBCeZWYlShb6_riAUB8UBPAtZBO7bo&_nc_ad=z-m&_nc_cid=1174&_nc_zt=23&_nc_ht=instagram.fjdh1-1.fna&_nc_gid=4uKI_lousggsOVbfe88J6w&_nc_ss=7a22e&oh=00_AQC93P6qZwFnQJuwz0J4Xc6DAAe7fO-BBptVcolDmOZpwg&oe=6A5E8810",
+        "url": "https://www.instagram.com/skillizee.io/p/DaNZGOKmhV9/",
+        "hashtags": [],
+        "engagementLevel": "Medium"
+      },
+      {
+        "id": "_skillizee.io_reel_DZ7YLqGT5KT_",
+        "caption": "Every great career starts with a single opportunity to create, build, and present.\n\nWatch our intern showcase their Hocco x SkilliZee Internship capstone project and product pitch with confidence and creativity.\n\n#skillizee #internship #studentjourney #reels",
+        "contentType": "Reel / Video",
+        "likes": 168,
+        "comments": 7,
+        "views": 1344,
+        "timestamp": "2026-07-16T10:02:48.114Z",
+        "thumbnail": "https://instagram.fjdh1-4.fna.fbcdn.net/v/t51.82787-15/730530244_17972377665098323_2944352802041654900_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=108&_nc_map=urlgen_bucketless&ig_cache_key=MzkyNTgzNzg1NDQxNzA2NDU5NTE3OTcyMzc3NjYyMDk4MzIz.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjYwOC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=8Sjeo-UjzZ8Q7kNvwHTwbrY&_nc_oc=AdrkUSQvM01UvXBNsyUwYsJL_wOcRYXLmyHJUrZYzGXrMWtO6_zAgOmWXrL5EOsC6T5eJcnhYSQJlDBZAvbWB2qu&_nc_ad=z-m&_nc_cid=1174&_nc_zt=23&_nc_ht=instagram.fjdh1-4.fna&_nc_gid=4uKI_lousggsOVbfe88J6w&_nc_ss=7a22e&oh=00_AQCCoiW6TTFwD5JN0vggA2ZGWwY2iOUgoU8_GsO3t2ovqA&oe=6A5E83F4",
+        "url": "https://www.instagram.com/skillizee.io/reel/DZ7YLqGT5KT/",
+        "hashtags": [],
+        "engagementLevel": "Medium"
+      },
+      {
+        "id": "_skillizee.io_reel_DZpSgRwzJvs_",
+        "caption": "The Student shares their inspiring journey from the SkilliZee x Hocco Internship Program. \n\n#skillizee #reels #futureready #internship",
+        "contentType": "Reel / Video",
+        "likes": 323,
+        "comments": 16,
+        "views": 2584,
+        "timestamp": "2026-07-16T10:02:48.114Z",
+        "thumbnail": "https://instagram.fjdh1-6.fna.fbcdn.net/v/t51.82787-15/722562594_17970848139098323_4267308806050284176_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=110&_nc_map=urlgen_bucketless&ig_cache_key=MzkyMDc0NjMzMzUzNTUwOTQ4NDE3OTcwODQ4MTMzMDk4MzIz.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjYwOC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=Um77-YjJjk4Q7kNvwEM_SpW&_nc_oc=AdpKjQ12NPl0eqa45rxIdu-yX_LROk5uUGHwtvtuHrtQDoO3FAA7QhEFEeK_CxbXrTpg6pz69h61whJ831v_2OEq&_nc_ad=z-m&_nc_cid=1174&_nc_zt=23&_nc_ht=instagram.fjdh1-6.fna&_nc_gid=4uKI_lousggsOVbfe88J6w&_nc_ss=7a22e&oh=00_AQDcRoQ9QJVhWiREDtN-AEzxhXiZFeGGGHjwkqozrXYwQQ&oe=6A5E7B43",
+        "url": "https://www.instagram.com/skillizee.io/reel/DZpSgRwzJvs/",
+        "hashtags": [],
+        "engagementLevel": "High"
+      },
+      {
+        "id": "_skillizee.io_p_DZZ7iYMmi7p_",
+        "caption": "Photo by SkilliZee on June 10, 2026. May be an image of ‎text that says \"‎PRO SkilliZee ealSkii skili illa. Real World. .Real: Impact. 089 SMART STARTUP Launch Your Big Idea PLAN V M Turn your ideas into real businesses. Learn. Build. Pitch. Lead. عكع 00 LEARN BUILD PITCH LEAD‎\"‎.",
+        "contentType": "Static Image",
+        "likes": 295,
+        "comments": 6,
+        "views": 0,
+        "timestamp": "2026-07-16T10:02:48.114Z",
+        "thumbnail": "https://instagram.fjdh1-3.fna.fbcdn.net/v/t51.82787-15/720776357_17970322122098323_1243585352648624184_n.heic?stp=dst-jpg_e35_s1080x1080_tt6&_nc_cat=100&_nc_map=urlgen_bucketless&ig_cache_key=MzkxNjQyMTQ2NDUyNDM3MzA2OQ%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNBUk9VU0VMX0lURU0ueHBpZHMuMTQ0MC5zZHIucmVndWxhcl9waG90by5DMyJ9&_nc_ohc=WoolioZXquUQ7kNvwF251MS&_nc_oc=AdrzKtJci8V9AGdyu3mkJhGUg-oU0Yu3rWRPyxGWW6OoRtK9fB6gDRylj5aEVFtc6A60LgmaOY6FwpBj8NLlCq5n&_nc_ad=z-m&_nc_cid=1174&_nc_zt=23&_nc_ht=instagram.fjdh1-3.fna&_nc_gid=4uKI_lousggsOVbfe88J6w&_nc_ss=7a22e&oh=00_AQDiUUDiFwPk701R6iqr7TLm2A0cLbyHSxDY-BOYqVn2WA&oe=6A5E91A5",
+        "url": "https://www.instagram.com/skillizee.io/p/DZZ7iYMmi7p/",
+        "hashtags": [],
+        "engagementLevel": "High"
+      }
+    ]
+  }
+}
+
+[2026-07-16T10:02:51.119Z] Extracted username: "skillizee.io" from manual payload
+
+
+[2026-07-16T10:02:51.119Z] Successfully cached in global.igCache under key: "skillizee.io"
+{
+  "profile": {
+    "username": "skillizee.io",
+    "fullName": "SkilliZee",
+    "bio": "skillizee.io\nskillizee.io\nOptions",
+    "followers": 825,
+    "following": 6,
+    "postCount": 312,
+    "profilePic": "https://scontent.cdninstagram.com/v/t51.82787-19/514510459_17921690523098323_2520038565024459694_n.jpg?stp=dst-jpg_s100x100_tt6&_nc_cat=104&ccb=7-5&_nc_sid=bf7eb4&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLnd3dy4xMDgwLkMzIn0%3D&_nc_ohc=i_3p7_5hY8QQ7kNvwH2nIMM&_nc_oc=AdqUgJZiWmvDUnexyJQFgEdHVeY9X0PabmLpSnG75DuJB7SwyNGHg7cDz2gnXKvoxB9X0zlVnQwR5SSvw-TA1I7u&_nc_zt=24&_nc_ht=scontent.cdninstagram.com&_nc_gid=wLX2V9T8YuGEeBylgpnvXg&_nc_ss=7b6a8&oh=00_AQCUx-4TCKY_UABEuEw3qnncfoEnTJgtTyoUqqWXpZe0TA&oe=6A5E62CE",
+    "isVerified": false,
+    "externalUrl": "https://www.instagram.com/skillizee.io/",
+    "category": "Creator"
+  },
+  "posts": [
+    {
+      "id": "_skillizee.io_p_DZhGXHpM1Nj_",
+      "caption": "Photo by SkilliZee on June 13, 2026. May be an image of ‎text that says \"‎Be part of 8700+ community communityofstudents of students buildingtheirstartups building startups PRO SkilliZee REAL SKILLS. REAL STARTUPS. REAL FUNDING. Students learn. Build. Pitch. And funded. SkilliZee PITCH DAY Idea Investors.In Impact. Learn alSkills elevant. ready. Build Startups urnideas nto 章 SkilliZee STARTUP FUNDING AWARDED ₹ु7,50,000 SEVENLAKHFIFTY THOUSAND RUPEESP PLUS ملدد Pitch to ealInvestors nvestors Practice.P Present. Persuade. inrestar Get alFunding Webackyou eback Students have received ₹7.5 LAKHS in funding for their startups Expert Mentors Hands- -on Learning Investor Network YOUR STARTUP JOURNEY STARTS HERE! RealWorld Real World Exposure ENROLL NOW seats available‎\"‎.",
+      "contentType": "Static Image",
+      "likes": 81,
+      "comments": 13,
+      "views": 0,
+      "timestamp": "2026-07-16T10:02:48.114Z",
+      "thumbnail": "https://instagram.fjdh1-6.fna.fbcdn.net/v/t51.82787-15/723197180_17970778359098323_883011953389345595_n.heic?stp=dst-jpg_e35_s1080x1080_tt6&_nc_cat=108&_nc_map=urlgen_bucketless&ig_cache_key=MzkxODQ0MTEyNzgyMzQ5NjAzNQ%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkZFRUQueHBpZHMuMTQ0MC5zZHIucmVndWxhcl9waG90by5DMyJ9&_nc_ohc=yQLBN_VhgD4Q7kNvwHPWlqA&_nc_oc=AdqckGbukH4Lwatl37p2R3I-DOepxhsGeqHhOrxOOES5gOCw2NhbVKBNpKYJFXiIIQkQNGui0SZtyJdtXAOAud4d&_nc_ad=z-m&_nc_cid=1174&_nc_zt=23&_nc_ht=instagram.fjdh1-6.fna&_nc_gid=4uKI_lousggsOVbfe88J6w&_nc_ss=7a22e&oh=00_AQDU1x16swgeeDzOl1OTfh0ZNvpG6GCr0Gt8-IaYwCf2Lg&oe=6A5E7E08",
+      "hashtags": [],
+      "url": "https://www.instagram.com/skillizee.io/p/DZhGXHpM1Nj/",
+      "engagementLevel": "Medium"
+    },
+    {
+      "id": "_smc.connect_reel_DRMkswIEUaQ_",
+      "caption": "It wasn’t just an event - it was a collective heartbeat.\nEvery cheer, every moment, every frame at @smc.connect … @cambridgecourtgroupofschools made it unforgettable🌻\n\n8th of November was epic , see you until next time 🔥\n\n#smc #sortmycollege #smcconnect #studentssupport #cambridgecourtgroupofschools #entrepreneurlife #creator",
+      "contentType": "Reel / Video",
+      "likes": 378,
+      "comments": 25,
+      "views": 3024,
+      "timestamp": "2026-07-16T10:02:48.114Z",
+      "thumbnail": "https://instagram.fjdh1-5.fna.fbcdn.net/v/t51.82787-15/582080511_17916222975220635_137022919493000646_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=103&_nc_map=urlgen_bucketless&ig_cache_key=Mzc2ODU0ODM5MzIwODU5NjExMjE3OTE2MjIyOTcyMjIwNjM1.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjcyMC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=Ds98mTi6dzYQ7kNvwHPSKR0&_nc_oc=AdrEWDckwOtB75o6WCC2vG6pMBlMgrmLtqgZjX5FJdKctCRjC4YzJaVueu4EXhrvqzPXt6Q57vt5XUqbdOfC5VAJ&_nc_ad=z-m&_nc_cid=1174&_nc_zt=23&_nc_ht=instagram.fjdh1-5.fna&_nc_gid=4uKI_lousggsOVbfe88J6w&_nc_ss=7a22e&oh=00_AQDstctnSxvmj2Wqv-a2wR50aWtu3TSSQvpglmNm54oDvg&oe=6A5E7EE5",
+      "hashtags": [],
+      "url": "https://www.instagram.com/smc.connect/reel/DRMkswIEUaQ/",
+      "engagementLevel": "High"
+    },
+    {
+      "id": "_aarnarawat_official_reel_DRcNizmAXI8_",
+      "caption": "A day of clarity, confidence and conversations that matter. This session was more than just a gathering — it was a moment of growth.\n\nIt offered clarity, courage and a fresh perspective to our students and watching them engage so deeply was such a proud moment.\n\nHere are the moments that captured the spirit of this powerful session. Grateful to our entire community for making this experience so meaningful. ✨\n\n#aarnarawat #skillizee #ankurwarikoo #metaskills #youthdevelopment #growthmindset #skillsforlife",
+      "contentType": "Reel / Video",
+      "likes": 282,
+      "comments": 24,
+      "views": 2256,
+      "timestamp": "2026-07-16T10:02:48.114Z",
+      "thumbnail": "https://instagram.fjdh1-1.fna.fbcdn.net/v/t51.82787-15/720125767_17973590727104396_1822906717697451388_n.jpg?stp=dst-jpg_e35_p972x972_sh2.08_tt6&_nc_cat=109&_nc_map=urlgen_bucketless&ig_cache_key=Mzc3Mjk1MDE1NDI5NDk0ODQxMjE3OTczNTkwNzIxMTA0Mzk2.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEyMTUuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=FJO3z2KPCfkQ7kNvwGC3plz&_nc_oc=AdrKIpNGk4-qDUjbwJxjj2b8NlZnXJBoyekzJrewE0hQGemfy5f1kJsyD2SlgRjUTjFO-2Jwb5E5EWMjzu1AcnFv&_nc_ad=z-m&_nc_cid=1174&_nc_zt=23&_nc_ht=instagram.fjdh1-1.fna&_nc_gid=4uKI_lousggsOVbfe88J6w&_nc_ss=7a22e&oh=00_AQBOnJIT8VCod2ZLucawzZxQvFBOIoN2LY7rpBnIHaH3cg&oe=6A5E803D",
+      "hashtags": [],
+      "url": "https://www.instagram.com/aarnarawat_official/reel/DRcNizmAXI8/",
+      "engagementLevel": "High"
+    },
+    {
+      "id": "_skillizee.io_reel_DavEhknsrGm_",
+      "caption": "Calling all innovators, dreamers, and visionaries 💡\n\nReady to take your ideas to new heights?\n\nJoin us for the ultimate creative journey where imagination knows no bounds and innovation is celebrated. Whether you're a seasoned entrepreneur or a budding inventor, IDEATHON 3.0 is your platform to shine!\n\nGet ready to ignite your creativity, collaborate with like-minded individuals, and turn your boldest ideas into reality. From groundbreaking startups to game-changing solutions, the possibilities are endless at IDEATHON 3.0.\n\n#skillizee #ideathon #trendingreels #reels",
+      "contentType": "Reel / Video",
+      "likes": 168,
+      "comments": 29,
+      "views": 1344,
+      "timestamp": "2026-07-16T10:02:48.114Z",
+      "thumbnail": "https://instagram.fjdh1-1.fna.fbcdn.net/v/t51.82787-15/747038347_17975655435098323_3559658655674881809_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=107&_nc_map=urlgen_bucketless&ig_cache_key=Mzk0MDM4ODA5ODIyMTk3ODAyMjE3OTc1NjU1NDMyMDk4MzIz.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjYwOC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=QPawPnuV4igQ7kNvwHN9oa3&_nc_oc=AdqQ4MCJg6S4C1lGaSoybM6skiX7qOYYNJvfpnxTWVtqqIaspiLv3f8B7wMcoIGZOTUBlyj3peUX6sVSNZh5HIVS&_nc_ad=z-m&_nc_cid=1174&_nc_zt=23&_nc_ht=instagram.fjdh1-1.fna&_nc_gid=4uKI_lousggsOVbfe88J6w&_nc_ss=7a22e&oh=00_AQAAtG6A7Px5akvvk-eq56ZQkBhPo9nozcD3bw6KYRGYYw&oe=6A5E857E",
+      "hashtags": [],
+      "url": "https://www.instagram.com/skillizee.io/reel/DavEhknsrGm/",
+      "engagementLevel": "Medium"
+    },
+    {
+      "id": "_skillizee.io_reel_DasTNhUshRE_",
+      "caption": "More than just pasta ✨\n\nThrough the Gustora × SkilliZee Internship, students stepped into the shoes of entrepreneurs—discovering how a food brand is built through innovation, creativity, marketing, and smart business thinking.\n\n#skillizee #internship #futureready #gustora",
+      "contentType": "Reel / Video",
+      "likes": 297,
+      "comments": 22,
+      "views": 2376,
+      "timestamp": "2026-07-16T10:02:48.114Z",
+      "thumbnail": "https://instagram.fjdh1-1.fna.fbcdn.net/v/t51.82787-15/744537806_17975477484098323_3272333615536343913_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=100&_nc_map=urlgen_bucketless&ig_cache_key=MzkzOTYwODI2NjA1OTk0NTAyODE3OTc1NDc3NDgxMDk4MzIz.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjYwOC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=lUT57JGGctcQ7kNvwGHJRvf&_nc_oc=AdpbSmLSVdiTcspvK6O4Jo-P2b0kKRlNELe76nZhbHkkeUIxHFxrhMuq4CRYF3FXXOrD8I96IHjZXiIPyPjMiPdR&_nc_ad=z-m&_nc_cid=1174&_nc_zt=23&_nc_ht=instagram.fjdh1-1.fna&_nc_gid=4uKI_lousggsOVbfe88J6w&_nc_ss=7a22e&oh=00_AQAU9AqaGphnmoqfwaDxyKzlKGjpSEhci6jYg3GfcNjoGQ&oe=6A5E8005",
+      "hashtags": [],
+      "url": "https://www.instagram.com/skillizee.io/reel/DasTNhUshRE/",
+      "engagementLevel": "High"
+    },
+    {
+      "id": "_skillizee.io_reel_DafeNB2sLWI_",
+      "caption": "From idea to brand ✨\n\nAs part of the Salty × SkilliZee Internship, our students built their very own jewellery brands—combining creativity, branding, marketing and entrepreneurial thinking into one capstone project.\n\n#skillizee #learningbydoing #futureready #internship #studentproject",
+      "contentType": "Reel / Video",
+      "likes": 182,
+      "comments": 34,
+      "views": 1456,
+      "timestamp": "2026-07-16T10:02:48.114Z",
+      "thumbnail": "https://instagram.fjdh1-2.fna.fbcdn.net/v/t51.82787-15/733992836_17974695264098323_8847166424259021051_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=106&_nc_map=urlgen_bucketless&ig_cache_key=MzkzNTk5NzQzNjA4NDkyNTgzMjE3OTc0Njk1MjU4MDk4MzIz.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjYwOC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=UXBRILg86ogQ7kNvwHWpV7R&_nc_oc=AdpD57dn0xNvng6J8Yt4HoAyScS_INLDaHeRkszdbOakFN6PZJymNryObT4kHdKcCOfErVN_IekJUCAge6PGh1T-&_nc_ad=z-m&_nc_cid=1174&_nc_zt=23&_nc_ht=instagram.fjdh1-2.fna&_nc_gid=4uKI_lousggsOVbfe88J6w&_nc_ss=7a22e&oh=00_AQApfUJM5OaiBX__PoIswASwa6zqLJuDnU0v9Mcf92DO7A&oe=6A5E9944",
+      "hashtags": [],
+      "url": "https://www.instagram.com/skillizee.io/reel/DafeNB2sLWI/",
+      "engagementLevel": "Medium"
+    },
+    {
+      "id": "_skillizee.io_reel_DaaSGLosWRp_",
+      "caption": "Ready to turn ideas into impact?\n\nSomething big is about to spark. \nStay tuned. 💡\n\n#skillizee #comingsoon #ideathon #ccis #cambridgecourtgroupofschools",
+      "contentType": "Reel / Video",
+      "likes": 395,
+      "comments": 31,
+      "views": 3160,
+      "timestamp": "2026-07-16T10:02:48.114Z",
+      "thumbnail": "https://instagram.fjdh1-3.fna.fbcdn.net/v/t51.71878-15/734846026_1030852636322619_7505501890073910376_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=108&_nc_map=urlgen_bucketless&ig_cache_key=MzkzNDUzNjgxNDEwOTQ4NDEzNw%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjY0MC5zZHIudmlkZW9fbmZyYW1lX2NvdmVyX2ZyYW1lLkMzIn0%3D&_nc_ohc=RDDK_LrbxNoQ7kNvwGtiVYN&_nc_oc=AdrHKfY1B2YnySteBWLcQJWKzN_xC0WmWxzxF_xBlzs-un3vRZBNdZSZ8uNV1MezkkiC-w0lwjpy61eq-BM3NFFI&_nc_ad=z-m&_nc_cid=1174&_nc_zt=23&_nc_ht=instagram.fjdh1-3.fna&_nc_gid=4uKI_lousggsOVbfe88J6w&_nc_ss=7a22e&oh=00_AQD1uhRB6R_RYL5cYcsAvKncCBY93bVVEaGAdpszuuGJCQ&oe=6A5E9137",
+      "hashtags": [],
+      "url": "https://www.instagram.com/skillizee.io/reel/DaaSGLosWRp/",
+      "engagementLevel": "High"
+    },
+    {
+      "id": "_skillizee.io_reel_DaXvxRLPtmk_",
+      "caption": "Learning how a real food brand is built!\n\nOur students are beginning their Gustora Pasta Internship, exploring business, innovation, marketing and entrepreneurship through real-world experiences. 🚀\n\n#skillizee #ccis #gustorapasta #internship",
+      "contentType": "Reel / Video",
+      "likes": 79,
+      "comments": 14,
+      "views": 632,
+      "timestamp": "2026-07-16T10:02:48.114Z",
+      "thumbnail": "https://instagram.fjdh1-2.fna.fbcdn.net/v/t51.82787-15/735150026_17974261935098323_2692455166686036943_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=105&_nc_map=urlgen_bucketless&ig_cache_key=MzkzMzgyMjg5MzQxNDA3ODg4NDE3OTc0MjYxOTMyMDk4MzIz.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjYwOC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=EyupOKnOe4EQ7kNvwEhDQrr&_nc_oc=AdqITRN_0P7FhzTXOjokNMKFJrx6QqrKJQj9hcJeAhvw3TtTsvpkGA8QohAntqMSSzouPfmPfS-Xwg2nWveMfX-J&_nc_ad=z-m&_nc_cid=1174&_nc_zt=23&_nc_ht=instagram.fjdh1-2.fna&_nc_gid=4uKI_lousggsOVbfe88J6w&_nc_ss=7a22e&oh=00_AQAAAVN2KpuQsfc-YEavNH8BsyHOynv6jNtojOpBjVPSww&oe=6A5E99F9",
+      "hashtags": [],
+      "url": "https://www.instagram.com/skillizee.io/reel/DaXvxRLPtmk/",
+      "engagementLevel": "Medium"
+    },
+    {
+      "id": "_skillizee.io_p_DaNZGOKmhV9_",
+      "caption": "Photo by SkilliZee on June 30, 2026. May be an image of magazine, microphone and text that says \"SkilliZee PRO Real Real kills. Rea Warld Re teal Impact 1mp MASTER PUBLIC SPEAKING SPEAK WITH CONFIDENCE & CHARISMA 自品\".",
+      "contentType": "Static Image",
+      "likes": 192,
+      "comments": 26,
+      "views": 0,
+      "timestamp": "2026-07-16T10:02:48.114Z",
+      "thumbnail": "https://instagram.fjdh1-1.fna.fbcdn.net/v/t51.82787-15/731025113_17973578913098323_2120830210873053164_n.heic?stp=dst-jpg_e35_p1080x1080_tt6&_nc_cat=106&_nc_map=urlgen_bucketless&ig_cache_key=MzkzMDg5Mjc3MDk5MTU0NTc4Mg%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNBUk9VU0VMX0lURU0ueHBpZHMuMTQ0MC5zZHIucmVndWxhcl9waG90by5DMyJ9&_nc_ohc=XlukXUB1kKYQ7kNvwHJI0SO&_nc_oc=AdpJhZMZCwziJJNYLp3FLT1oK4ebTxaGN3zHDT1yiJdIlvLLQz7ZFqgdEmqBCeZWYlShb6_riAUB8UBPAtZBO7bo&_nc_ad=z-m&_nc_cid=1174&_nc_zt=23&_nc_ht=instagram.fjdh1-1.fna&_nc_gid=4uKI_lousggsOVbfe88J6w&_nc_ss=7a22e&oh=00_AQC93P6qZwFnQJuwz0J4Xc6DAAe7fO-BBptVcolDmOZpwg&oe=6A5E8810",
+      "hashtags": [],
+      "url": "https://www.instagram.com/skillizee.io/p/DaNZGOKmhV9/",
+      "engagementLevel": "Medium"
+    },
+    {
+      "id": "_skillizee.io_reel_DZ7YLqGT5KT_",
+      "caption": "Every great career starts with a single opportunity to create, build, and present.\n\nWatch our intern showcase their Hocco x SkilliZee Internship capstone project and product pitch with confidence and creativity.\n\n#skillizee #internship #studentjourney #reels",
+      "contentType": "Reel / Video",
+      "likes": 168,
+      "comments": 7,
+      "views": 1344,
+      "timestamp": "2026-07-16T10:02:48.114Z",
+      "thumbnail": "https://instagram.fjdh1-4.fna.fbcdn.net/v/t51.82787-15/730530244_17972377665098323_2944352802041654900_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=108&_nc_map=urlgen_bucketless&ig_cache_key=MzkyNTgzNzg1NDQxNzA2NDU5NTE3OTcyMzc3NjYyMDk4MzIz.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjYwOC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=8Sjeo-UjzZ8Q7kNvwHTwbrY&_nc_oc=AdrkUSQvM01UvXBNsyUwYsJL_wOcRYXLmyHJUrZYzGXrMWtO6_zAgOmWXrL5EOsC6T5eJcnhYSQJlDBZAvbWB2qu&_nc_ad=z-m&_nc_cid=1174&_nc_zt=23&_nc_ht=instagram.fjdh1-4.fna&_nc_gid=4uKI_lousggsOVbfe88J6w&_nc_ss=7a22e&oh=00_AQCCoiW6TTFwD5JN0vggA2ZGWwY2iOUgoU8_GsO3t2ovqA&oe=6A5E83F4",
+      "hashtags": [],
+      "url": "https://www.instagram.com/skillizee.io/reel/DZ7YLqGT5KT/",
+      "engagementLevel": "Medium"
+    },
+    {
+      "id": "_skillizee.io_reel_DZpSgRwzJvs_",
+      "caption": "The Student shares their inspiring journey from the SkilliZee x Hocco Internship Program. \n\n#skillizee #reels #futureready #internship",
+      "contentType": "Reel / Video",
+      "likes": 323,
+      "comments": 16,
+      "views": 2584,
+      "timestamp": "2026-07-16T10:02:48.114Z",
+      "thumbnail": "https://instagram.fjdh1-6.fna.fbcdn.net/v/t51.82787-15/722562594_17970848139098323_4267308806050284176_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=110&_nc_map=urlgen_bucketless&ig_cache_key=MzkyMDc0NjMzMzUzNTUwOTQ4NDE3OTcwODQ4MTMzMDk4MzIz.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjYwOC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=Um77-YjJjk4Q7kNvwEM_SpW&_nc_oc=AdpKjQ12NPl0eqa45rxIdu-yX_LROk5uUGHwtvtuHrtQDoO3FAA7QhEFEeK_CxbXrTpg6pz69h61whJ831v_2OEq&_nc_ad=z-m&_nc_cid=1174&_nc_zt=23&_nc_ht=instagram.fjdh1-6.fna&_nc_gid=4uKI_lousggsOVbfe88J6w&_nc_ss=7a22e&oh=00_AQDcRoQ9QJVhWiREDtN-AEzxhXiZFeGGGHjwkqozrXYwQQ&oe=6A5E7B43",
+      "hashtags": [],
+      "url": "https://www.instagram.com/skillizee.io/reel/DZpSgRwzJvs/",
+      "engagementLevel": "High"
+    },
+    {
+      "id": "_skillizee.io_p_DZZ7iYMmi7p_",
+      "caption": "Photo by SkilliZee on June 10, 2026. May be an image of ‎text that says \"‎PRO SkilliZee ealSkii skili illa. Real World. .Real: Impact. 089 SMART STARTUP Launch Your Big Idea PLAN V M Turn your ideas into real businesses. Learn. Build. Pitch. Lead. عكع 00 LEARN BUILD PITCH LEAD‎\"‎.",
+      "contentType": "Static Image",
+      "likes": 295,
+      "comments": 6,
+      "views": 0,
+      "timestamp": "2026-07-16T10:02:48.114Z",
+      "thumbnail": "https://instagram.fjdh1-3.fna.fbcdn.net/v/t51.82787-15/720776357_17970322122098323_1243585352648624184_n.heic?stp=dst-jpg_e35_s1080x1080_tt6&_nc_cat=100&_nc_map=urlgen_bucketless&ig_cache_key=MzkxNjQyMTQ2NDUyNDM3MzA2OQ%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNBUk9VU0VMX0lURU0ueHBpZHMuMTQ0MC5zZHIucmVndWxhcl9waG90by5DMyJ9&_nc_ohc=WoolioZXquUQ7kNvwF251MS&_nc_oc=AdrzKtJci8V9AGdyu3mkJhGUg-oU0Yu3rWRPyxGWW6OoRtK9fB6gDRylj5aEVFtc6A60LgmaOY6FwpBj8NLlCq5n&_nc_ad=z-m&_nc_cid=1174&_nc_zt=23&_nc_ht=instagram.fjdh1-3.fna&_nc_gid=4uKI_lousggsOVbfe88J6w&_nc_ss=7a22e&oh=00_AQDiUUDiFwPk701R6iqr7TLm2A0cLbyHSxDY-BOYqVn2WA&oe=6A5E91A5",
+      "hashtags": [],
+      "url": "https://www.instagram.com/skillizee.io/p/DZZ7iYMmi7p/",
+      "engagementLevel": "High"
+    }
+  ],
+  "analysis": {
+    "avgLikes": 237,
+    "avgComments": 21,
+    "avgViews": 1515,
+    "engagementRate": "31.27",
+    "formatDistribution": {
+      "reels": 9,
+      "carousels": 0,
+      "static": 3
+    },
+    "topFormat": "Reels",
+    "postingFrequency": "~84.0 posts/week",
+    "bestPerformingPost": {
+      "id": "_skillizee.io_reel_DaaSGLosWRp_",
+      "caption": "Ready to turn ideas into impact?\n\nSomething big is about to spark. \nStay tuned. 💡\n\n#skillizee #comingsoon #ideathon #ccis #cambridgecourtgroupofschools",
+      "contentType": "Reel / Video",
+      "likes": 395,
+      "comments": 31,
+      "views": 3160,
+      "timestamp": "2026-07-16T10:02:48.114Z",
+      "thumbnail": "https://instagram.fjdh1-3.fna.fbcdn.net/v/t51.71878-15/734846026_1030852636322619_7505501890073910376_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=108&_nc_map=urlgen_bucketless&ig_cache_key=MzkzNDUzNjgxNDEwOTQ4NDEzNw%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjY0MC5zZHIudmlkZW9fbmZyYW1lX2NvdmVyX2ZyYW1lLkMzIn0%3D&_nc_ohc=RDDK_LrbxNoQ7kNvwGtiVYN&_nc_oc=AdrHKfY1B2YnySteBWLcQJWKzN_xC0WmWxzxF_xBlzs-un3vRZBNdZSZ8uNV1MezkkiC-w0lwjpy61eq-BM3NFFI&_nc_ad=z-m&_nc_cid=1174&_nc_zt=23&_nc_ht=instagram.fjdh1-3.fna&_nc_gid=4uKI_lousggsOVbfe88J6w&_nc_ss=7a22e&oh=00_AQD1uhRB6R_RYL5cYcsAvKncCBY93bVVEaGAdpszuuGJCQ&oe=6A5E9137",
+      "hashtags": [],
+      "url": "https://www.instagram.com/skillizee.io/reel/DaaSGLosWRp/",
+      "engagementLevel": "High"
+    },
+    "worstPerformingPost": {
+      "id": "_skillizee.io_reel_DaXvxRLPtmk_",
+      "caption": "Learning how a real food brand is built!\n\nOur students are beginning their Gustora Pasta Internship, exploring business, innovation, marketing and entrepreneurship through real-world experiences. 🚀\n\n#skillizee #ccis #gustorapasta #internship",
+      "contentType": "Reel / Video",
+      "likes": 79,
+      "comments": 14,
+      "views": 632,
+      "timestamp": "2026-07-16T10:02:48.114Z",
+      "thumbnail": "https://instagram.fjdh1-2.fna.fbcdn.net/v/t51.82787-15/735150026_17974261935098323_2692455166686036943_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=105&_nc_map=urlgen_bucketless&ig_cache_key=MzkzMzgyMjg5MzQxNDA3ODg4NDE3OTc0MjYxOTMyMDk4MzIz.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjYwOC5zZHIudmlkZW9fZGVmYXVsdF9jb3Zlcl9mcmFtZS5DMyJ9&_nc_ohc=EyupOKnOe4EQ7kNvwEhDQrr&_nc_oc=AdqITRN_0P7FhzTXOjokNMKFJrx6QqrKJQj9hcJeAhvw3TtTsvpkGA8QohAntqMSSzouPfmPfS-Xwg2nWveMfX-J&_nc_ad=z-m&_nc_cid=1174&_nc_zt=23&_nc_ht=instagram.fjdh1-2.fna&_nc_gid=4uKI_lousggsOVbfe88J6w&_nc_ss=7a22e&oh=00_AQAAAVN2KpuQsfc-YEavNH8BsyHOynv6jNtojOpBjVPSww&oe=6A5E99F9",
+      "hashtags": [],
+      "url": "https://www.instagram.com/skillizee.io/reel/DaXvxRLPtmk/",
+      "engagementLevel": "Medium"
+    }
+  },
+  "source": "extension",
+  "syncedAt": "2026-07-16T10:02:51.119Z"
+}
+

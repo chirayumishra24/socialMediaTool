@@ -1,20 +1,67 @@
-/**
- * Skilizee Instagram Scraper Extension — Content Script
- * Extracts public profile stats and recent posts from the page DOM.
- */
+const isDashboard = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 
-// Listen for messages from the popup
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "scrape_profile") {
-    try {
-      const data = performScrape();
-      sendResponse({ success: true, data });
-    } catch (err) {
-      sendResponse({ success: false, error: err.message });
+if (isDashboard) {
+  runDashboardBridge();
+} else {
+  // Listen for messages from the popup (Instagram Scraper mode)
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === "scrape_profile") {
+      try {
+        const data = performScrape();
+        sendResponse({ success: true, data });
+      } catch (err) {
+        sendResponse({ success: false, error: err.message });
+      }
     }
+    return true;
+  });
+}
+
+function runDashboardBridge() {
+  console.log("[Skilizee Extension] Dashboard Bridge active on", window.location.origin);
+  
+  // Initial sync from extension storage to page localStorage
+  syncStorageToLocalStorage();
+
+  // Listen for real-time updates when user syncs from popup
+  try {
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+      if (areaName === "local") {
+        console.log("[Skilizee Extension] Extension storage updated, re-syncing...");
+        syncStorageToLocalStorage();
+      }
+    });
+  } catch (e) {
+    console.error("[Skilizee Extension] Failed to bind storage listener:", e);
   }
-  return true;
-});
+}
+
+function syncStorageToLocalStorage() {
+  try {
+    chrome.storage.local.get(null, (items) => {
+      if (chrome.runtime.lastError) {
+        console.error("[Skilizee Extension] Error reading extension storage:", chrome.runtime.lastError.message);
+        return;
+      }
+      
+      const cache = {};
+      for (const [key, value] of Object.entries(items)) {
+        if (key.startsWith("ig_profile_")) {
+          const username = key.replace("ig_profile_", "");
+          cache[username] = value;
+        }
+      }
+      
+      localStorage.setItem("skilizee_ig_sync_cache", JSON.stringify(cache));
+      console.log("[Skilizee Extension] Successfully synced extension cache to local dashboard storage for @usernames:", Object.keys(cache));
+      
+      // Dispatch custom event to notify Next.js React client
+      window.dispatchEvent(new CustomEvent("skilizee_cache_updated"));
+    });
+  } catch (e) {
+    console.error("[Skilizee Extension] Error syncing storage:", e);
+  }
+}
 
 function performScrape() {
   const urlParts = window.location.pathname.split("/").filter(Boolean);
