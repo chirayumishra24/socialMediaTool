@@ -21,7 +21,7 @@ const corsHeaders = {
 // Log helper to write to a local file in the workspace
 function writeDebugLog(message, data = null) {
   try {
-    const logFilePath = "e:/skilizee/ai-agent/route_logs.txt";
+    const logFilePath = path.join(process.cwd(), "route_logs.txt");
     const timestamp = new Date().toISOString();
     const formattedData = data ? JSON.stringify(data, null, 2) : "";
     const logMessage = `[${timestamp}] ${message}\n${formattedData}\n\n`;
