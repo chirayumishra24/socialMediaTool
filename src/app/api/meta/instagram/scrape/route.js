@@ -9,6 +9,18 @@ if (!global.igCache) {
   global.igCache = {};
 }
 
+// CORS Helper headers
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+// Handle OPTIONS preflight requests
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
+
 export async function POST(req) {
   try {
     const body = await req.json();
@@ -22,14 +34,18 @@ export async function POST(req) {
           ...data,
           syncedAt: new Date().toISOString()
         };
+        console.log(`[IG Sync] Successfully cached profile for @${username} via Chrome Extension`);
       }
-      return NextResponse.json({ ok: true, cached: true, ...data });
+      return NextResponse.json(
+        { ok: true, cached: true, ...data }, 
+        { headers: corsHeaders }
+      );
     }
 
     // Mode B: Dashboard requesting profile info
     const { username } = body;
     if (!username || typeof username !== "string" || !username.trim()) {
-      return NextResponse.json({ error: "Username is required" }, { status: 400 });
+      return NextResponse.json({ error: "Username is required" }, { status: 400, headers: corsHeaders });
     }
 
     const cleanUsername = username.toLowerCase().trim();
@@ -37,16 +53,18 @@ export async function POST(req) {
     // Check if the Chrome extension recently synced this profile
     if (global.igCache[cleanUsername]) {
       const cachedData = global.igCache[cleanUsername];
-      // Optional: clear cache after reading if you want one-time sync
-      // delete global.igCache[cleanUsername];
-      return NextResponse.json({ ok: true, ...cachedData, source: "Chrome Extension" });
+      console.log(`[IG Sync] Returning cached data for @${cleanUsername}`);
+      return NextResponse.json(
+        { ok: true, ...cachedData, source: "Chrome Extension" }, 
+        { headers: corsHeaders }
+      );
     }
 
     // Otherwise, try auto-scraping (with free/unsubscribed fallback warning)
     const data = await scrapeProfile(cleanUsername);
-    return NextResponse.json({ ok: true, ...data });
+    return NextResponse.json({ ok: true, ...data }, { headers: corsHeaders });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Profile scrape failed";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500, headers: corsHeaders });
   }
 }
