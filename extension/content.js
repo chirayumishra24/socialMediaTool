@@ -6,14 +6,15 @@ if (isDashboard) {
   // Listen for messages from the popup (Instagram Scraper mode)
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "scrape_profile") {
-      try {
-        const data = performScrape();
-        sendResponse({ success: true, data });
-      } catch (err) {
-        sendResponse({ success: false, error: err.message });
-      }
+      performScrape()
+        .then((data) => {
+          sendResponse({ success: true, data });
+        })
+        .catch((err) => {
+          sendResponse({ success: false, error: err.message });
+        });
+      return true; // Keep channel open for async response
     }
-    return true;
   });
 }
 
@@ -63,7 +64,7 @@ function syncStorageToLocalStorage() {
   }
 }
 
-function performScrape() {
+async function performScrape() {
   const urlParts = window.location.pathname.split("/").filter(Boolean);
   if (urlParts.length === 0 || window.location.hostname !== "www.instagram.com") {
     throw new Error("Please navigate to an Instagram profile page (e.g. https://www.instagram.com/skillizee.io)");
@@ -78,7 +79,21 @@ function performScrape() {
 
   console.log("[Skilizee Crawler] Starting extraction for username:", username);
 
-  // Try extracting high-fidelity parsed JSON data from embedded script tags first
+  // Tier 1: Try same-origin JSON fetch using active session
+  try {
+    const rawJson = await fetchInstagramProfileJson(username);
+    if (rawJson) {
+      const mapped = mapJsonToProfile(rawJson, username.toLowerCase().trim());
+      if (mapped && mapped.profile && mapped.profile.followers > 0) {
+        console.log("[Skilizee Crawler] Successfully fetched high-fidelity profile from same-origin JSON API:", mapped);
+        return mapped;
+      }
+    }
+  } catch (e) {
+    console.warn("[Skilizee Crawler] Same-origin fetch failed:", e);
+  }
+
+  // Tier 2: Try extracting high-fidelity parsed JSON data from embedded script tags
   try {
     const scriptData = extractDataFromScripts(username);
     if (scriptData && scriptData.profile && scriptData.profile.followers > 0) {
@@ -277,39 +292,55 @@ function performScrape() {
   // 6. EXTRACT RECENT POSTS
   const posts = [];
   try {
-    const postElements = document.querySelectorAll('a[href*="/p/"], a[href*="/reel/"]');
+    const postElements = Array.from(document.querySelectorAll('a[href*="/p/"], a[href*="/reel/"]'));
     const processedHrefs = new Set();
 
-    postElements.forEach((el) => {
-      if (posts.length >= 12) return;
+    for (const el of postElements) {
+      if (posts.length >= 12) break;
       const href = el.getAttribute('href');
-      if (!href || processedHrefs.has(href)) return;
+      if (!href || processedHrefs.has(href)) continue;
       processedHrefs.add(href);
 
       const url = `https://www.instagram.com${href}`;
       const imgEl = el.querySelector('img');
       const thumbnail = imgEl ? imgEl.src : "";
-
       const contentType = href.includes('/reel/') ? "Reel / Video" : "Static Image";
+
+      // Tier 3: Trigger hover/mouseenter to let Instagram render overlay dynamically
+      let likes = 0;
+      let comments = 0;
+      try {
+        const hovered = await hoverAndScrapePost(el);
+        likes = hovered.likes;
+        comments = hovered.comments;
+      } catch (hoverErr) {
+        console.warn("[Skilizee Crawler] Post hover scrape failed:", hoverErr);
+      }
+
+      const views = contentType === "Reel / Video" ? likes * 4 : 0;
 
       posts.push({
         id: href.replace(/\//g, "_"),
         caption: imgEl ? (imgEl.getAttribute('alt') || "") : "",
         contentType,
-        likes: 0,
-        comments: 0,
-        views: 0,
+        likes,
+        comments,
+        views,
         timestamp: null,
         thumbnail,
         url,
         hashtags: [],
-        engagementLevel: "Unknown",
+        engagementLevel: likes > 1000 ? "High" : likes > 200 ? "Medium" : "Unknown",
       });
-    });
+    }
     console.log(`[Skilizee Crawler] Extracted ${posts.length} posts`);
   } catch (e) {
     console.warn("[Skilizee Crawler] Post extraction failed:", e);
   }
+
+  const isLoggedIn = document.cookie.includes("ds_user_id") || 
+                     !!document.querySelector('svg[aria-label="Direct"], svg[aria-label="Messenger"], a[href*="/direct/"], svg[aria-label="Home"]') || 
+                     !!document.querySelector('img[alt*="profile picture"]');
 
   return {
     profile: {
@@ -325,6 +356,7 @@ function performScrape() {
       category: "Creator",
     },
     posts,
+    isLoggedIn
   };
 }
 
@@ -595,6 +627,10 @@ function mapJsonToProfile(root, targetUsername) {
     });
   }
 
+  const isLoggedIn = document.cookie.includes("ds_user_id") || 
+                     !!document.querySelector('svg[aria-label="Direct"], svg[aria-label="Messenger"], a[href*="/direct/"], svg[aria-label="Home"]') || 
+                     !!document.querySelector('img[alt*="profile picture"]');
+
   return {
     profile: {
       username,
@@ -609,5 +645,76 @@ function mapJsonToProfile(root, targetUsername) {
       category: user.category_name || "Creator",
     },
     posts,
+    isLoggedIn
   };
+}
+
+async function fetchInstagramProfileJson(username) {
+  try {
+    const url = `${window.location.origin}/${username}/?__a=1&__d=dis`;
+    console.log(`[Skilizee Crawler] Fetching JSON from same-origin: ${url}`);
+    const res = await fetch(url, {
+      headers: {
+        "x-ig-app-id": "936619743392459", // Instagram official web client ID
+      }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    return json;
+  } catch (err) {
+    console.warn("[Skilizee Crawler] Same-origin API fetch failed:", err);
+    return null;
+  }
+}
+
+async function hoverAndScrapePost(el) {
+  // Trigger hover events to force React UI hydration of the post overlay
+  el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+  el.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+  
+  // Wait 60ms for DOM overlay rendering
+  await new Promise(resolve => setTimeout(resolve, 60));
+  
+  let likes = 0;
+  let comments = 0;
+  
+  const svgs = Array.from(el.querySelectorAll('svg'));
+  svgs.forEach(svg => {
+    const ariaLabel = (svg.getAttribute('aria-label') || '').toLowerCase();
+    const parentText = svg.parentElement ? svg.parentElement.textContent.trim() : "";
+    if (ariaLabel.includes('like') || ariaLabel.includes('heart') || ariaLabel.includes('likes') || ariaLabel.includes('hearts')) {
+      const num = parseInstagramNumber(parentText);
+      if (num > 0) likes = num;
+    }
+    if (ariaLabel.includes('comment') || ariaLabel.includes('comments')) {
+      const num = parseInstagramNumber(parentText);
+      if (num > 0) comments = num;
+    }
+  });
+
+  if (likes === 0 && comments === 0) {
+    const listItems = Array.from(el.querySelectorAll('ul li, span, div'));
+    const numbers = [];
+    for (const item of listItems) {
+      if (item.children.length === 0) {
+        const txt = item.textContent.trim();
+        const num = parseInstagramNumber(txt);
+        if (num > 0 && /^\d+[\d,.]*[kkm]?$/i.test(txt)) {
+          numbers.push(num);
+        }
+      }
+    }
+    if (numbers.length >= 2) {
+      likes = numbers[0];
+      comments = numbers[1];
+    } else if (numbers.length === 1) {
+      likes = numbers[0];
+    }
+  }
+
+  // Mouse leave cleanup
+  el.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+  el.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true }));
+
+  return { likes, comments };
 }

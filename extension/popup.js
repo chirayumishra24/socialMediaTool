@@ -25,6 +25,7 @@ document.getElementById("sync-btn").addEventListener("click", async () => {
     }
 
     const payload = response.data;
+    console.log("[Skilizee Popup] Scraped payload:", payload);
     
     // Show proof of scrape
     try {
@@ -38,13 +39,13 @@ document.getElementById("sync-btn").addEventListener("click", async () => {
       console.error("Error setting preview data:", e);
     }
 
-    showStatus(`Extracted @${payload.profile.username}! Syncing...`, "success");
-
     // Save directly to extension storage under key "ig_profile_{username}"
     const username = payload.profile.username.toLowerCase().trim();
     chrome.storage.local.set({ [`ig_profile_${username}`]: payload }, () => {
       if (chrome.runtime.lastError) {
         showStatus(`Failed to save data: ${chrome.runtime.lastError.message}`, "error");
+      } else if (payload.isLoggedIn === false) {
+        showStatus(`⚠️ Synced @${payload.profile.username}, but you are LOGGED OUT of Instagram. Please log in to get post likes & comments!`, "error");
       } else {
         showStatus(`Successfully synced @${payload.profile.username}! Open your Skilizee Dashboard to see stats.`, "success");
       }
