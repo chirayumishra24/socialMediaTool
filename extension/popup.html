@@ -97,6 +97,53 @@
       color: #B91C1C;
       border: 1px solid #FCA5A5;
     }
+    .preview-card {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px dashed #CBD5E1;
+      border-radius: 8px;
+      background: #F8FAFC;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .preview-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid #8B5CF6;
+      object-fit: cover;
+    }
+    .preview-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .preview-name {
+      font-size: 12px;
+      font-weight: 800;
+      color: #0F172A;
+      margin: 0 0 2px 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .preview-username {
+      font-size: 10px;
+      color: #64748B;
+      font-weight: 600;
+      margin: 0 0 6px 0;
+    }
+    .preview-stats {
+      display: flex;
+      gap: 12px;
+      font-size: 9px;
+      font-weight: 700;
+      color: #475569;
+    }
+    .preview-stats b {
+      color: #8B5CF6;
+    }
   </style>
 </head>
 <body>
@@ -114,6 +161,18 @@
     </p>
     <button id="sync-btn">Sync to Dashboard</button>
     <div id="status-box" class="status"></div>
+    
+    <div id="preview-box" class="preview-card">
+      <img id="preview-pic" class="preview-avatar" src="" alt="Avatar">
+      <div class="preview-info">
+        <h3 id="preview-fullname" class="preview-name">-</h3>
+        <p id="preview-user" class="preview-username">@username</p>
+        <div class="preview-stats">
+          <span>Followers: <b id="preview-followers">0</b></span>
+          <span>Scraped Posts: <b id="preview-posts">0</b></span>
+        </div>
+      </div>
+    </div>
   </div>
   <script src="popup.js"></script>
 </body>

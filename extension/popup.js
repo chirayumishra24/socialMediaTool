@@ -10,6 +10,8 @@ document.getElementById("sync-btn").addEventListener("click", async () => {
     return;
   }
 
+  // Hide preview card on fresh click
+  document.getElementById("preview-box").style.display = "none";
   showStatus("Extracting profile info...", "success");
 
   // Send message to content script to perform scrape
@@ -23,6 +25,19 @@ document.getElementById("sync-btn").addEventListener("click", async () => {
     }
 
     const payload = response.data;
+    
+    // Show proof of scrape
+    try {
+      document.getElementById("preview-pic").src = payload.profile.profilePic || "https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=100&h=100&fit=crop";
+      document.getElementById("preview-fullname").textContent = payload.profile.fullName || payload.profile.username || "Instagram User";
+      document.getElementById("preview-user").textContent = `@${payload.profile.username}`;
+      document.getElementById("preview-followers").textContent = Number(payload.profile.followers || 0).toLocaleString();
+      document.getElementById("preview-posts").textContent = Array.isArray(payload.posts) ? payload.posts.length : 0;
+      document.getElementById("preview-box").style.display = "flex";
+    } catch (e) {
+      console.error("Error setting preview data:", e);
+    }
+
     showStatus(`Extracted @${payload.profile.username}! Syncing...`, "success");
 
     // Try posting to localhost ports 3000, 3001, and 3002
