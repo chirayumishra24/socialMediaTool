@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Skilizee Instagram Scraper",
+  "version": "1.0",
+  "description": "Scrapes Instagram profile info and sends it directly to your Skilizee Agent Dashboard.",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://www.instagram.com/*",
+    "http://localhost:3000/*",
+    "http://localhost:3001/*",
+    "http://localhost:3002/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.instagram.com/*"],
+      "js": ["content.js"]
+    }
+  ]
+}

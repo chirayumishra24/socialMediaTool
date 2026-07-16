@@ -249,6 +249,20 @@ export default function InstagramAnalyzer() {
           </button>
         </div>
 
+        {/* Chrome Extension Scraper Helper Banner */}
+        <div className="mt-4 p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100/60 flex items-start gap-3">
+          <span className="text-base">💡</span>
+          <div className="text-[11px] text-indigo-950/80 leading-relaxed font-semibold">
+            <p className="font-extrabold text-indigo-950">Sync automatically without RapidAPI subscriptions:</p>
+            <ol className="list-decimal pl-4 mt-1 space-y-1">
+              <li>Open Chrome and navigate to <code className="bg-white/80 px-1 py-0.5 rounded border border-indigo-200">chrome://extensions/</code></li>
+              <li>Turn on <b>Developer mode</b> (top right toggle)</li>
+              <li>Click <b>Load unpacked</b> and select the <code className="bg-white/80 px-1 py-0.5 rounded border border-indigo-200">extension</code> directory in your project folder</li>
+              <li>Go to any public Instagram profile page, open the extension popup, and click <b>Sync to Dashboard</b></li>
+            </ol>
+          </div>
+        </div>
+
         {/* Context Form (Collapsible) */}
         <div className="mt-4">
           <button
