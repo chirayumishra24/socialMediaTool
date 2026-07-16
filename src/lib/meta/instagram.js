@@ -1,3 +1,5 @@
+import { computeAnalytics } from "../crawlers/profile-scraper";
+
 const GRAPH_BASE_URL = "https://graph.facebook.com";
 const DEFAULT_GRAPH_VERSION = process.env.META_GRAPH_VERSION || "v22.0";
 const MEDIA_PAGE_LIMIT = 50;
@@ -71,7 +73,13 @@ async function graphRequest(path, params = {}) {
 
   if (!response.ok || payload?.error) {
     const message = payload?.error?.message || `Meta request failed with status ${response.status}`;
-    throw new Error(message);
+    const err = new Error(message);
+    const errCode = payload?.error?.code;
+    const errType = payload?.error?.type;
+    if (errCode === 190 || errType === "OAuthException") {
+      err.metaTokenExpired = true;
+    }
+    throw err;
   }
 
   return payload;
@@ -249,20 +257,25 @@ export async function fetchInstagramProfileFromMeta(username) {
     };
   });
 
+  const profile = {
+    username: connectedUsername,
+    fullName: userPayload.name || connectedUsername,
+    bio: userPayload.biography || "",
+    followers: Number(userPayload.followers_count || 0),
+    following: Number(userPayload.follows_count || 0),
+    postCount: Number(userPayload.media_count || posts.length),
+    profilePic: userPayload.profile_picture_url || "",
+    isVerified: false,
+    externalUrl: userPayload.website || "",
+    category: "Business",
+  };
+
+  const analysis = computeAnalytics(posts, profile);
+
   return {
-    profile: {
-      username: connectedUsername,
-      fullName: userPayload.name || connectedUsername,
-      bio: userPayload.biography || "",
-      followers: Number(userPayload.followers_count || 0),
-      following: Number(userPayload.follows_count || 0),
-      postCount: Number(userPayload.media_count || posts.length),
-      profilePic: userPayload.profile_picture_url || "",
-      isVerified: false,
-      externalUrl: userPayload.website || "",
-      category: "Business",
-    },
+    profile,
     posts,
+    analysis,
     source: "Meta Graph API",
   };
 }

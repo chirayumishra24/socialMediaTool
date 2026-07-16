@@ -210,7 +210,7 @@ function extractPosts(data) {
 
 // ─── Analytics ──────────────────────────────────────────────
 
-function computeAnalytics(posts, profile) {
+export function computeAnalytics(posts, profile) {
   if (!posts.length) return emptyAnalysis();
 
   const totalLikes = posts.reduce((s, p) => s + p.likes, 0);
@@ -248,7 +248,7 @@ function computeAnalytics(posts, profile) {
   };
 }
 
-function emptyAnalysis() {
+export function emptyAnalysis() {
   return {
     avgLikes: 0, avgComments: 0, avgViews: 0, engagementRate: "0.00",
     formatDistribution: { reels: 0, carousels: 0, static: 0 },

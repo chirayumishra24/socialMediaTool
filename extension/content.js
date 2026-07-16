@@ -280,22 +280,19 @@ function performScrape() {
       const thumbnail = imgEl ? imgEl.src : "";
 
       const contentType = href.includes('/reel/') ? "Reel / Video" : "Static Image";
-      const likes = Math.floor(Math.random() * 400) + 50;
-      const comments = Math.floor(Math.random() * 30) + 5;
-      const views = contentType === "Reel / Video" ? likes * 8 : 0;
 
       posts.push({
         id: href.replace(/\//g, "_"),
         caption: imgEl ? (imgEl.getAttribute('alt') || "") : "",
         contentType,
-        likes,
-        comments,
-        views,
-        timestamp: new Date().toISOString(),
+        likes: 0,
+        comments: 0,
+        views: 0,
+        timestamp: null,
         thumbnail,
         url,
         hashtags: [],
-        engagementLevel: likes > 200 ? "High" : "Medium",
+        engagementLevel: "Unknown",
       });
     });
     console.log(`[Skilizee Crawler] Extracted ${posts.length} posts`);

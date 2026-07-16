@@ -392,3 +392,111 @@
   "syncedAt": "2026-07-16T10:02:51.119Z"
 }
 
+[2026-07-16T10:31:02.761Z] Received POST request
+{
+  "username": "chirayumishra24"
+}
+
+[2026-07-16T10:31:02.762Z] Dashboard requested username: "chirayumishra24"
+
+
+[2026-07-16T10:31:02.762Z] Cleaned username: "chirayumishra24"
+
+
+[2026-07-16T10:31:02.763Z] Current global.igCache keys:
+[
+  "skillizee.io"
+]
+
+[2026-07-16T10:31:02.763Z] Cache miss for "chirayumishra24". Attempting scrapeProfile...
+
+
+[2026-07-16T10:31:07.182Z] scrapeProfile result for "chirayumishra24":
+{
+  "profile": {
+    "username": "chirayumishra24",
+    "fullName": "",
+    "bio": "",
+    "followers": 0,
+    "following": 0,
+    "postCount": 0,
+    "profilePic": "",
+    "isVerified": false,
+    "externalUrl": "",
+    "category": ""
+  },
+  "posts": [],
+  "analysis": {
+    "avgLikes": 0,
+    "avgComments": 0,
+    "avgViews": 0,
+    "engagementRate": "0.00",
+    "formatDistribution": {
+      "reels": 0,
+      "carousels": 0,
+      "static": 0
+    },
+    "topFormat": "Unknown",
+    "postingFrequency": "Unknown",
+    "bestPerformingPost": null,
+    "worstPerformingPost": null
+  },
+  "source": "manual",
+  "needsManualInput": true,
+  "message": "Instagram APIs unavailable. Please enter your profile stats manually."
+}
+
+[2026-07-16T10:35:57.612Z] Received POST request
+{
+  "username": "chirayumishra24"
+}
+
+[2026-07-16T10:35:57.612Z] Dashboard requested username: "chirayumishra24"
+
+
+[2026-07-16T10:35:57.613Z] Cleaned username: "chirayumishra24"
+
+
+[2026-07-16T10:35:57.613Z] Current global.igCache keys:
+[
+  "skillizee.io"
+]
+
+[2026-07-16T10:35:57.614Z] Cache miss for "chirayumishra24". Attempting scrapeProfile...
+
+
+[2026-07-16T10:36:01.637Z] scrapeProfile result for "chirayumishra24":
+{
+  "profile": {
+    "username": "chirayumishra24",
+    "fullName": "",
+    "bio": "",
+    "followers": 0,
+    "following": 0,
+    "postCount": 0,
+    "profilePic": "",
+    "isVerified": false,
+    "externalUrl": "",
+    "category": ""
+  },
+  "posts": [],
+  "analysis": {
+    "avgLikes": 0,
+    "avgComments": 0,
+    "avgViews": 0,
+    "engagementRate": "0.00",
+    "formatDistribution": {
+      "reels": 0,
+      "carousels": 0,
+      "static": 0
+    },
+    "topFormat": "Unknown",
+    "postingFrequency": "Unknown",
+    "bestPerformingPost": null,
+    "worstPerformingPost": null
+  },
+  "source": "manual",
+  "needsManualInput": true,
+  "message": "Instagram APIs unavailable. Please enter your profile stats manually."
+}
+

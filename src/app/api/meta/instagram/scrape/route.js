@@ -1,16 +1,10 @@
 import { NextResponse } from "next/server";
-import { scrapeProfile, buildManualProfile } from "@/lib/crawlers/profile-scraper";
 import { fetchInstagramProfileFromMeta, getInstagramSyncStatus } from "@/lib/meta/instagram";
 import fs from "fs";
 import path from "path";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
-
-// Setup global server-side cache for Chrome extension syncs
-if (!global.igCache) {
-  global.igCache = {};
-}
 
 // CORS Helper headers
 const corsHeaders = {
@@ -19,8 +13,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
-// Log helper to write to a local file in the workspace
+// Log helper to write to a local file in the workspace (only in development)
 function writeDebugLog(message, data = null) {
+  if (process.env.NODE_ENV !== "development") return;
   try {
     const logFilePath = path.join(process.cwd(), "route_logs.txt");
     const timestamp = new Date().toISOString();
@@ -42,27 +37,6 @@ export async function POST(req) {
     const body = await req.json();
     writeDebugLog("Received POST request", body);
 
-    // Mode A: Chrome Extension uploading scraped profile payload
-    if (body.manual) {
-      const data = buildManualProfile(body.manual);
-      const username = String(body.manual.profile?.username || body.manual.username || "").toLowerCase().trim();
-      
-      writeDebugLog(`Extracted username: "${username}" from manual payload`);
-      
-      if (username) {
-        global.igCache[username] = {
-          ...data,
-          syncedAt: new Date().toISOString()
-        };
-        writeDebugLog(`Successfully cached in global.igCache under key: "${username}"`, global.igCache[username]);
-      }
-      return NextResponse.json(
-        { ok: true, cached: true, ...data }, 
-        { headers: corsHeaders }
-      );
-    }
-
-    // Mode B: Dashboard requesting profile info
     const { username } = body;
     writeDebugLog(`Dashboard requested username: "${username}"`);
     
@@ -89,23 +63,26 @@ export async function POST(req) {
       writeDebugLog(`Meta Graph API lookup skipped/failed: ${metaErr.message}`);
     }
 
-    writeDebugLog("Current global.igCache keys:", Object.keys(global.igCache));
-
-    // Check if the Chrome extension recently synced this profile
-    if (global.igCache[cleanUsername]) {
-      const cachedData = global.igCache[cleanUsername];
-      writeDebugLog(`Cache hit for "${cleanUsername}"`);
-      return NextResponse.json(
-        { ok: true, ...cachedData, source: "Chrome Extension" }, 
-        { headers: corsHeaders }
-      );
-    }
-
-    // Otherwise, try auto-scraping (with free/unsubscribed fallback warning)
-    writeDebugLog(`Cache miss for "${cleanUsername}". Attempting scrapeProfile...`);
-    const data = await scrapeProfile(cleanUsername);
-    writeDebugLog(`scrapeProfile result for "${cleanUsername}":`, data);
-    return NextResponse.json({ ok: true, ...data }, { headers: corsHeaders });
+    // Since cache missed and Meta API couldn't resolve it, return manual input/extension sync fallback response
+    writeDebugLog(`Cache miss for "${cleanUsername}" and Meta API unavailable/skipped. Requesting manual input fallback.`);
+    return NextResponse.json({
+      ok: true,
+      profile: {
+        username: cleanUsername,
+        fullName: "",
+        bio: "",
+        followers: 0,
+        following: 0,
+        postCount: 0,
+        profilePic: "",
+        isVerified: false,
+        externalUrl: "",
+        category: "",
+      },
+      posts: [],
+      needsManualInput: true,
+      message: "Instagram APIs unavailable. Please sync your profile stats via the Chrome Extension.",
+    }, { headers: corsHeaders });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Profile scrape failed";
     writeDebugLog(`Error in POST route: ${message}`);
