@@ -29,23 +29,58 @@ function performScrape() {
     throw new Error("Please navigate to an Instagram profile page (e.g. https://www.instagram.com/skillizee.io) instead of a specific post, reel, or page.");
   }
 
-  // Try extracting stats from selectors
+  // Initialize variables
   let followers = 0;
   let following = 0;
   let postCount = 0;
+  let profilePic = "";
+  let fullName = "";
+  let bio = "";
 
-  // Try finding followers link
-  const followersEl = document.querySelector('a[href*="/followers/"] span, a[href*="/followers/"]');
-  if (followersEl) {
-    followers = parseInstagramNumber(followersEl.textContent || followersEl.title);
+  // 1. TRY METADATA PARSING (SEO Description & Title - highly reliable for public pages)
+  const metaDesc = document.querySelector('meta[name="description"], meta[property="og:description"]');
+  if (metaDesc) {
+    const descContent = metaDesc.getAttribute("content") || "";
+    // e.g. "12 Followers, 10 Following, 5 Posts - See Instagram photos and videos..."
+    const followersMatch = descContent.match(/([\d,.]+[KkMm]?)\s*Followers/i);
+    const followingMatch = descContent.match(/([\d,.]+[KkMm]?)\s*Following/i);
+    const postsMatch = descContent.match(/([\d,.]+[KkMm]?)\s*Posts/i);
+
+    if (followersMatch) followers = parseInstagramNumber(followersMatch[1]);
+    if (followingMatch) following = parseInstagramNumber(followingMatch[1]);
+    if (postsMatch) postCount = parseInstagramNumber(postsMatch[1]);
   }
 
-  const followingEl = document.querySelector('a[href*="/following/"] span, a[href*="/following/"]');
-  if (followingEl) {
-    following = parseInstagramNumber(followingEl.textContent || followingEl.title);
+  const ogImage = document.querySelector('meta[property="og:image"]');
+  if (ogImage) {
+    profilePic = ogImage.getAttribute("content") || "";
   }
 
-  // Fallback selector for stats list
+  const ogTitle = document.querySelector('meta[property="og:title"]');
+  if (ogTitle) {
+    const titleContent = ogTitle.getAttribute("content") || "";
+    // e.g. "Skillizee (@skillizee.io) • Instagram photos and videos"
+    const nameMatch = titleContent.match(/^([^(]+)\s*\(@/);
+    if (nameMatch) {
+      fullName = nameMatch[1].trim();
+    }
+  }
+
+  // 2. FALLBACK TO DOM SELECTORS (if logged in or metadata is hidden/different)
+  if (!followers) {
+    const followersEl = document.querySelector('a[href*="/followers/"] span, a[href*="/followers/"]');
+    if (followersEl) {
+      followers = parseInstagramNumber(followersEl.textContent || followersEl.title);
+    }
+  }
+
+  if (!following) {
+    const followingEl = document.querySelector('a[href*="/following/"] span, a[href*="/following/"]');
+    if (followingEl) {
+      following = parseInstagramNumber(followingEl.textContent || followingEl.title);
+    }
+  }
+
   const statListItems = document.querySelectorAll('header ul li, header section ul li');
   if (statListItems.length >= 3) {
     if (!postCount) postCount = parseInstagramNumber(statListItems[0].textContent);
@@ -53,37 +88,62 @@ function performScrape() {
     if (!following) following = parseInstagramNumber(statListItems[2].textContent);
   }
 
-  // Profile Picture
-  const avatarEl = document.querySelector('header img');
-  const profilePic = avatarEl ? avatarEl.src : "";
+  // 3. FALLBACK BODY TEXT REGEX
+  if (!followers || !postCount) {
+    const bodyText = document.body.innerText || "";
+    const followersMatch = bodyText.match(/([\d,.]+[KkMm]?)\s*followers/i);
+    const followingMatch = bodyText.match(/([\d,.]+[KkMm]?)\s*following/i);
+    const postsMatch = bodyText.match(/([\d,.]+[KkMm]?)\s*posts/i);
 
-  // Full name
+    if (!followers && followersMatch) followers = parseInstagramNumber(followersMatch[1]);
+    if (!following && followingMatch) following = parseInstagramNumber(followingMatch[1]);
+    if (!postCount && postsMatch) postCount = parseInstagramNumber(postsMatch[1]);
+  }
+
+  // Fallback Profile Pic
+  if (!profilePic) {
+    const headerImgs = document.querySelectorAll('header img');
+    for (const img of headerImgs) {
+      if (img.src && (img.src.includes("cdninstagram.com") || img.src.includes("fbcdn.net"))) {
+        profilePic = img.src;
+        break;
+      }
+    }
+    if (!profilePic && headerImgs.length > 0) {
+      profilePic = headerImgs[0].src;
+    }
+  }
+
+  // Fallback Full Name and Bio from DOM
   const headerEl = document.querySelector('header h2, header h1');
-  let fullName = "";
-  let bio = "";
-
   if (headerEl) {
-    // Bio is usually inside a container within the header section
+    if (!fullName) {
+      fullName = headerEl.textContent.trim();
+    }
     const headerContainer = headerEl.closest('section');
     if (headerContainer) {
       const spans = headerContainer.querySelectorAll('h1 ~ div span, h2 ~ div span, div > span');
-      // Concat all text content under heading
       const textContents = Array.from(spans).map(s => s.textContent.trim()).filter(Boolean);
       if (textContents.length > 0) {
-        fullName = textContents[0];
+        if (!fullName || fullName === username) {
+          fullName = textContents[0];
+        }
         bio = textContents.slice(1).join("\n");
       }
     }
   }
 
   // Extract recent posts
-  const postElements = document.querySelectorAll('article a[href*="/p/"], article a[href*="/reel/"]');
+  const postElements = document.querySelectorAll('a[href*="/p/"], a[href*="/reel/"]');
   const posts = [];
+  const processedHrefs = new Set();
 
-  postElements.forEach((el, idx) => {
-    if (idx >= 12) return; // Only need last 12
-
+  postElements.forEach((el) => {
+    if (posts.length >= 12) return; // Only need last 12
     const href = el.getAttribute('href');
+    if (!href || processedHrefs.has(href)) return;
+    processedHrefs.add(href);
+
     const url = `https://www.instagram.com${href}`;
     const imgEl = el.querySelector('img');
     const thumbnail = imgEl ? imgEl.src : "";
