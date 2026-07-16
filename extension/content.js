@@ -76,6 +76,19 @@ function performScrape() {
     throw new Error("Please navigate to an Instagram profile page (e.g. https://www.instagram.com/skillizee.io) instead of a specific post, reel, or page.");
   }
 
+  console.log("[Skilizee Crawler] Starting extraction for username:", username);
+
+  // Try extracting high-fidelity parsed JSON data from embedded script tags first
+  try {
+    const scriptData = extractDataFromScripts(username);
+    if (scriptData && scriptData.profile && scriptData.profile.followers > 0) {
+      console.log("[Skilizee Crawler] Successfully parsed high-fidelity data from scripts:", scriptData);
+      return scriptData;
+    }
+  } catch (e) {
+    console.warn("[Skilizee Crawler] Script parsing attempt failed:", e);
+  }
+
   // Initialize variables
   let followers = 0;
   let following = 0;
@@ -83,8 +96,6 @@ function performScrape() {
   let profilePic = "";
   let fullName = "";
   let bio = "";
-
-  console.log("[Skilizee Crawler] Starting extraction for username:", username);
 
   // 1. TRY METADATA PARSING (SEO description & title tags)
   try {
@@ -331,4 +342,272 @@ function parseInstagramNumber(text) {
   if (unit === 'm') return Math.round(val * 1000000);
   if (unit === 'k') return Math.round(val * 1000);
   return Math.round(val);
+}
+
+function extractDataFromScripts(targetUsername) {
+  const scripts = Array.from(document.querySelectorAll('script'));
+  const cleanTarget = targetUsername.toLowerCase().trim();
+
+  for (const script of scripts) {
+    const text = script.textContent || "";
+    
+    // Look for tags containing timeline media
+    if (
+      !text.includes("edge_owner_to_timeline_media") &&
+      !text.includes("edge_media_preview_like") &&
+      !text.includes("xdt_api__v1__feed")
+    ) {
+      continue;
+    }
+
+    try {
+      let jsonObjects = [];
+      
+      const fnMatches = [
+        /window\._sharedData\s*=\s*({.+?});/s,
+        /window\.__additionalDataLoaded\s*\(\s*['"][^'"]+['"]\s*,\s*({.+?})\s*\);/s,
+        /requireLazy\(\['[^']+'\],function\([^)]+\)\{.*?\((.+?)\);?\s*\}\);/s,
+        /{\s*"[^"]+"\s*:\s*.+}/s
+      ];
+
+      for (const regex of fnMatches) {
+        const matches = text.match(regex);
+        if (matches) {
+          try {
+            const parsed = JSON.parse(matches[1]);
+            jsonObjects.push(parsed);
+          } catch (e) {}
+        }
+      }
+
+      if (jsonObjects.length === 0) {
+        try {
+          const parsed = JSON.parse(text);
+          jsonObjects.push(parsed);
+        } catch (e) {}
+      }
+
+      if (jsonObjects.length === 0) {
+        let openBrackets = 0;
+        let startIdx = -1;
+        for (let i = 0; i < text.length; i++) {
+          if (text[i] === '{') {
+            if (openBrackets === 0) startIdx = i;
+            openBrackets++;
+          } else if (text[i] === '}') {
+            openBrackets--;
+            if (openBrackets === 0 && startIdx !== -1) {
+              const candidate = text.substring(startIdx, i + 1);
+              if (candidate.length > 500) {
+                try {
+                  const parsed = JSON.parse(candidate);
+                  jsonObjects.push(parsed);
+                } catch (e) {}
+              }
+            }
+          }
+        }
+      }
+
+      for (const obj of jsonObjects) {
+        const results = findKeysInObject(obj, ["user", "graphql", "edge_owner_to_timeline_media", "xdt_api__v1__feed__user_timeline_graphql_connection"]);
+        if (results.user || results.edge_owner_to_timeline_media || results.xdt_api__v1__feed__user_timeline_graphql_connection) {
+          const profileAndPosts = mapJsonToProfile(obj, cleanTarget);
+          if (profileAndPosts && profileAndPosts.profile.followers > 0) {
+            return profileAndPosts;
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("[Skilizee Crawler] Script parse error:", err);
+    }
+  }
+  return null;
+}
+
+function findKeysInObject(obj, keys) {
+  const found = {};
+  if (!obj || typeof obj !== "object") return found;
+
+  const stack = [obj];
+  const visited = new Set();
+
+  while (stack.length > 0) {
+    const current = stack.pop();
+    if (visited.has(current)) continue;
+    visited.add(current);
+
+    for (const key of Object.keys(current)) {
+      if (keys.includes(key)) {
+        found[key] = current[key];
+      }
+      const val = current[key];
+      if (val && typeof val === "object") {
+        stack.push(val);
+      }
+    }
+  }
+  return found;
+}
+
+function mapJsonToProfile(root, targetUsername) {
+  let user = null;
+  
+  if (root?.entry_data?.ProfilePage?.[0]?.graphql?.user) {
+    user = root.entry_data.ProfilePage[0].graphql.user;
+  }
+  if (!user && root?.graphql?.user) {
+    user = root.graphql.user;
+  }
+  if (!user && root?.user) {
+    user = root.user;
+  }
+
+  if (!user) {
+    const queue = [root];
+    const visited = new Set();
+    while (queue.length > 0) {
+      const current = queue.shift();
+      if (!current || typeof current !== "object" || visited.has(current)) continue;
+      visited.add(current);
+
+      if (current.username && String(current.username).toLowerCase() === targetUsername) {
+        if (current.edge_followed_by || current.followers_count || current.edge_owner_to_timeline_media) {
+          user = current;
+          break;
+        }
+      }
+
+      for (const k of Object.keys(current)) {
+        if (current[k] && typeof current[k] === "object") {
+          queue.push(current[k]);
+        }
+      }
+    }
+  }
+
+  if (!user) return null;
+
+  const username = user.username || targetUsername;
+  const fullName = user.full_name || user.fullName || username;
+  const bio = user.biography || user.bio || "";
+  
+  const followers = parseInt(
+    user.edge_followed_by?.count || 
+    user.followers_count || 
+    user.follower_count || 0
+  );
+  
+  const following = parseInt(
+    user.edge_follow?.count || 
+    user.following_count || 0
+  );
+  
+  const postCount = parseInt(
+    user.edge_owner_to_timeline_media?.count || 
+    user.media_count || 0
+  );
+  
+  const profilePic = user.profile_pic_url_hd || user.profile_pic_url || "";
+  const externalUrl = user.external_url || user.externalUrl || "";
+
+  const posts = [];
+  let edges = [];
+
+  if (user.edge_owner_to_timeline_media?.edges) {
+    edges = user.edge_owner_to_timeline_media.edges;
+  } else if (user.media?.nodes) {
+    edges = user.media.nodes.map(node => ({ node }));
+  } else {
+    const queue = [user];
+    const visited = new Set();
+    while (queue.length > 0) {
+      const current = queue.shift();
+      if (!current || typeof current !== "object" || visited.has(current)) continue;
+      visited.add(current);
+
+      if (Array.isArray(current.edges)) {
+        edges = current.edges;
+        break;
+      }
+      if (Array.isArray(current) && current.length > 0 && current[0]?.node) {
+        edges = current;
+        break;
+      }
+
+      for (const k of Object.keys(current)) {
+        if (current[k] && typeof current[k] === "object") {
+          queue.push(current[k]);
+        }
+      }
+    }
+  }
+
+  if (Array.isArray(edges)) {
+    edges.forEach((edge) => {
+      const node = edge?.node || edge;
+      if (!node || !node.id) return;
+      if (posts.length >= 12) return;
+
+      const code = node.shortcode || node.code || "";
+      const likes = parseInt(
+        node.edge_liked_by?.count || 
+        node.edge_media_preview_like?.count || 
+        node.like_count || 0
+      );
+      
+      const comments = parseInt(
+        node.edge_media_to_comment?.count || 
+        node.edge_media_to_parent_comment?.count || 
+        node.comment_count || 0
+      );
+
+      const views = parseInt(node.video_view_count || node.view_count || (node.is_video ? likes * 4 : 0));
+      const caption = node.edge_media_to_caption?.edges?.[0]?.node?.text || node.caption || "";
+      const thumbnail = node.display_url || node.display_src || node.thumbnail_src || "";
+      
+      const isVideo = !!(node.is_video || node.media_type === 2);
+      const isCarousel = !!(node.media_type === 8 || node.edge_sidecar_to_children);
+      
+      let contentType = "Static Image";
+      if (isVideo) contentType = "Reel / Video";
+      else if (isCarousel) contentType = "Carousel";
+
+      let timestamp = null;
+      const ts = node.taken_at_timestamp || node.timestamp;
+      if (ts) {
+        timestamp = new Date(ts * 1000).toISOString();
+      }
+
+      posts.push({
+        id: node.id,
+        caption,
+        contentType,
+        likes,
+        comments,
+        views,
+        timestamp,
+        thumbnail,
+        url: code ? `https://www.instagram.com/p/${code}/` : "",
+        hashtags: caption.match(/#[\w]+/g) || [],
+        engagementLevel: likes > 1000 ? "High" : "Medium",
+      });
+    });
+  }
+
+  return {
+    profile: {
+      username,
+      fullName,
+      bio,
+      followers,
+      following,
+      postCount,
+      profilePic,
+      isVerified: !!user.is_verified,
+      externalUrl,
+      category: user.category_name || "Creator",
+    },
+    posts,
+  };
 }
