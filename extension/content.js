@@ -662,11 +662,15 @@ async function fetchInstagramProfileJson(username) {
         "x-ig-app-id": "936619743392459", // Instagram official web client ID
       }
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = await res.json();
-    return json;
+    if (!res.ok) return null;
+    const text = await res.text();
+    if (!text || !text.trim()) return null;
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      return null;
+    }
   } catch (err) {
-    console.warn("[Skilizee Crawler] Same-origin API fetch failed:", err);
     return null;
   }
 }
