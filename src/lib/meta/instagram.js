@@ -1,7 +1,7 @@
 import { computeAnalytics } from "../crawlers/profile-scraper";
+import { getValidAccessToken, getInstagramAccountId } from "./meta-auth";
+import { buildGraphUrl, checkRateLimit, trackApiCall } from "./meta-config";
 
-const GRAPH_BASE_URL = "https://graph.facebook.com";
-const DEFAULT_GRAPH_VERSION = process.env.META_GRAPH_VERSION || "v22.0";
 const MEDIA_PAGE_LIMIT = 50;
 const MAX_MEDIA_PAGES = 5;
 const INSIGHT_METRIC_ATTEMPTS = [
@@ -23,31 +23,30 @@ function normalizePermalink(value) {
   }
 }
 
-function buildGraphUrl(path, params = {}) {
-  const url = new URL(`${GRAPH_BASE_URL}/${DEFAULT_GRAPH_VERSION}${path}`);
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") {
-      url.searchParams.set(key, String(value));
-    }
-  });
-  return url;
-}
+async function getInstagramSyncConfig() {
+  try {
+    const accessToken = await getValidAccessToken();
+    const instagramAccountId = await getInstagramAccountId();
 
-function getInstagramSyncConfig() {
-  const accessToken = process.env.META_ACCESS_TOKEN;
-  const instagramAccountId = process.env.META_IG_ACCOUNT_ID;
-  const missing = [];
+    return {
+      ready: true,
+      missing: [],
+      accessToken,
+      instagramAccountId,
+    };
+  } catch (err) {
+    const missing = [];
+    if (err.message.includes("access token")) missing.push("META_ACCESS_TOKEN");
+    if (err.message.includes("Instagram account")) missing.push("META_IG_ACCOUNT_ID");
 
-  if (!accessToken) missing.push("META_ACCESS_TOKEN");
-  if (!instagramAccountId) missing.push("META_IG_ACCOUNT_ID");
-
-  return {
-    ready: missing.length === 0,
-    missing,
-    accessToken,
-    instagramAccountId,
-    graphVersion: DEFAULT_GRAPH_VERSION,
-  };
+    return {
+      ready: false,
+      missing: missing.length > 0 ? missing : ["META_ACCESS_TOKEN", "META_IG_ACCOUNT_ID"],
+      accessToken: "",
+      instagramAccountId: "",
+      error: err.message,
+    };
+  }
 }
 
 async function graphRequest(path, params = {}) {
