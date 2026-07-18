@@ -40,6 +40,13 @@ const DEFAULT_USERS = [
     roles: ["linkedin", "social_media"],
     isAdmin: false,
     name: "Campaign Manager"
+  },
+  {
+    email: "podcast@skillizee.io",
+    password: "User@123",
+    roles: ["podcast"],
+    isAdmin: false,
+    name: "Podcast Manager"
   }
 ];
 
