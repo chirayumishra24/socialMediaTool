@@ -14,7 +14,11 @@ import {
   Music,
   Mic,
   Sparkles,
-  FlaskConical
+  FlaskConical,
+  Calendar,
+  CheckSquare,
+  PlusCircle,
+  Sliders
 } from "lucide-react";
 
 function Instagram(props) {
@@ -87,6 +91,9 @@ import DiscoverHub from "@/components/DiscoverHub";
 import Analytics from "@/components/Analytics";
 import AdminPanel from "@/components/AdminPanel";
 import InstagramAnalyzer from "@/components/InstagramAnalyzer";
+import MetaDashboard from "@/components/MetaDashboard";
+import PostComposer from "@/components/PostComposer";
+import MetaConnect from "@/components/MetaConnect";
 import Login from "@/components/Login";
 import AccessDenied from "@/components/AccessDenied";
 import LandingPage from "@/components/LandingPage";
@@ -97,6 +104,9 @@ function AppContent({ defaultTab = "dashboard" }) {
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [researchContext, setResearchContext] = useState(null);
   const [showLogin, setShowLogin] = useState(false);
+  const [composerInitialContent, setComposerInitialContent] = useState("");
+  const [scheduledPrefillDate, setScheduledPrefillDate] = useState("");
+  const [selectedPostToEdit, setSelectedPostToEdit] = useState(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -164,7 +174,7 @@ function AppContent({ defaultTab = "dashboard" }) {
       <div className="absolute bottom-1/3 left-1/4 w-28 h-28 rounded-full bg-indigo-300/10 blur-2xl pointer-events-none" />
 
       {/* Global Sidebar (Left) */}
-      <aside className="w-full lg:w-[100px] bg-white border-b lg:border-b-0 lg:border-r border-slate-100 flex flex-row lg:flex-col items-center justify-between lg:justify-start p-4 lg:py-10 shrink-0 gap-8 z-30">
+      <aside className="w-full lg:w-[100px] bg-white border-b lg:border-b-0 lg:border-r border-slate-100 flex flex-row lg:flex-col items-center justify-between lg:justify-start p-4 lg:py-6 shrink-0 gap-4 z-30">
         {/* Logo Brand Icon */}
         <div className="w-12 h-12 rounded-[1.25rem] bg-gradient-to-tr from-purple-500 via-indigo-500 to-cyan-400 p-[2px] shadow-lg flex items-center justify-center transition-transform hover:scale-105 shrink-0">
           <div className="w-full h-full bg-white rounded-[1.15rem] flex items-center justify-center">
@@ -175,14 +185,17 @@ function AppContent({ defaultTab = "dashboard" }) {
         </div>
 
         {/* Navigation Links */}
-        <nav className="flex flex-row lg:flex-col items-center gap-1 sm:gap-3 lg:gap-6">
+        <nav className="flex flex-row lg:flex-col items-center gap-1 sm:gap-2 lg:gap-3.5 max-h-[75vh] overflow-y-auto custom-scroll pr-1">
           <SidebarBtn icon={Home} label="Home" active={activeTab === "dashboard"} onClick={() => setActiveTab("dashboard")} />
           <SidebarBtn icon={TrendingUp} label="Trends" active={activeTab === "discover"} onClick={() => setActiveTab("discover")} />
           <SidebarBtn icon={FlaskConical} label="R&D Lab" active={activeTab === "research"} onClick={() => setActiveTab("research")} />
+          <SidebarBtn icon={Video} label="Content" active={activeTab === "studio"} onClick={() => setActiveTab("studio")} />
+          <SidebarBtn icon={Calendar} label="Calendar" active={activeTab === "calendar"} onClick={() => setActiveTab("calendar")} />
+          <SidebarBtn icon={CheckSquare} label="Approval" active={activeTab === "approval"} onClick={() => setActiveTab("approval")} />
+          <SidebarBtn icon={PlusCircle} label="Compose" active={activeTab === "composer"} onClick={() => { setComposerInitialContent(""); setScheduledPrefillDate(""); setSelectedPostToEdit(null); setActiveTab("composer"); }} />
           <SidebarBtn icon={BarChart3} label="Analytics" active={activeTab === "analytics"} onClick={() => setActiveTab("analytics")} />
           <SidebarBtn icon={Sparkles} label="IG Audit" active={activeTab === "instagram-analyzer"} onClick={() => setActiveTab("instagram-analyzer")} />
-          <SidebarBtn icon={Video} label="Content" active={activeTab === "studio"} onClick={() => setActiveTab("studio")} />
-          <SidebarBtn icon={Users} label="Audience" active={activeTab === "audience"} onClick={() => setActiveTab("analytics")} />
+          <SidebarBtn icon={Sliders} label="Settings" active={activeTab === "settings"} onClick={() => setActiveTab("settings")} />
           {user.isAdmin && (
             <SidebarBtn icon={Settings} label="Admin" active={activeTab === "admin"} onClick={() => setActiveTab("admin")} />
           )}
@@ -209,7 +222,7 @@ function AppContent({ defaultTab = "dashboard" }) {
         }} />
         <SocialIcon color="bg-[#ff0000]" icon={Youtube} label="YouTube" onClick={() => setActiveTab("analytics")} />
         <SocialIcon color="bg-indigo-600" icon={Mic} label="Podcast Studio" onClick={() => {
-          const url = "https://podcast-tool-ccis.vercel.app/";
+          const url = process.env.NEXT_PUBLIC_PODCAST_URL || "https://podcast-tool-ccis.vercel.app/";
           const sso = typeof window !== "undefined" ? localStorage.getItem("skilizee_sso") : null;
           window.location.href = sso ? `${url}?sso=${sso}` : url;
         }} />
@@ -228,6 +241,10 @@ function AppContent({ defaultTab = "dashboard" }) {
               {activeTab === "research" && "R&D Lab Cycles"}
               {activeTab === "studio" && "Production Content Studio"}
               {activeTab === "instagram-analyzer" && "Instagram Profile Analyzer"}
+              {activeTab === "calendar" && "Content Calendar & Scheduling"}
+              {activeTab === "approval" && "Content Approval Queue"}
+              {activeTab === "composer" && "Social Media Composer"}
+              {activeTab === "settings" && "Connected Social Channels & Settings"}
               {activeTab === "admin" && "Administrative Portal"}
             </h1>
             <p className="text-sm font-semibold text-slate-500 mt-0.5">
@@ -277,15 +294,53 @@ function AppContent({ defaultTab = "dashboard" }) {
           {activeTab === "studio" && (
             <ContentStudio
               researchContext={researchContext}
+              onSchedulePost={(content) => {
+                setComposerInitialContent(content);
+                setActiveTab("composer");
+              }}
             />
           )}
-          {activeTab === "calendar" && <ContentCalendar />}
-          {activeTab === "approval" && <ApprovalBoard />}
+          {activeTab === "calendar" && (
+            <ContentCalendar
+              onSelectPost={(post) => {
+                if (post.type === "meta") {
+                  setSelectedPostToEdit(post.fullPost);
+                  setComposerInitialContent(post.fullPost.caption);
+                  setActiveTab("composer");
+                } else if (post.scheduledDate) {
+                  setScheduledPrefillDate(post.scheduledDate);
+                  setActiveTab("composer");
+                }
+              }}
+            />
+          )}
+          {activeTab === "approval" && (
+            <ApprovalBoard
+              onPublishPost={(post) => {
+                setComposerInitialContent(post.caption || post.content || "");
+                setActiveTab("composer");
+              }}
+            />
+          )}
+          {activeTab === "composer" && (
+            <PostComposer
+              initialContent={composerInitialContent}
+              prefillDate={scheduledPrefillDate}
+              postToEdit={selectedPostToEdit}
+              onPublished={() => {
+                setComposerInitialContent("");
+                setScheduledPrefillDate("");
+                setSelectedPostToEdit(null);
+                setActiveTab("calendar");
+              }}
+            />
+          )}
           {activeTab === "discover" && (
             <DiscoverHub onStartResearch={handleStartResearch} />
           )}
           {activeTab === "analytics" && <Analytics />}
           {activeTab === "instagram-analyzer" && <InstagramAnalyzer />}
+          {activeTab === "settings" && <MetaConnect />}
           {activeTab === "admin" && user.isAdmin && <AdminPanel />}
         </div>
 

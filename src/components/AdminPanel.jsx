@@ -280,7 +280,7 @@ export default function AdminPanel() {
                 {[
                   { id: "linkedin", label: "LinkedIn Growth Tool" },
                   { id: "social_media", label: "Social Media Tool (AI Agent)" },
-                  { id: "podcast", label: "Podcast Suite (Coming Soon)" }
+                  { id: "podcast", label: "AI Podcast Tool" }
                 ].map((item) => (
                   <label
                     key={item.id}

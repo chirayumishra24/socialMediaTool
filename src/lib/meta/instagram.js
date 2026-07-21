@@ -50,10 +50,17 @@ async function getInstagramSyncConfig() {
 }
 
 async function graphRequest(path, params = {}) {
-  const config = getInstagramSyncConfig();
+  const config = await getInstagramSyncConfig();
   if (!config.ready) {
     throw new Error(`Missing Meta configuration: ${config.missing.join(", ")}`);
   }
+
+  // Rate limit check
+  const rateCheck = checkRateLimit("instagram");
+  if (!rateCheck.allowed) {
+    throw new Error(`Instagram API rate limit exceeded. Resets in ${Math.ceil(rateCheck.resetsIn / 60000)} minutes.`);
+  }
+  trackApiCall("instagram");
 
   const url = buildGraphUrl(path, {
     ...params,
@@ -91,7 +98,7 @@ async function getMediaDetails(mediaId) {
 }
 
 async function findMediaByPermalink(publishedUrl) {
-  const config = getInstagramSyncConfig();
+  const config = await getInstagramSyncConfig();
   const targetPermalink = normalizePermalink(publishedUrl);
 
   let after = "";
@@ -139,12 +146,11 @@ async function getMediaInsights(mediaId) {
   return [];
 }
 
-export function getInstagramSyncStatus() {
-  const config = getInstagramSyncConfig();
+export async function getInstagramSyncStatus() {
+  const config = await getInstagramSyncConfig();
   return {
     ready: config.ready,
     missing: config.missing,
-    graphVersion: config.graphVersion,
   };
 }
 
@@ -204,7 +210,7 @@ export async function syncInstagramPost({ publishedUrl = "", postId = "" } = {})
 }
 
 export async function fetchInstagramProfileFromMeta(username) {
-  const config = getInstagramSyncConfig();
+  const config = await getInstagramSyncConfig();
   if (!config.ready) {
     throw new Error(`Missing Meta configuration: ${config.missing.join(", ")}`);
   }

@@ -30,6 +30,27 @@ import {
   XCircle,
 } from "lucide-react";
 import SocialPreview from "./SocialPreview";
+
+function Instagram(props) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+    </svg>
+  );
+}
 import {
   updateContentTracking,
   updateContentBody,
@@ -64,7 +85,7 @@ function getBoardStage(status) {
   return status || "pending";
 }
 
-export default function ApprovalBoard() {
+export default function ApprovalBoard({ onPublishPost }) {
   const items = useResearchHistory();
   const scripts = useContentHistory();
 
@@ -924,6 +945,17 @@ export default function ApprovalBoard() {
                     className="px-8 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest bg-accent text-white hover:opacity-90 transition-all shadow-xl shadow-accent/20 flex items-center gap-2.5"
                   >
                     <Rocket className="w-4.5 h-4.5" /> Approve & Publish + Word Doc
+                  </button>
+                )}
+                {previewItem.boardStatus === "approved" && onPublishPost && (
+                  <button
+                    onClick={() => {
+                      onPublishPost({ caption: previewItem.script, format: previewItem.format });
+                      setPreviewItem(null);
+                    }}
+                    className="px-8 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90 transition-all shadow-xl shadow-indigo-200 flex items-center gap-2.5"
+                  >
+                    <Instagram className="w-4.5 h-4.5" /> Compose &amp; Publish to Meta
                   </button>
                 )}
                 <button

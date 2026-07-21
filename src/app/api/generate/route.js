@@ -9,7 +9,7 @@ export async function POST(req) {
   try {
     const {
       keyword, format, style, audience, location, research,
-      brandVoice,
+      brandVoice, performanceData,
       bundle = false, bundleFormats = ["instagram_reel", "x_thread", "linkedin_post"]
     } = await req.json();
 
@@ -20,7 +20,7 @@ export async function POST(req) {
 
     if (bundle) {
       const rawScripts = await generateBundle({
-        keyword, style, audience, research, location, brandVoice,
+        keyword, style, audience, research, location, brandVoice, performanceData,
         formats: bundleFormats,
       });
       const optimizedScripts = await Promise.all(
@@ -54,7 +54,7 @@ export async function POST(req) {
 
     // 1. Generate Script
     const script = await generateScript({
-      keyword, format, style, audience, research, location, brandVoice
+      keyword, format, style, audience, research, location, brandVoice, performanceData
     });
 
     // 2. Run supporting AI work in parallel and fail open if either step breaks.

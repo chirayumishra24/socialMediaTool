@@ -33,7 +33,7 @@ export default function AccessDenied() {
       id: "podcast",
       name: "AI Podcast Tool",
       desc: "Podcast scripting, audio creation & automation",
-      url: process.env.NEXT_PUBLIC_PODCAST_URL || "http://localhost:3002",
+      url: process.env.NEXT_PUBLIC_PODCAST_URL || "https://podcast-tool-ccis.vercel.app/",
       icon: Radio,
       color: "bg-purple-50 text-purple-600 border-purple-100"
     }

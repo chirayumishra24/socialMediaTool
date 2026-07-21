@@ -8,8 +8,9 @@ export async function POST(req) {
     const { publishedUrl = "", postId = "" } = await req.json();
 
     if (!String(publishedUrl).trim() && !String(postId).trim()) {
+      const config = await getInstagramSyncStatus();
       return NextResponse.json(
-        { error: "Missing publishedUrl or postId", config: getInstagramSyncStatus() },
+        { error: "Missing publishedUrl or postId", config },
         { status: 400 }
       );
     }
@@ -19,10 +20,11 @@ export async function POST(req) {
       postId: String(postId).trim(),
     });
 
+    const config = await getInstagramSyncStatus();
     return NextResponse.json({
       ok: true,
       ...result,
-      config: getInstagramSyncStatus(),
+      config,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Instagram sync failed";
@@ -32,10 +34,11 @@ export async function POST(req) {
         ? 404
         : 500;
 
+    const config = await getInstagramSyncStatus().catch(() => ({ ready: false }));
     return NextResponse.json(
       {
         error: message,
-        config: getInstagramSyncStatus(),
+        config,
       },
       { status }
     );

@@ -77,6 +77,7 @@ export async function generateScript({
   style = "professional",
   audience = "general audience",
   research = null,
+  performanceData = null,
   location = "IN",
   language = "en",
   brandVoice = null,
@@ -85,6 +86,14 @@ export async function generateScript({
   const styleDesc = STYLES[style] || STYLES.professional;
   const performanceGoal = PERFORMANCE_GOALS[format] || PERFORMANCE_GOALS.youtube_long;
   const today = new Date().toISOString().split("T")[0];
+
+  let performanceContext = "";
+  if (performanceData && Array.isArray(performanceData) && performanceData.length > 0) {
+    const topPosts = performanceData.slice(0, 3).map((p, i) => 
+      `${i + 1}. Caption: "${(p.caption || p.message || "").substring(0, 150)}" | Format: ${p.format || p.contentType || ""} | Likes: ${p.likes || 0} | Comments: ${p.comments || 0}`
+    ).join("\n");
+    performanceContext = `\n═══ HISTORICAL TOP-PERFORMANCE DATA (MANDATORY INSPIRATION) ═══\nHere are the top performing posts in the account history. Replicate their successful hook styles, length, formatting, and structural styles:\n${topPosts}\n`;
+  }
 
   let researchContext = "";
   if (research) {
@@ -140,6 +149,7 @@ LANGUAGE: ${language === "hi" ? "Hindi" : language === "hinglish" ? "Hinglish" :
 PERFORMANCE GOAL: ${performanceGoal}
 
 ${researchContext}
+${performanceContext}
 ${brandCtx}
 
 FORMAT STRUCTURE: ${spec.structure}

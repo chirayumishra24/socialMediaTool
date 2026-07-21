@@ -16,6 +16,14 @@ export default function Dashboard({ onNavigate, onStartResearch, onGoToStudio })
   const researchHistory = useResearchHistory();
   const contentHistory = useContentHistory();
   const performance = usePerformanceInsights();
+  const [metaStatus, setMetaStatus] = useState(null);
+
+  useEffect(() => {
+    fetch("/api/meta/status")
+      .then((res) => res.json())
+      .then((data) => setMetaStatus(data))
+      .catch(() => {});
+  }, []);
 
   // Mock word cloud data
   const words = [
@@ -48,6 +56,49 @@ export default function Dashboard({ onNavigate, onStartResearch, onGoToStudio })
 
   return (
     <div className="flex flex-col gap-8 w-full animate-fade-in">
+      {/* Meta Quick Connect Banner */}
+      {metaStatus && !metaStatus.connected && (
+        <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 rounded-3xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm">
+          <div>
+            <h4 className="text-sm font-black text-slate-800 flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-ping" />
+              Maximize Your Reach with Meta API
+            </h4>
+            <p className="text-xs text-slate-500 font-semibold mt-1">
+              Connect Instagram and Facebook to enable one-click publishing, AI strategy recommendations, and live content metrics directly in your calendar.
+            </p>
+          </div>
+          <button
+            onClick={() => onNavigate("settings")}
+            className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-all shadow-md shadow-indigo-100 shrink-0 cursor-pointer"
+          >
+            Connect Account
+          </button>
+        </div>
+      )}
+
+      {metaStatus?.connected && (
+        <div className="bg-white border border-slate-100 rounded-[2rem] p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs font-black shadow-inner">
+              ✓
+            </div>
+            <div>
+              <h4 className="text-sm font-black text-slate-800">Connected to Meta Channels</h4>
+              <p className="text-xs text-slate-400 font-semibold mt-0.5">
+                Instagram: @{metaStatus.instagram?.username || "—"} • Facebook: {metaStatus.facebook?.pageName || "—"}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => onNavigate("analytics")}
+            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all cursor-pointer"
+          >
+            View Live Insights
+          </button>
+        </div>
+      )}
+
       {/* Cards Grid Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         

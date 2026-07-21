@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Skilizee Instagram Scraper",
+  "name": "Skilizee Social Media Tool",
   "version": "1.0",
-  "description": "Scrapes Instagram profile info and sends it directly to your Skilizee Agent Dashboard.",
+  "description": "Scrapes Instagram/Facebook profile info and synchronizes directly with your Skilizee Agent Dashboard.",
   "permissions": [
     "activeTab",
     "scripting",
@@ -10,9 +10,11 @@
   ],
   "host_permissions": [
     "https://www.instagram.com/*",
+    "https://www.facebook.com/*",
     "http://localhost:3000/*",
     "http://localhost:3001/*",
-    "http://localhost:3002/*"
+    "http://localhost:3002/*",
+    "https://*.vercel.app/*"
   ],
   "action": {
     "default_popup": "popup.html"
@@ -21,9 +23,11 @@
     {
       "matches": [
         "https://www.instagram.com/*",
+        "https://www.facebook.com/*",
         "http://localhost:3000/*",
         "http://localhost:3001/*",
-        "http://localhost:3002/*"
+        "http://localhost:3002/*",
+        "https://*.vercel.app/*"
       ],
       "js": ["content.js"]
     }

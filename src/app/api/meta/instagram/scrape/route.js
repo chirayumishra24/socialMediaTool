@@ -49,7 +49,7 @@ export async function POST(req) {
 
     // Try fetching from official Meta API if credentials are ready
     try {
-      const syncStatus = getInstagramSyncStatus();
+      const syncStatus = await getInstagramSyncStatus();
       if (syncStatus.ready) {
         writeDebugLog(`Meta credentials are ready. Fetching profile for @${cleanUsername} from Meta API...`);
         const metaData = await fetchInstagramProfileFromMeta(cleanUsername);

@@ -16,7 +16,7 @@ const FORMATS = [
 
 const STYLES = ["professional", "casual", "hinglish", "story", "data", "provocative", "educational"];
 
-export default function ContentStudio({ researchContext }) {
+export default function ContentStudio({ researchContext, onSchedulePost }) {
   const [keyword, setKeyword] = useState("");
   const [audience, setAudience] = useState("");
   const [format, setFormat] = useState("youtube_long");
@@ -28,6 +28,19 @@ export default function ContentStudio({ researchContext }) {
   const [error, setError] = useState(null);
   const [tab, setTab] = useState("script");
   const [isSaved, setIsSaved] = useState(false);
+  const [performanceData, setPerformanceData] = useState([]);
+
+  useEffect(() => {
+    fetch("/api/meta/insights")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.platforms) {
+          const top = data.platforms.flatMap((p) => p.topContent || []);
+          setPerformanceData(top);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (researchContext?.keyword) {
@@ -62,7 +75,7 @@ export default function ContentStudio({ researchContext }) {
 
       const res = await fetch("/api/generate", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ keyword, format, style, audience, location, research: researchSummary, bundle: isBundle }),
+        body: JSON.stringify({ keyword, format, style, audience, location, research: researchSummary, bundle: isBundle, performanceData }),
       });
       if (!res.ok) {
         const failure = await res.json().catch(() => ({}));
@@ -79,7 +92,7 @@ export default function ContentStudio({ researchContext }) {
       }
     } catch (e) { setError(e.message); }
     finally { setLoading(false); }
-  }, [keyword, format, style, audience, location, researchContext]);
+  }, [keyword, format, style, audience, location, researchContext, performanceData]);
 
   const handleSave = () => {
     if (!result) return;
@@ -255,8 +268,14 @@ export default function ContentStudio({ researchContext }) {
                     className="p-3 rounded-xl bg-bg-card border border-border text-txt-muted hover:text-txt transition-all cursor-pointer shadow-sm hover:border-primary/20"><Copy className="w-4.5 h-4.5" /></button>
                   <button onClick={handleSave} disabled={isSaved}
                     className={`px-8 py-3 rounded-2xl text-[11px] font-bold flex items-center gap-2.5 transition-all cursor-pointer shadow-xl ${isSaved ? "bg-success/10 text-success border border-success/20" : "bg-bg-card border border-border text-txt hover:bg-bg-elevated hover:border-primary/30"}`}>
-                    {isSaved ? <><CheckCircle2 className="w-4.5 h-4.5" /> Saved to Calendar</> : <><Save className="w-4.5 h-4.5" /> Save & Schedule</>}
+                    {isSaved ? <><CheckCircle2 className="w-4.5 h-4.5" /> Saved to Calendar</> : <><Save className="w-4.5 h-4.5" /> Save &amp; Schedule</>}
                   </button>
+                  {onSchedulePost && (
+                    <button onClick={() => onSchedulePost(result.script)}
+                      className="px-6 py-3 rounded-2xl text-[11px] font-bold bg-gradient-to-r from-purple-600 to-indigo-600 text-white flex items-center gap-2 hover:opacity-90 transition-all cursor-pointer shadow-xl">
+                      <Sparkles className="w-4.5 h-4.5" /> Compose on Meta
+                    </button>
+                  )}
                 </div>
               </div>
 
