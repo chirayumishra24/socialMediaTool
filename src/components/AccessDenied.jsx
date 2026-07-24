@@ -33,7 +33,7 @@ export default function AccessDenied() {
       id: "podcast",
       name: "AI Podcast Tool",
       desc: "Podcast scripting, audio creation & automation",
-      url: process.env.NEXT_PUBLIC_PODCAST_URL || "https://podcast-tool-ccis.vercel.app/",
+      url: process.env.NEXT_PUBLIC_PODCAST_URL || "https://skillizee-products.web.app/",
       icon: Radio,
       color: "bg-purple-50 text-purple-600 border-purple-100"
     }

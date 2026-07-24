@@ -222,7 +222,7 @@ function AppContent({ defaultTab = "dashboard" }) {
         }} />
         <SocialIcon color="bg-[#ff0000]" icon={Youtube} label="YouTube" onClick={() => setActiveTab("analytics")} />
         <SocialIcon color="bg-indigo-600" icon={Mic} label="Podcast Studio" onClick={() => {
-          const url = process.env.NEXT_PUBLIC_PODCAST_URL || "https://podcast-tool-ccis.vercel.app/";
+          const url = process.env.NEXT_PUBLIC_PODCAST_URL || "https://skillizee-products.web.app/";
           const sso = typeof window !== "undefined" ? localStorage.getItem("skilizee_sso") : null;
           window.location.href = sso ? `${url}?sso=${sso}` : url;
         }} />
