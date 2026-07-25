@@ -53,8 +53,17 @@ export async function POST(req) {
     }
 
     const scheduledDate = new Date(scheduledAt);
-    if (isNaN(scheduledDate.getTime()) || scheduledDate < new Date()) {
-      return NextResponse.json({ error: "Scheduled time must be in the future" }, { status: 400 });
+    // Allow a 10-minute grace period for timezone differences and clock drift
+    const graceCutoff = new Date(Date.now() - 10 * 60 * 1000);
+    if (isNaN(scheduledDate.getTime()) || scheduledDate < graceCutoff) {
+      return NextResponse.json(
+        {
+          error: `Scheduled time must be in the future. Received: ${
+            isNaN(scheduledDate.getTime()) ? scheduledAt : scheduledDate.toLocaleString()
+          }`,
+        },
+        { status: 400 }
+      );
     }
 
     const post = await schedulePost({

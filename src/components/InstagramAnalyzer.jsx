@@ -109,6 +109,13 @@ export default function InstagramAnalyzer() {
     };
   }, [username]);
 
+  // Auto-load @skillizee.io account data on mount
+  useEffect(() => {
+    if (!profileData && !scraping) {
+      handleScrape();
+    }
+  }, []);
+
   // ─── Scrape Handler (Client-side extension cache lookup + Meta API fallback) ───
   const handleScrape = useCallback(async () => {
     const cleanUser = username.toLowerCase().trim();
@@ -124,43 +131,40 @@ export default function InstagramAnalyzer() {
     setManualMode(false);
 
     try {
-      // 1. Check local extension sync cache first
-      const cacheStr = localStorage.getItem("skilizee_ig_sync_cache");
-      let data = null;
-      if (cacheStr) {
-        const cache = JSON.parse(cacheStr);
-        if (cache[cleanUser]) {
-          data = cache[cleanUser];
-          console.log("[IG Analyzer] Cache hit from extension storage:", data);
-        }
-      }
+      // 1. Fetch from server first (checks live Meta Graph API)
+      console.log("[IG Analyzer] Fetching live profile data from Meta Graph API / server...");
+      const res = await fetch("/api/meta/instagram/scrape", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: cleanUser }),
+      });
 
-      if (data) {
-        setProfileData(ensureAnalytics(data));
-        console.log("[IG Analyzer] Loaded synced profile data successfully!");
+      const serverData = await res.json();
+
+      if (res.ok && !serverData.needsManualInput) {
+        setProfileData(ensureAnalytics(serverData));
+        console.log("[IG Analyzer] Loaded live profile data from Meta Graph API successfully!");
       } else {
-        // 2. Cache miss — fetch from server (checks Meta API & server cache)
-        console.log("[IG Analyzer] Extension cache miss. Fetching from server...");
-        const res = await fetch("/api/meta/instagram/scrape", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: cleanUser }),
-        });
-        
-        console.log(`[IG Analyzer] Server scrape response status: ${res.status}`);
-        const serverData = await res.json();
-        console.log("[IG Analyzer] Server scrape response data:", serverData);
-        
-        if (!res.ok) throw new Error(serverData.error || "Scrape failed");
+        // 2. Fallback to extension cache if Meta API is unavailable
+        const cacheStr = localStorage.getItem("skilizee_ig_sync_cache");
+        let data = null;
+        if (cacheStr) {
+          try {
+            const cache = JSON.parse(cacheStr);
+            if (cache[cleanUser]) data = cache[cleanUser];
+          } catch (e) {
+            console.error("Cache parse error", e);
+          }
+        }
 
-        if (serverData.needsManualInput) {
-          console.log("[IG Analyzer] Server requested manual entry fallback");
-          setError(`No cached extension data or connected Meta account found for @${cleanUser}. Please sync using the Chrome Extension first!`);
+        if (data) {
+          setProfileData(ensureAnalytics(data));
+        } else if (serverData.needsManualInput) {
+          setError(`No cached extension data or connected Meta account found for @${cleanUser}.`);
           setManualMode(true);
           setManualProfile((prev) => ({ ...prev, username: cleanUser }));
         } else {
-          setProfileData(ensureAnalytics(serverData));
-          console.log("[IG Analyzer] Loaded profile data from server/Meta Graph API successfully!");
+          throw new Error(serverData.error || "Scrape failed");
         }
       }
     } catch (err) {
@@ -487,8 +491,12 @@ export default function InstagramAnalyzer() {
                   <span className="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[8px]">✓</span>
                 )}
                 {profileData.source && (
-                  <span className="text-[8px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full uppercase">
-                    via {profileData.source === "manual" ? "manual entry" : profileData.source}
+                  <span className={`text-[9px] font-black px-2.5 py-0.5 rounded-full flex items-center gap-1 uppercase ${
+                    profileData.source === "Meta Graph API" 
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      : "bg-slate-100 text-slate-500"
+                  }`}>
+                    {profileData.source === "Meta Graph API" ? "✓ Meta Graph API (Official)" : `via ${profileData.source}`}
                   </span>
                 )}
               </div>
@@ -550,13 +558,15 @@ export default function InstagramAnalyzer() {
                       </div>
                     )}
                     {/* Overlay */}
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-1 text-white">
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-1 text-white p-2">
                       <span className="text-[8px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">{post.contentType}</span>
-                      <div className="flex items-center gap-3 text-[10px] font-bold mt-1">
+                      <div className="flex items-center gap-2 text-[10px] font-bold mt-1">
                         <span>❤️ {formatNum(post.likes)}</span>
                         <span>💬 {formatNum(post.comments)}</span>
                       </div>
-                      {post.views > 0 && <span className="text-[9px] opacity-70">👁️ {formatNum(post.views)}</span>}
+                      {post.saves > 0 && <span className="text-[8px] opacity-80 font-semibold">🔖 {formatNum(post.saves)} saves</span>}
+                      {post.shares > 0 && <span className="text-[8px] opacity-80 font-semibold">↗️ {formatNum(post.shares)} shares</span>}
+                      {post.views > 0 && <span className="text-[8px] opacity-80 font-semibold">👁️ {formatNum(post.views)} reach</span>}
                     </div>
                     <div className={`absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-full text-[7px] font-black uppercase ${
                       post.engagementLevel === "Very High" ? "bg-emerald-500 text-white" :
@@ -568,6 +578,56 @@ export default function InstagramAnalyzer() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Granular Tag & Word Performance Matrix */}
+          {profileData.posts.length > 0 && (
+            <div className="mt-8 pt-6 border-t border-slate-100">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h4 className="text-sm font-extrabold text-[#0B192C]">Hashtag & Word Performance Matrix</h4>
+                  <p className="text-[10px] text-slate-400 font-bold">Granular engagement breakdown per tag across 50 posts</p>
+                </div>
+                <span className="px-2.5 py-1 rounded-full text-[9px] font-black uppercase bg-purple-50 text-purple-600 border border-purple-200">
+                  Tag Analytics Active
+                </span>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                      <th className="pb-3">Hashtag / Keyword</th>
+                      <th className="pb-3">Post Count</th>
+                      <th className="pb-3">Avg Likes</th>
+                      <th className="pb-3">Avg Comments</th>
+                      <th className="pb-3">Est. Reach</th>
+                      <th className="pb-3">Impact</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50 text-xs font-semibold text-slate-700">
+                    {computeHashtagStats(profileData.posts).map((stat, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50/80 transition-all">
+                        <td className="py-3 font-extrabold text-indigo-600">{stat.tag}</td>
+                        <td className="py-3 font-bold">{stat.count} posts</td>
+                        <td className="py-3 font-bold text-rose-500">❤️ {stat.avgLikes}</td>
+                        <td className="py-3 font-bold text-emerald-600">💬 {stat.avgComments}</td>
+                        <td className="py-3 font-bold text-purple-600">👁️ {stat.avgReach}</td>
+                        <td className="py-3">
+                          <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase ${
+                            stat.impact === "Viral" ? "bg-purple-100 text-purple-700 border border-purple-200" :
+                            stat.impact === "High" ? "bg-emerald-100 text-emerald-700 border border-emerald-200" :
+                            "bg-blue-100 text-blue-700 border border-blue-200"
+                          }`}>
+                            {stat.impact}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
@@ -880,4 +940,34 @@ function ensureAnalytics(data) {
       worstPerformingPost: sorted[sorted.length - 1] || null,
     }
   };
+}
+
+function computeHashtagStats(posts = []) {
+  const map = {};
+  posts.forEach((p) => {
+    const tags = p.hashtags && p.hashtags.length > 0 ? p.hashtags : ((p.caption || "").match(/#[\w]+/g) || []);
+    tags.forEach((t) => {
+      const clean = t.toLowerCase();
+      if (!map[clean]) {
+        map[clean] = { tag: clean, count: 0, totalLikes: 0, totalComments: 0, totalReach: 0 };
+      }
+      map[clean].count += 1;
+      map[clean].totalLikes += Number(p.likes || 0);
+      map[clean].totalComments += Number(p.comments || 0);
+      map[clean].totalReach += Number(p.reach || p.views || 0);
+    });
+  });
+
+  return Object.values(map)
+    .map((s) => {
+      const avgLikes = Math.round(s.totalLikes / s.count);
+      const avgComments = Math.round(s.totalComments / s.count);
+      const avgReach = Math.round(s.totalReach / s.count);
+      let impact = "Moderate";
+      if (avgLikes > 80) impact = "Viral";
+      else if (avgLikes > 25) impact = "High";
+      return { ...s, avgLikes, avgComments, avgReach, impact };
+    })
+    .sort((a, b) => b.totalLikes - a.totalLikes)
+    .slice(0, 10);
 }

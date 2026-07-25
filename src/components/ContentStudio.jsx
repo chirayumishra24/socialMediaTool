@@ -120,90 +120,140 @@ export default function ContentStudio({ researchContext, onSchedulePost }) {
         <p className="text-sm text-txt-muted font-medium">Generate platform-optimized scripts from verified 2026 research.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Config */}
-        <div className="lg:col-span-4 space-y-6">
-          <div className="rounded-2xl bg-bg-card border border-border p-6 space-y-6 shadow-sm">
-            <div className="space-y-4">
-              <Field label={researchContext?.keyword ? "Topic (From R&D)" : "Topic"}>
+      <div className="flex flex-col gap-8">
+        {/* Horizontal Input Panel Banner across top */}
+        <div className="w-full rounded-[2.5rem] bg-bg-card border border-border p-6 md:p-8 space-y-6 shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
+            {/* Topic Input */}
+            <div className="md:col-span-4">
+              <Field label="Topic">
                 <div className="relative">
-                  <input type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)}
+                  <input
+                    type="text"
+                    value={keyword}
+                    onChange={(e) => setKeyword(e.target.value)}
                     placeholder="Enter main subject..."
-                    className={`w-full px-4 py-3 rounded-xl border text-sm text-txt transition-all ${researchContext?.keyword ? "bg-primary/[0.03] border-primary/20" : "bg-bg-elevated border-border"}`} />
-                  {researchContext?.keyword && <Sparkles className="absolute right-3 top-3 w-4 h-4 text-primary opacity-50" />}
+                    className={`w-full px-4 py-3 rounded-xl border text-sm text-txt transition-all ${
+                      researchContext?.keyword ? "bg-primary/[0.03] border-primary/20" : "bg-bg-elevated border-border"
+                    }`}
+                  />
+                  {researchContext?.keyword && <Sparkles className="absolute right-3 top-3.5 w-4 h-4 text-primary opacity-50" />}
                 </div>
-              </Field>
-
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Format">
-                  <select value={format} onChange={(e) => setFormat(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-bg-elevated border border-border text-sm text-txt cursor-pointer focus:ring-2 focus:ring-primary/20 transition-all outline-none">
-                    {FORMATS.map(f => <option key={f.id} value={f.id}>{f.label}</option>)}
-                  </select>
-                </Field>
-                <Field label="Tone">
-                  <select value={style} onChange={(e) => setStyle(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-bg-elevated border border-border text-sm text-txt cursor-pointer focus:ring-2 focus:ring-primary/20 transition-all outline-none">
-                    {STYLES.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </Field>
-              </div>
-
-              <Field label="Target Audience">
-                <input type="text" value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="e.g. Parents of middle-schoolers"
-                  className="w-full px-4 py-3 rounded-xl bg-bg-elevated border border-border text-sm text-txt placeholder:text-txt-muted focus:ring-2 focus:ring-primary/20 transition-all outline-none" />
               </Field>
             </div>
 
-            <div className="space-y-3">
-              <button onClick={() => handleGenerate(false)} disabled={loading || !keyword.trim()}
-                className={`w-full py-4 rounded-2xl text-sm font-bold transition-all flex items-center justify-center gap-3 ${loading ? "bg-primary/20 text-primary-hover cursor-wait" : "grad-primary text-white cursor-pointer shadow-xl shadow-primary/20 hover:scale-[0.98] active:scale-95"}`}>
-                {loading && !bundleResult ? <><Loader2 className="w-5 h-5 animate-spin" /> Generating...</> : <><Sparkles className="w-5 h-5" /> Generate Script</>}
+            {/* Format Dropdown */}
+            <div className="md:col-span-3">
+              <Field label="Format">
+                <select
+                  value={format}
+                  onChange={(e) => setFormat(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-bg-elevated border border-border text-sm text-txt cursor-pointer focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                >
+                  {FORMATS.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.label} ({f.desc})
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+
+            {/* Tone Dropdown */}
+            <div className="md:col-span-2">
+              <Field label="Tone">
+                <select
+                  value={style}
+                  onChange={(e) => setStyle(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-bg-elevated border border-border text-sm text-txt cursor-pointer focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                >
+                  {STYLES.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+
+            {/* Target Audience Input */}
+            <div className="md:col-span-3">
+              <Field label="Target Audience">
+                <input
+                  type="text"
+                  value={audience}
+                  onChange={(e) => setAudience(e.target.value)}
+                  placeholder="e.g. Parents of middle-schoolers"
+                  className="w-full px-4 py-3 rounded-xl bg-bg-elevated border border-border text-sm text-txt placeholder:text-txt-muted focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                />
+              </Field>
+            </div>
+          </div>
+
+          {/* Action Row */}
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-4 border-t border-border/60">
+            {researchContext?.research ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[10px] font-black text-primary-hover uppercase tracking-widest flex items-center gap-1.5 mr-1">
+                  <Globe className="w-3.5 h-3.5" /> Context:
+                </span>
+                <span className="text-xs font-bold text-txt">{researchContext.keyword}</span>
+                {researchContext.research?.viralCheck?.score !== undefined && (
+                  <span className="text-[9px] font-black text-orange-600 px-2 py-0.5 rounded-lg bg-orange-50 border border-orange-200">
+                    Viral {researchContext.research.viralCheck.score}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-txt-muted font-medium">Ready to script. Choose your format and tone above.</p>
+            )}
+
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              <button
+                onClick={() => handleGenerate(false)}
+                disabled={loading || !keyword.trim()}
+                className={`px-8 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2.5 ${
+                  loading ? "bg-primary/20 text-primary-hover cursor-wait" : "grad-primary text-white cursor-pointer shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95"
+                }`}
+              >
+                {loading && !bundleResult ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" /> Generate Script
+                  </>
+                )}
               </button>
 
               {researchContext?.research && (
-                <button onClick={() => handleGenerate(true)} disabled={loading || !keyword.trim()}
-                  className={`w-full py-4 rounded-2xl text-[11px] font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-3 border-2 ${loading && bundleResult ? "bg-accent/20 text-accent-hover cursor-wait border-accent/30" : "bg-bg-card border-accent/20 text-accent-hover hover:bg-accent/5 hover:border-accent/40 shadow-lg shadow-accent/5"}`}>
-                  {loading && bundleResult ? <><Loader2 className="w-4 h-4 animate-spin" /> Bundling...</> : <><Wand2 className="w-4 h-4" /> Generate Bundle</>}
+                <button
+                  onClick={() => handleGenerate(true)}
+                  disabled={loading || !keyword.trim()}
+                  className={`px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 border-2 ${
+                    loading && bundleResult
+                      ? "bg-accent/20 text-accent-hover cursor-wait border-accent/30"
+                      : "bg-bg-card border-accent/20 text-accent-hover hover:bg-accent/5 hover:border-accent/40 shadow-sm"
+                  }`}
+                >
+                  {loading && bundleResult ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Bundling...
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="w-3.5 h-3.5" /> Generate Bundle
+                    </>
+                  )}
                 </button>
               )}
             </div>
           </div>
-
-          {researchContext?.research && (
-            <div className="p-6 rounded-2xl bg-primary/5 border border-primary/10 space-y-4">
-              <h4 className="text-[10px] font-black text-primary-hover uppercase tracking-widest flex items-center gap-2">
-                <Globe className="w-3.5 h-3.5" /> Research Context Loaded
-              </h4>
-              <p className="text-xs font-bold text-txt leading-relaxed">{researchContext.keyword}</p>
-              <div className="flex flex-wrap gap-2">
-                {researchContext.research?.recommendedStrategy?.bestFormat && (
-                  <span className="text-[9px] font-black text-primary px-2.5 py-1 rounded-lg bg-white/60 border border-primary/10 shadow-sm">
-                    {researchContext.research.recommendedStrategy.bestFormat}
-                  </span>
-                )}
-                {researchContext.research?.viralCheck?.score !== undefined && (
-                  <span className="text-[9px] font-black text-orange-600 px-2.5 py-1 rounded-lg bg-white/60 border border-orange-200 shadow-sm">
-                    Viral {researchContext.research.viralCheck.score}
-                  </span>
-                )}
-                {!!researchContext.research?.trendSignals?.length && (
-                  <span className="text-[9px] font-black text-accent-hover px-2.5 py-1 rounded-lg bg-white/60 border border-accent/10 shadow-sm">
-                    {researchContext.research.trendSignals.length} trend signals
-                  </span>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-2 pt-2 border-t border-primary/10">
-                {researchContext.topKeywords?.slice(0, 5).map((kw, i) => (
-                  <span key={i} className="text-[9px] font-bold text-primary px-2.5 py-1 rounded-lg bg-white/50 border border-primary/10 shadow-sm">#{kw.keyword || kw}</span>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* Output */}
-        <div className="lg:col-span-8">
+        {/* Output Workspace Container */}
+        <div className="w-full">
           {error && (
             <div className="p-4 mb-6 rounded-xl bg-danger/5 border border-danger/10 text-danger text-sm font-bold flex items-center gap-3">
               <X className="w-4 h-4" /> {error}

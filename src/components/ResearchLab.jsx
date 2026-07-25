@@ -120,109 +120,123 @@ export default function ResearchLab({ onResearchComplete, onGoToStudio, initialK
         <p className="text-sm text-txt-muted font-medium">Crawl 2026 trends, news, and viral signals before scripting.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Input Panel */}
-        <div className="lg:col-span-4 space-y-6">
-          <div className="rounded-[2.5rem] bg-bg-card border border-border p-8 space-y-8 shadow-sm">
-            <Field label="Topic">
-              <input type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)}
-                placeholder='e.g. "AI in education 2026"'
-                className="w-full px-5 py-4 rounded-2xl bg-bg-elevated border border-border text-sm text-txt focus:ring-2 focus:ring-primary/20 transition-all outline-none"
-                onKeyDown={(e) => e.key === "Enter" && handleResearch()} />
-            </Field>
-
-            <Field label="Location">
-              <div className="grid grid-cols-2 gap-2">
-                {LOCATIONS.map((l) => (
-                  <button key={l.code} onClick={() => setLocation(l.code)}
-                    className={`px-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-wider border-2 transition-all cursor-pointer flex items-center justify-center gap-2 ${location === l.code ? "bg-primary/10 text-primary border-primary" : "bg-bg-elevated border-border text-txt-muted hover:text-txt"}`}>
-                    <l.icon className="w-3.5 h-3.5" /> {l.label}
-                  </button>
-                ))}
+      <div className="flex flex-col gap-8">
+        {/* Horizontal Input Panel Banner across top */}
+        <div className="w-full rounded-[2.5rem] bg-white border border-slate-100 p-6 md:p-8 space-y-6 shadow-sm">
+          {/* Search Topic Input Bar with embedded Run Research Button */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+              Research Subject / Topic
+            </label>
+            <div className="flex flex-col sm:flex-row items-center gap-3 bg-slate-50 border border-slate-200/80 p-2 rounded-2xl focus-within:bg-white focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-100 transition-all">
+              <div className="flex items-center gap-3 px-3 flex-1 w-full">
+                <Search className="w-5 h-5 text-indigo-500 shrink-0" />
+                <input
+                  type="text"
+                  value={keyword}
+                  onChange={(e) => setKeyword(e.target.value)}
+                  placeholder='Enter topic (e.g. "AI in education 2026", "Student Internships", "Generative Marketing")...'
+                  className="w-full bg-transparent border-0 outline-none text-sm text-slate-800 font-bold placeholder:text-slate-400"
+                  onKeyDown={(e) => e.key === "Enter" && handleResearch()}
+                />
               </div>
-            </Field>
-
-            <Field label="Depth">
-              <div className="grid grid-cols-1 gap-2">
-                {DEPTHS.map((d) => (
-                  <button key={d.id} onClick={() => setDepth(d.id)}
-                    className={`p-4 rounded-2xl border-2 text-left transition-all cursor-pointer flex items-center gap-4 ${depth === d.id ? "bg-primary/5 border-primary shadow-sm" : "bg-bg-elevated border-border hover:bg-bg-card"}`}>
-                    <div className={`p-2.5 rounded-xl ${depth === d.id ? "bg-primary text-white" : "bg-bg-card text-txt-muted"}`}>
-                      <d.icon className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-txt">{d.label}</p>
-                      <p className="text-[10px] text-txt-muted">{d.desc}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </Field>
-
-            <Field label="Source Scope">
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { id: "all", label: "All Platforms" },
-                    { id: "custom", label: "Specific Sources" },
-                  ].map((option) => (
-                    <button
-                      key={option.id}
-                      onClick={() => setSourceMode(option.id)}
-                      className={`px-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-wider border-2 transition-all cursor-pointer ${sourceMode === option.id ? "bg-primary/10 text-primary border-primary" : "bg-bg-elevated border-border text-txt-muted hover:text-txt"}`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-
-                {sourceMode === "custom" && (
-                  <div className="grid grid-cols-2 gap-2">
-                    {SOURCE_TARGETS.map((target) => (
-                      <button
-                        key={target.id}
-                        onClick={() => toggleTarget(target.id)}
-                        className={`px-3 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-all cursor-pointer flex items-center justify-center gap-2 ${platformTargets.includes(target.id) ? "bg-accent/10 border-accent/25 text-accent-hover" : "bg-bg-elevated border-border text-txt-muted hover:text-txt hover:border-primary/20"}`}
-                      >
-                        <target.icon className="w-3.5 h-3.5" /> {target.label}
-                      </button>
-                    ))}
-                  </div>
+              <button
+                onClick={handleResearch}
+                disabled={loading || !keyword.trim()}
+                className={`w-full sm:w-auto px-7 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 shrink-0 ${
+                  loading
+                    ? "bg-indigo-200 text-indigo-700 cursor-wait"
+                    : "bg-gradient-to-r from-purple-600 via-indigo-600 to-indigo-700 text-white cursor-pointer shadow-md shadow-indigo-200 hover:scale-102 active:scale-95"
+                }`}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Crawling...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" /> Run Research
+                  </>
                 )}
-              </div>
-            </Field>
-
-            <button onClick={handleResearch} disabled={loading || !keyword.trim()}
-              className={`w-full py-4 rounded-[2rem] text-sm font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 ${loading ? "bg-primary/20 text-primary-hover cursor-wait" : "grad-primary text-white cursor-pointer shadow-xl shadow-primary/20 hover:scale-[0.98] active:scale-95"}`}>
-              {loading ? <><Loader2 className="w-5 h-5 animate-spin" /> Crawling 2026 Signals...</> : <><Sparkles className="w-5 h-5" /> Run Research</>}
-            </button>
+              </button>
+            </div>
           </div>
 
-          <div className="rounded-2xl p-6 bg-accent/5 border border-accent/10 space-y-4">
-            <h4 className="text-[10px] font-black text-accent uppercase tracking-widest flex items-center gap-2">
-              <Globe className="w-3.5 h-3.5" /> Sources
-            </h4>
-            <div className="flex flex-wrap gap-2">
-              {PLATFORMS_LIST.map(p => (
-                <div key={p.id} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border flex items-center gap-2 ${activePlatforms.includes(p.id) ? "bg-white border-accent/20 text-accent" : "opacity-30 border-border grayscale"}`}>
-                  <p.icon className="w-3 h-3" /> {p.label}
-                </div>
-              ))}
-            </div>
-            {sourceMode === "custom" && platformTargets.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-2 border-t border-accent/10">
-                {SOURCE_TARGETS.filter((target) => platformTargets.includes(target.id)).map((target) => (
-                  <span key={target.id} className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-white border border-accent/20 text-accent-hover">
-                    {target.label}
-                  </span>
+          {/* Bottom Row: 3 Clean Controls (Location, Depth, Scope) */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-slate-100">
+            {/* Location */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                📍 Target Region
+              </label>
+              <div className="grid grid-cols-4 gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200/60">
+                {LOCATIONS.map((l) => (
+                  <button
+                    key={l.code}
+                    onClick={() => setLocation(l.code)}
+                    className={`py-1.5 rounded-lg text-[10px] font-black transition-all cursor-pointer text-center ${
+                      location === l.code
+                        ? "bg-indigo-600 text-white shadow-sm font-extrabold"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    {l.label}
+                  </button>
                 ))}
               </div>
-            )}
+            </div>
+
+            {/* Depth */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                ⚡ Analysis Depth
+              </label>
+              <div className="grid grid-cols-3 gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200/60">
+                {DEPTHS.map((d) => (
+                  <button
+                    key={d.id}
+                    onClick={() => setDepth(d.id)}
+                    className={`py-1.5 rounded-lg text-[10px] font-black transition-all cursor-pointer text-center ${
+                      depth === d.id
+                        ? "bg-indigo-600 text-white shadow-sm font-extrabold"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    {d.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Scope */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                🌐 Source Scope
+              </label>
+              <div className="grid grid-cols-2 gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200/60">
+                {[
+                  { id: "all", label: "All Platforms" },
+                  { id: "custom", label: "Custom Sources" },
+                ].map((option) => (
+                  <button
+                    key={option.id}
+                    onClick={() => setSourceMode(option.id)}
+                    className={`py-1.5 rounded-lg text-[10px] font-black transition-all cursor-pointer text-center ${
+                      sourceMode === option.id
+                        ? "bg-indigo-600 text-white shadow-sm font-extrabold"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Results */}
-        <div className="lg:col-span-8">
+        {/* Results Container */}
+        <div className="w-full">
           {error && <div className="p-4 mb-6 rounded-xl bg-danger/5 border border-danger/10 text-danger text-sm font-bold">{error}</div>}
 
           {!result && !loading && (

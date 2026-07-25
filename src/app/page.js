@@ -20,7 +20,14 @@ import {
   Calendar,
   CheckSquare,
   PlusCircle,
-  Sliders
+  Sliders,
+  FileSpreadsheet,
+  ChevronDown,
+  ChevronUp,
+  ChevronLeft,
+  ChevronRight,
+  PanelLeftClose,
+  PanelLeftOpen
 } from "lucide-react";
 
 function Instagram(props) {
@@ -95,6 +102,7 @@ import AdminPanel from "@/components/AdminPanel";
 import InstagramAnalyzer from "@/components/InstagramAnalyzer";
 import MetaDashboard from "@/components/MetaDashboard";
 import PostComposer from "@/components/PostComposer";
+import CampaignHub from "@/components/CampaignHub";
 import MetaConnect from "@/components/MetaConnect";
 import Login from "@/components/Login";
 import AccessDenied from "@/components/AccessDenied";
@@ -109,6 +117,7 @@ function AppContent({ defaultTab = "dashboard" }) {
   const [composerInitialContent, setComposerInitialContent] = useState("");
   const [scheduledPrefillDate, setScheduledPrefillDate] = useState("");
   const [selectedPostToEdit, setSelectedPostToEdit] = useState(null);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -175,39 +184,112 @@ function AppContent({ defaultTab = "dashboard" }) {
       <div className="absolute top-1/3 right-1/4 w-20 h-20 rounded-full bg-pink-300/5 blur-xl pointer-events-none" />
       <div className="absolute bottom-1/3 left-1/4 w-28 h-28 rounded-full bg-indigo-300/10 blur-2xl pointer-events-none" />
 
-      {/* Global Sidebar (Left) */}
-      <aside className="w-full lg:w-[100px] bg-white border-b lg:border-b-0 lg:border-r border-slate-100 flex flex-row lg:flex-col items-center justify-between lg:justify-start p-4 lg:py-6 shrink-0 gap-4 z-30">
-        {/* Logo Brand Icon */}
-        <div className="w-12 h-12 rounded-[1.25rem] bg-gradient-to-tr from-purple-500 via-indigo-500 to-cyan-400 p-[2px] shadow-lg flex items-center justify-center transition-transform hover:scale-105 shrink-0">
-          <div className="w-full h-full bg-white rounded-[1.15rem] flex items-center justify-center">
-            <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-purple-500 to-indigo-600 flex items-center justify-center text-white text-xs font-black shadow-inner">
-              S
+      {/* Global Sidebar (Collapsible, Inline Accordion, No Scrollbar) */}
+      <aside className={`w-full ${isSidebarCollapsed ? "lg:w-[76px]" : "lg:w-[230px]"} transition-all duration-300 bg-white border-b lg:border-b-0 lg:border-r border-slate-100 flex flex-row lg:flex-col items-center lg:items-stretch justify-between lg:justify-start p-3 lg:p-4 shrink-0 gap-4 z-30 overflow-visible`}>
+        {/* Brand Logo & Collapse Toggle Header */}
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-[1.15rem] bg-gradient-to-tr from-purple-500 via-indigo-500 to-cyan-400 p-[2px] shadow-md flex items-center justify-center transition-transform hover:scale-105 shrink-0">
+              <div className="w-full h-full bg-white rounded-[1.05rem] flex items-center justify-center">
+                <div className="w-5 h-5 rounded-lg bg-gradient-to-tr from-purple-500 to-indigo-600 flex items-center justify-center text-white text-xs font-black shadow-inner">
+                  S
+                </div>
+              </div>
             </div>
+            {!isSidebarCollapsed && (
+              <span className="text-xs font-black text-slate-800 tracking-tight hidden lg:block">
+                Skilizee<span className="text-indigo-600">.ai</span>
+              </span>
+            )}
           </div>
+
+          <button
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            className="w-7 h-7 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-100 text-slate-400 hover:text-indigo-600 hidden lg:flex items-center justify-center transition-all cursor-pointer"
+          >
+            {isSidebarCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+          </button>
         </div>
 
         {/* Navigation Links */}
-        <nav className="flex flex-row lg:flex-col items-center gap-1 sm:gap-2 lg:gap-3.5 max-h-[75vh] overflow-y-auto custom-scroll pr-1">
-          <SidebarBtn icon={Home} label="Home" active={activeTab === "dashboard"} onClick={() => setActiveTab("dashboard")} />
-          <SidebarBtn icon={TrendingUp} label="Trends" active={activeTab === "discover"} onClick={() => setActiveTab("discover")} />
-          <SidebarBtn icon={FlaskConical} label="R&D Lab" active={activeTab === "research"} onClick={() => setActiveTab("research")} />
-          <SidebarBtn icon={Video} label="Content" active={activeTab === "studio"} onClick={() => setActiveTab("studio")} />
-          <SidebarBtn icon={Calendar} label="Calendar" active={activeTab === "calendar"} onClick={() => setActiveTab("calendar")} />
-          <SidebarBtn icon={CheckSquare} label="Approval" active={activeTab === "approval"} onClick={() => setActiveTab("approval")} />
-          <SidebarBtn icon={PlusCircle} label="Compose" active={activeTab === "composer"} onClick={() => { setComposerInitialContent(""); setScheduledPrefillDate(""); setSelectedPostToEdit(null); setActiveTab("composer"); }} />
-          <SidebarBtn icon={BarChart3} label="Analytics" active={activeTab === "analytics"} onClick={() => setActiveTab("analytics")} />
-          <SidebarBtn icon={Sparkles} label="IG Audit" active={activeTab === "instagram-analyzer"} onClick={() => setActiveTab("instagram-analyzer")} />
-          <SidebarBtn icon={Sliders} label="Settings" active={activeTab === "settings"} onClick={() => setActiveTab("settings")} />
-          {user.isAdmin && (
-            <SidebarBtn icon={Settings} label="Admin" active={activeTab === "admin"} onClick={() => setActiveTab("admin")} />
-          )}
+        <nav className="flex flex-row lg:flex-col items-center lg:items-stretch gap-1 sm:gap-2 w-full">
+          <SidebarGroupNav
+            icon={Home}
+            label="Home"
+            collapsed={isSidebarCollapsed}
+            active={["dashboard", "discover"].includes(activeTab)}
+            activeTab={activeTab}
+            onSelectTab={setActiveTab}
+            items={[
+              { id: "dashboard", label: "📊 Dashboard" },
+              { id: "discover", label: "📈 Trends & Signals" },
+            ]}
+          />
+          <SidebarGroupNav
+            icon={Video}
+            label="Studio"
+            collapsed={isSidebarCollapsed}
+            active={["studio", "research", "composer", "approval"].includes(activeTab)}
+            activeTab={activeTab}
+            onSelectTab={(id) => {
+              if (id === "composer") {
+                setComposerInitialContent("");
+                setScheduledPrefillDate("");
+                setSelectedPostToEdit(null);
+              }
+              setActiveTab(id);
+            }}
+            items={[
+              { id: "studio", label: "🎬 Content Studio" },
+              { id: "research", label: "🧪 R&D Lab" },
+              { id: "composer", label: "✍️ Compose Post" },
+              { id: "approval", label: "✅ Approval Queue" },
+            ]}
+          />
+          <SidebarGroupNav
+            icon={Calendar}
+            label="Schedule"
+            collapsed={isSidebarCollapsed}
+            active={activeTab === "calendar"}
+            activeTab={activeTab}
+            onSelectTab={setActiveTab}
+            items={[
+              { id: "calendar", label: "🗓️ Calendar" },
+            ]}
+          />
+          <SidebarGroupNav
+            icon={BarChart3}
+            label="Analytics"
+            collapsed={isSidebarCollapsed}
+            active={["instagram-analyzer", "campaign-hub", "analytics"].includes(activeTab)}
+            activeTab={activeTab}
+            onSelectTab={setActiveTab}
+            items={[
+              { id: "instagram-analyzer", label: "✨ IG Audit & Tags" },
+              { id: "campaign-hub", label: "📑 Campaign Hub" },
+              { id: "analytics", label: "📊 Channel Analytics" },
+            ]}
+          />
+          <SidebarGroupNav
+            icon={Sliders}
+            label="Settings"
+            collapsed={isSidebarCollapsed}
+            active={["settings", "admin"].includes(activeTab)}
+            activeTab={activeTab}
+            onSelectTab={setActiveTab}
+            items={[
+              { id: "settings", label: "🎛️ Meta Setup" },
+              ...(user.isAdmin ? [{ id: "admin", label: "🔐 Admin Portal" }] : []),
+            ]}
+          />
         </nav>
 
         {/* Sleek Log Out Action */}
         <button
           onClick={logout}
           title="Log Out"
-          className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-all cursor-pointer mt-auto hidden lg:flex"
+          className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-all cursor-pointer mt-auto hidden lg:flex self-center"
         >
           <LogOut className="w-4 h-4" />
         </button>
@@ -240,6 +322,7 @@ function AppContent({ defaultTab = "dashboard" }) {
               {activeTab === "dashboard" && "Social Media AI Agent Dashboard"}
               {activeTab === "discover" && "News & Signals Discovery"}
               {activeTab === "analytics" && "Campaign Analytics Hub"}
+              {activeTab === "campaign-hub" && "Campaigns & Audience Export Hub"}
               {activeTab === "research" && "R&D Lab Cycles"}
               {activeTab === "studio" && "Production Content Studio"}
               {activeTab === "instagram-analyzer" && "Instagram Profile Analyzer"}
@@ -337,16 +420,109 @@ function AppContent({ defaultTab = "dashboard" }) {
               }}
             />
           )}
-          {activeTab === "discover" && (
-            <DiscoverHub onStartResearch={handleStartResearch} />
-          )}
-          {activeTab === "analytics" && <Analytics />}
-          {activeTab === "instagram-analyzer" && <InstagramAnalyzer />}
-          {activeTab === "settings" && <MetaConnect />}
-          {activeTab === "admin" && user.isAdmin && <AdminPanel />}
+              {activeTab === "discover" && (
+                <DiscoverHub onStartResearch={handleStartResearch} />
+              )}
+              {activeTab === "analytics" && <Analytics />}
+              {activeTab === "campaign-hub" && <CampaignHub />}
+              {activeTab === "instagram-analyzer" && <InstagramAnalyzer />}
+              {activeTab === "settings" && <MetaConnect />}
+              {activeTab === "admin" && user.isAdmin && <AdminPanel />}
         </div>
 
       </div>
+    </div>
+  );
+}
+
+/* Sidebar Group Navigation with Accordion & Collapsed Flyout support */
+function SidebarGroupNav({ icon: Icon, label, active = false, items = [], activeTab, onSelectTab, collapsed = false }) {
+  const [expanded, setExpanded] = useState(active);
+
+  useEffect(() => {
+    if (active) setExpanded(true);
+  }, [active]);
+
+  if (collapsed) {
+    return (
+      <div className="relative group/sidebar">
+        <button
+          onClick={() => onSelectTab(items[0]?.id)}
+          className={`w-12 h-12 rounded-2xl flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-all duration-300 ${
+            active
+              ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100 scale-105"
+              : "text-slate-400 hover:bg-slate-50 hover:text-indigo-600"
+          }`}
+        >
+          <Icon className="w-5 h-5 shrink-0" />
+          <span className="text-[8px] font-black uppercase tracking-wide scale-90">{label}</span>
+        </button>
+
+        {/* Hover Popover in Collapsed mode */}
+        <div className="absolute left-14 top-0 z-50 hidden group-hover/sidebar:block min-w-[200px] bg-white border border-slate-100 p-2.5 rounded-2xl shadow-xl animate-fade-in">
+          <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider px-3 py-1 border-b border-slate-50">
+            {label}
+          </p>
+          <div className="flex flex-col gap-1 mt-1.5">
+            {items.map((subItem) => (
+              <button
+                key={subItem.id}
+                onClick={() => onSelectTab(subItem.id)}
+                className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
+                  activeTab === subItem.id
+                    ? "bg-indigo-50 text-indigo-600 font-black"
+                    : "text-slate-600 hover:bg-slate-50 hover:text-indigo-600"
+                }`}
+              >
+                <span>{subItem.label}</span>
+                {activeTab === subItem.id && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600" />}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full flex flex-col gap-1">
+      {/* Category Accordion Header */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className={`w-full px-3 py-2 rounded-2xl flex items-center justify-between transition-all cursor-pointer ${
+          active
+            ? "bg-indigo-50 text-indigo-600 font-extrabold"
+            : "text-slate-500 hover:bg-slate-50 hover:text-indigo-600 font-bold"
+        }`}
+      >
+        <div className="flex items-center gap-2.5">
+          <div className={`p-1.5 rounded-xl ${active ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-500"}`}>
+            <Icon className="w-4 h-4 shrink-0" />
+          </div>
+          <span className="text-xs uppercase tracking-wider font-extrabold">{label}</span>
+        </div>
+        {expanded ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
+      </button>
+
+      {/* Inline Sub-items Dropdown */}
+      {expanded && (
+        <div className="flex flex-col gap-1 pl-9 pr-1 py-1">
+          {items.map((subItem) => (
+            <button
+              key={subItem.id}
+              onClick={() => onSelectTab(subItem.id)}
+              className={`w-full text-left px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer flex items-center justify-between ${
+                activeTab === subItem.id
+                  ? "bg-indigo-600 text-white font-extrabold shadow-sm"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-indigo-600 font-medium"
+              }`}
+            >
+              <span>{subItem.label}</span>
+              {activeTab === subItem.id && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
