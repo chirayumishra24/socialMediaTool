@@ -16,9 +16,14 @@ import { getFacebookPageCredentials } from "./meta-auth";
 
 // ─── Account-Level Instagram Insights ──────────────────────────
 
-const ACCOUNT_METRICS_PERIODIC = [
+// v22.0: These metrics work with period (time-series)
+const ACCOUNT_METRICS_TIMESERIES = [
   "reach",
   "follower_count",
+];
+
+// v22.0: These metrics require metric_type=total_value
+const ACCOUNT_METRICS_TOTAL = [
   "profile_views",
   "website_clicks",
   "accounts_engaged",
@@ -36,11 +41,13 @@ const AUDIENCE_BREAKDOWN_METRICS = [
   { metric: "follower_demographics", breakdown: "city", key: "city" },
   { metric: "follower_demographics", breakdown: "country", key: "country" },
   { metric: "follower_demographics", breakdown: "age,gender", key: "genderAge" },
-  { metric: "online_followers", breakdown: null, key: "onlineFollowers" },
 ];
 
+// online_followers is incompatible with metric_type=total_value, fetched separately
+const ONLINE_FOLLOWERS_METRIC = "online_followers";
+
 /**
- * Fetch account-level periodic insights (impressions, reach, follower count, etc.)
+ * Fetch account-level periodic insights (reach, follower count, engagement, etc.)
  * @param {"day"|"week"|"days_28"} period
  * @returns {Promise<object>}
  */
@@ -52,37 +59,55 @@ export async function fetchAccountInsights(period = "days_28") {
 
   const results = {};
 
-  // Batch in groups of 5 — some metrics may fail based on account type
-  const metricBatches = [
-    ACCOUNT_METRICS_PERIODIC.slice(0, 5),
-    ACCOUNT_METRICS_PERIODIC.slice(5, 10),
-    ACCOUNT_METRICS_PERIODIC.slice(10),
+  // Group 1: Time-series metrics (use period, no metric_type)
+  try {
+    const payload = await graphRequest(
+      `/${config.instagramAccountId}/insights`,
+      { metric: ACCOUNT_METRICS_TIMESERIES.join(","), period }
+    );
+
+    for (const entry of payload?.data || []) {
+      const latestValue = entry.values?.[entry.values.length - 1];
+      results[entry.name] = {
+        value: latestValue?.value ?? 0,
+        endTime: latestValue?.end_time || null,
+        title: entry.title || entry.name,
+        description: entry.description || "",
+        period: entry.period || period,
+        timeSeries: (entry.values || []).map((v) => ({
+          value: v.value ?? 0,
+          endTime: v.end_time || null,
+        })),
+      };
+    }
+  } catch (err) {
+    console.warn(`[Deep Insights] Time-series metrics failed:`, err.message);
+  }
+
+  // Group 2: Total value metrics (require metric_type=total_value)
+  const totalBatches = [
+    ACCOUNT_METRICS_TOTAL.slice(0, 5),
+    ACCOUNT_METRICS_TOTAL.slice(5),
   ];
 
-  for (const batch of metricBatches) {
+  for (const batch of totalBatches) {
     try {
       const payload = await graphRequest(
         `/${config.instagramAccountId}/insights`,
-        { metric: batch.join(","), period }
+        { metric: batch.join(","), period, metric_type: "total_value" }
       );
 
       for (const entry of payload?.data || []) {
-        const latestValue = entry.values?.[entry.values.length - 1];
+        const totalVal = entry.total_value?.value ?? 0;
         results[entry.name] = {
-          value: latestValue?.value ?? 0,
-          endTime: latestValue?.end_time || null,
+          value: totalVal,
           title: entry.title || entry.name,
           description: entry.description || "",
           period: entry.period || period,
-          // Store full time series for trending
-          timeSeries: (entry.values || []).map((v) => ({
-            value: v.value ?? 0,
-            endTime: v.end_time || null,
-          })),
         };
       }
     } catch (err) {
-      console.warn(`[Deep Insights] Account metrics batch failed:`, err.message);
+      console.warn(`[Deep Insights] Total-value metrics batch failed:`, err.message);
     }
   }
 
@@ -149,6 +174,25 @@ export async function fetchAudienceDemographics() {
     } catch (err) {
       console.warn(`[Deep Insights] ${key} unavailable:`, err.message);
     }
+  }
+
+  // online_followers: incompatible with metric_type=total_value — fetch with period=lifetime only
+  try {
+    const payload = await graphRequest(
+      `/${config.instagramAccountId}/insights`,
+      { metric: ONLINE_FOLLOWERS_METRIC, period: "lifetime" }
+    );
+
+    const entry = payload?.data?.[0];
+    if (entry) {
+      const latestValue = entry.values?.[entry.values.length - 1]?.value;
+      if (latestValue) {
+        demographics.onlineFollowers = latestValue;
+        demographics.available = true;
+      }
+    }
+  } catch (err) {
+    console.warn(`[Deep Insights] onlineFollowers unavailable:`, err.message);
   }
 
   return demographics;
