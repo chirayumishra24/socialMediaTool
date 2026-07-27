@@ -23,6 +23,7 @@ import {
   ChevronUp,
   Send,
   X,
+  Bookmark,
 } from "lucide-react";
 import { useContentHistory } from "@/lib/storage";
 
@@ -51,7 +52,28 @@ export default function ContentCalendar({ onSelectPost }) {
   const [showInsights, setShowInsights] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [scheduleLoading, setScheduleLoading] = useState(null);
+  const [savedToast, setSavedToast] = useState(false);
   const items = useContentHistory();
+
+  const handleSaveCalendarStrategy = () => {
+    if (!aiCalendar) return;
+    try {
+      const existing = JSON.parse(localStorage.getItem("skilizee_saved_strategies") || "[]");
+      const entry = {
+        id: `strategy_${Date.now()}`,
+        savedAt: new Date().toISOString(),
+        type: "AI Calendar Strategy",
+        insights: aiCalendar.insights,
+        calendarCount: (aiCalendar.calendar || []).length,
+      };
+      existing.unshift(entry);
+      localStorage.setItem("skilizee_saved_strategies", JSON.stringify(existing.slice(0, 20)));
+      setSavedToast(true);
+      setTimeout(() => setSavedToast(false), 3000);
+    } catch (e) {
+      console.error("Failed to save calendar strategy:", e);
+    }
+  };
 
   const fetchMetaScheduled = useCallback(async () => {
     setLoading(true);
@@ -245,7 +267,20 @@ export default function ContentCalendar({ onSelectPost }) {
                 </p>
               </div>
             </div>
-            {showInsights ? <ChevronUp className="w-4 h-4 text-txt-muted" /> : <ChevronDown className="w-4 h-4 text-txt-muted" />}
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSaveCalendarStrategy();
+                }}
+                className="px-3 py-1.5 rounded-xl bg-violet-50 hover:bg-violet-100 text-violet-700 border border-violet-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+              >
+                {savedToast ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Bookmark className="w-3.5 h-3.5" />}
+                {savedToast ? "Strategy Saved!" : "Save Strategy"}
+              </button>
+              {showInsights ? <ChevronUp className="w-4 h-4 text-txt-muted" /> : <ChevronDown className="w-4 h-4 text-txt-muted" />}
+            </div>
           </button>
 
           {showInsights && (

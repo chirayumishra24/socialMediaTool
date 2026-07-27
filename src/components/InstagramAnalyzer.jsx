@@ -24,7 +24,10 @@ import {
   Edit3,
   Plus,
   Trash2,
-  History
+  History,
+  Bookmark,
+  Download,
+  Check
 } from "lucide-react";
 import { saveAnalysis, useAnalysisHistory } from "@/lib/storage";
 
@@ -39,7 +42,58 @@ export default function InstagramAnalyzer() {
   const [contextOpen, setContextOpen] = useState(false);
   const [manualMode, setManualMode] = useState(false);
   
+  const [savedToast, setSavedToast] = useState(false);
   const history = useAnalysisHistory();
+
+  const handleSaveStrategy = () => {
+    if (!strategy || !profileData) return;
+    saveAnalysis({
+      profile: profileData.profile,
+      posts: profileData.posts,
+      analysis: profileData.analysis,
+      strategy,
+    });
+    setSavedToast(true);
+    setTimeout(() => setSavedToast(false), 3000);
+  };
+
+  const handleDownloadStrategyDoc = () => {
+    if (!strategy) return;
+    const safeUser = profileData?.profile?.username || "instagram";
+    const filename = `${safeUser}-marketing-strategy.doc`;
+
+    const html = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+        <head><meta charset="utf-8"/><title>${safeUser} AI Strategy</title></head>
+        <body style="font-family: Arial, sans-serif; padding: 20px;">
+          <h1 style="color: #4f46e5;">Instagram Marketing Strategy: @${safeUser}</h1>
+          <p><strong>Generated:</strong> ${new Date(strategy.generatedAt).toLocaleString()}</p>
+          <hr />
+          <h2>Executive Summary</h2>
+          <p>${strategy.summary || ""}</p>
+          <h2>Profile Audit</h2>
+          <h3>What's Working</h3>
+          <ul>${(strategy.profileAudit?.whatsWorking || []).map((item) => `<li>${item}</li>`).join("")}</ul>
+          <h3>What's Not</h3>
+          <ul>${(strategy.profileAudit?.whatsNot || []).map((item) => `<li>${item}</li>`).join("")}</ul>
+          <h3>Quick Fixes</h3>
+          <ul>${(strategy.profileAudit?.quickFixes || []).map((item) => `<li>${item}</li>`).join("")}</ul>
+          <h2>Content Pillars</h2>
+          <ul>${(strategy.contentPillars || []).map((p) => `<li><strong>${p.name}</strong> (${p.weeklyPercent}%): ${p.description}</li>`).join("")}</ul>
+        </body>
+      </html>
+    `;
+
+    const blob = new Blob(["\ufeff", html], { type: "application/msword" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  };
 
   // Manual profile input
   const [manualProfile, setManualProfile] = useState({
@@ -654,13 +708,31 @@ export default function InstagramAnalyzer() {
       {strategy && (
         <div className="flex flex-col gap-6 animate-fade-in">
           {/* Summary Banner */}
-          <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-500 p-6 rounded-[2rem] text-white shadow-xl">
-            <div className="flex items-center gap-3 mb-3">
-              <Sparkles className="w-6 h-6" />
-              <h2 className="text-lg font-extrabold">AI Marketing Strategy</h2>
+          <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-500 p-6 rounded-[2rem] text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <Sparkles className="w-6 h-6" />
+                <h2 className="text-lg font-extrabold">AI Marketing Strategy</h2>
+              </div>
+              <p className="text-sm font-medium opacity-90 leading-relaxed max-w-3xl">{strategy.summary}</p>
+              <p className="text-[9px] font-bold uppercase tracking-wider opacity-60 mt-3">Generated {new Date(strategy.generatedAt || Date.now()).toLocaleString()}</p>
             </div>
-            <p className="text-sm font-medium opacity-90 leading-relaxed">{strategy.summary}</p>
-            <p className="text-[9px] font-bold uppercase tracking-wider opacity-60 mt-3">Generated {new Date(strategy.generatedAt).toLocaleString()}</p>
+
+            <div className="flex items-center gap-2.5 shrink-0 self-start md:self-center">
+              <button
+                onClick={handleSaveStrategy}
+                className="px-4 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 backdrop-blur-md text-white text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer border border-white/30"
+              >
+                {savedToast ? <Check className="w-4 h-4 text-emerald-300" /> : <Bookmark className="w-4 h-4" />}
+                {savedToast ? "Saved!" : "Save Strategy"}
+              </button>
+              <button
+                onClick={handleDownloadStrategyDoc}
+                className="px-4 py-2.5 rounded-xl bg-white text-indigo-700 text-xs font-black uppercase tracking-wider flex items-center gap-2 hover:bg-slate-100 transition-all cursor-pointer shadow-md"
+              >
+                <Download className="w-4 h-4" /> Export Doc
+              </button>
+            </div>
           </div>
 
           {/* Step 1: Profile Audit */}
