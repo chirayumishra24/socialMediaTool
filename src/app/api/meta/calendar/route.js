@@ -23,6 +23,9 @@ export async function POST(request) {
         : ["Grow followers", "Increase engagement", "Drive traffic"],
       postsLimit: Math.min(Number(body.postsLimit) || 50, 50),
       period: body.period || "days_28",
+      startDate: body.startDate || undefined,
+      endDate: body.endDate || undefined,
+      postsPerWeek: Math.min(Number(body.postsPerWeek) || 5, 7),
     };
 
     console.log("[Calendar API] Generating calendar with options:", options);

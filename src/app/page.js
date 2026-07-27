@@ -397,6 +397,20 @@ function AppContent({ defaultTab = "dashboard" }) {
                   setActiveTab("composer");
                 }
               }}
+              onSendToResearch={(topic) => {
+                handleResearchComplete({ keyword: topic });
+                setActiveTab("research");
+              }}
+              onSendToStudio={(topic, format) => {
+                const formatMap = {
+                  Reel: "instagram_reel",
+                  Carousel: "instagram_carousel",
+                  Static: "instagram_post",
+                  Story: "instagram_reel",
+                };
+                setResearchContext({ keyword: topic, format: formatMap[format] || "instagram_reel" });
+                setActiveTab("studio");
+              }}
             />
           )}
           {activeTab === "approval" && (

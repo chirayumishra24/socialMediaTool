@@ -28,7 +28,7 @@ import {
 
 /**
  * Full pipeline: fetch deep insights → build snapshot → compute trends → generate AI calendar.
- * @param {{ niche?: string, goals?: string[], postsLimit?: number, period?: string }} options
+ * @param {{ niche?: string, goals?: string[], postsLimit?: number, period?: string, startDate?: string, endDate?: string, postsPerWeek?: number }} options
  * @returns {Promise<object>} — The generated content calendar
  */
 export async function generateContentCalendar(options = {}) {
@@ -37,6 +37,9 @@ export async function generateContentCalendar(options = {}) {
     goals = ["Grow followers", "Increase engagement", "Drive traffic"],
     postsLimit = 50,
     period = "days_28",
+    startDate,
+    endDate,
+    postsPerWeek = 5,
   } = options;
 
   console.log("[Calendar Agent] Starting content calendar pipeline...");
@@ -78,8 +81,12 @@ export async function generateContentCalendar(options = {}) {
   console.log("[Calendar Agent] Step 5: Extracting topic clusters...");
   const topicClusters = extractTopicClusters(postsWithInsights);
 
-  // Step 6: Generate AI calendar
-  console.log("[Calendar Agent] Step 6: Generating AI calendar...");
+  // Step 6: Compute date range
+  const { rangeStart, rangeEnd, totalDays } = computeDateRange(startDate, endDate);
+  const totalPosts = Math.round((totalDays / 7) * postsPerWeek);
+
+  // Step 7: Generate AI calendar
+  console.log(`[Calendar Agent] Step 7: Generating AI calendar (${rangeStart} → ${rangeEnd}, ${totalPosts} posts)...`);
   const prompt = buildCalendarPrompt({
     snapshot,
     trends: trendData,
@@ -88,6 +95,9 @@ export async function generateContentCalendar(options = {}) {
     topicClusters,
     niche,
     goals,
+    rangeStart,
+    rangeEnd,
+    totalPosts,
   });
 
   const aiOutput = await generate(prompt, { tier: "pro", jsonMode: true, maxRetries: 2 });
@@ -104,8 +114,45 @@ export async function generateContentCalendar(options = {}) {
       trendsAvailable: trendData.available,
       demographicsAvailable: demographics?.available || false,
       heatmapAvailable: heatmap.available,
+      rangeStart,
+      rangeEnd,
+      totalPostsRequested: totalPosts,
     },
   };
+}
+
+/**
+ * Compute the date range for calendar generation.
+ * Defaults to upcoming Monday → Sunday if not specified.
+ */
+function computeDateRange(startDate, endDate) {
+  const now = new Date();
+
+  let rangeStart, rangeEnd;
+
+  if (startDate) {
+    rangeStart = startDate;
+  } else {
+    // Default: next Monday
+    const dayOfWeek = now.getDay();
+    const daysUntilMonday = dayOfWeek === 0 ? 1 : (8 - dayOfWeek);
+    const nextMonday = new Date(now);
+    nextMonday.setDate(now.getDate() + daysUntilMonday);
+    rangeStart = nextMonday.toISOString().slice(0, 10);
+  }
+
+  if (endDate) {
+    rangeEnd = endDate;
+  } else {
+    // Default: 6 days after start (1 week)
+    const start = new Date(rangeStart);
+    start.setDate(start.getDate() + 6);
+    rangeEnd = start.toISOString().slice(0, 10);
+  }
+
+  const totalDays = Math.max(1, Math.round((new Date(rangeEnd) - new Date(rangeStart)) / (1000 * 60 * 60 * 24)) + 1);
+
+  return { rangeStart, rangeEnd, totalDays };
 }
 
 // ─── Topic Cluster Extraction ──────────────────────────────────
@@ -190,7 +237,7 @@ export function extractTopicClusters(posts) {
 /**
  * Construct the comprehensive AI prompt with all available data.
  */
-export function buildCalendarPrompt({ snapshot, trends, demographics, heatmap, topicClusters, niche, goals }) {
+export function buildCalendarPrompt({ snapshot, trends, demographics, heatmap, topicClusters, niche, goals, rangeStart, rangeEnd, totalPosts }) {
   const cb = snapshot?.contentBreakdown || {};
 
   // Format comparison table
@@ -240,21 +287,12 @@ export function buildCalendarPrompt({ snapshot, trends, demographics, heatmap, t
 Top countries: ${topCountries.map(([c, v]) => `${c} (${v})`).join(", ")}`;
   }
 
-  // Calculate the upcoming Monday as week start
-  const now = new Date();
-  const dayOfWeek = now.getDay();
-  const daysUntilMonday = dayOfWeek === 0 ? 1 : (8 - dayOfWeek);
-  const nextMonday = new Date(now);
-  nextMonday.setDate(now.getDate() + daysUntilMonday);
-  const weekStart = nextMonday.toISOString().slice(0, 10);
-
-  return `You are an elite social media strategist building a WEEKLY CONTENT CALENDAR for the upcoming week starting ${weekStart}.
+  return `You are an elite social media strategist building a CONTENT CALENDAR from ${rangeStart} to ${rangeEnd}.
 
 ═══ REAL PERFORMANCE DATA (FROM META GRAPH API) ═══
 
 Account Metrics (Last 28 Days):
 - Reach: ${snapshot?.account?.reach_28d || "N/A"}
-- Impressions: ${snapshot?.account?.impressions_28d || "N/A"}
 - Profile Views (7d): ${snapshot?.account?.profileViews_7d || "N/A"}
 - Website Clicks (7d): ${snapshot?.account?.websiteClicks_7d || "N/A"}
 - Total Posts Analyzed: ${snapshot?.totalPostsAnalyzed || 0}
@@ -294,14 +332,21 @@ ${demoText}
 
 ═══ YOUR TASK ═══
 
-Using ONLY the real data above, generate a 7-day content calendar for the week starting ${weekStart}.
+Using ONLY the real data above, generate a content calendar with EXACTLY ${totalPosts} posts spread across ${rangeStart} to ${rangeEnd}.
 
 Every recommendation MUST reference specific data points from the metrics above.
+
+For EACH calendar entry you MUST include a "description" field:
+- For Carousel: a slide-by-slide breakdown (Slide 1: ..., Slide 2: ..., etc.)
+- For Reel: the topic angle, key talking points, and visual suggestions
+- For Static: the image concept and key message
+- For Story: the sequence and interactive elements (polls, questions, etc.)
 
 Return your response as a JSON object with EXACTLY this structure:
 
 {
-  "weekStarting": "${weekStart}",
+  "rangeStart": "${rangeStart}",
+  "rangeEnd": "${rangeEnd}",
   "insights": {
     "bestFormat": "The format with highest avg reach from the table above",
     "bestPostingHours": [9, 12, 18],
@@ -318,6 +363,7 @@ Return your response as a JSON object with EXACTLY this structure:
       "slot": "HH:MM",
       "format": "Reel | Carousel | Static | Story",
       "topic": "Specific post topic title",
+      "description": "Detailed content breakdown — slide-by-slide for carousels, talking points for reels, image concept for static",
       "hook": "Opening hook text (first 3 sec for Reels, first slide for Carousels)",
       "caption": "Full caption draft with hashtags and CTA",
       "hashtags": ["#tag1", "#tag2"],
@@ -339,11 +385,13 @@ Return your response as a JSON object with EXACTLY this structure:
 }
 
 CRITICAL RULES:
-1. The calendar array MUST have exactly 7 entries (Monday through Sunday).
-2. Each date must be a real date from the upcoming week starting ${weekStart}.
-3. All "reasoning" fields must cite specific numbers from the data above.
-4. "estimatedReach" should be based on the avg reach of that format from the table.
-5. Return ONLY valid JSON. No markdown, no explanation.`;
+1. The calendar array MUST have exactly ${totalPosts} entries spread across the date range ${rangeStart} to ${rangeEnd}.
+2. Each date must be a real date within the range.
+3. Space posts evenly — avoid putting all posts on adjacent days.
+4. All "reasoning" fields must cite specific numbers from the data above.
+5. "estimatedReach" should be based on the avg reach of that format from the table.
+6. The "description" field is MANDATORY and must be detailed (at least 2-3 sentences).
+7. Return ONLY valid JSON. No markdown, no explanation.`;
 }
 
 // ─── Response Parser ───────────────────────────────────────────
@@ -355,7 +403,8 @@ export function parseCalendarResponse(aiOutput) {
   const data = typeof aiOutput === "string" ? JSON.parse(aiOutput) : aiOutput;
 
   return {
-    weekStarting: data.weekStarting || "",
+    rangeStart: data.rangeStart || data.weekStarting || "",
+    rangeEnd: data.rangeEnd || "",
     generatedAt: new Date().toISOString(),
     insights: {
       bestFormat: data.insights?.bestFormat || "Reel",
@@ -381,6 +430,7 @@ export function parseCalendarResponse(aiOutput) {
           slot: entry.slot || "12:00",
           format: entry.format || "Reel",
           topic: entry.topic || "",
+          description: entry.description || "",
           hook: entry.hook || "",
           caption: entry.caption || "",
           hashtags: Array.isArray(entry.hashtags) ? entry.hashtags : [],
