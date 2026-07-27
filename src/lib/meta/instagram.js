@@ -237,18 +237,23 @@ export async function fetchInstagramProfileFromMeta(username) {
   });
 
   const rawPosts = mediaPayload?.data || [];
+  console.log(`[Meta API] Received ${rawPosts.length} media items. Sample fields:`, rawPosts[0] ? Object.keys(rawPosts[0]) : "empty");
 
   // Map into standard Dashboard post format instantly from media payload
   const posts = rawPosts.map((p) => {
+    // Determine content type from media_type + media_product_type
     let contentType = "Static Image";
-    if (p.media_type === "VIDEO") {
+    const mType = (p.media_type || "").toUpperCase();
+    const mProduct = (p.media_product_type || "").toUpperCase();
+    if (mType === "VIDEO" || mProduct === "REELS" || mProduct === "REEL") {
       contentType = "Reel / Video";
-    } else if (p.media_type === "CAROUSEL_ALBUM") {
+    } else if (mType === "CAROUSEL_ALBUM") {
       contentType = "Carousel";
     }
 
-    const likes = Number(p.like_count || 0);
-    const comments = Number(p.comments_count || 0);
+    // Extract likes/comments — handle both flat and nested API response shapes
+    const likes = Number(p.like_count ?? p.likes ?? 0);
+    const comments = Number(p.comments_count ?? p.comments ?? 0);
 
     // Resolve best thumbnail for Video, Reels, Carousels, and Static Photos
     const firstChild = p.children?.data?.[0];
@@ -273,7 +278,7 @@ export async function fetchInstagramProfileFromMeta(username) {
       thumbnail,
       url: p.permalink || "",
       hashtags: (p.caption || "").match(/#[\w]+/g) || [],
-      engagementLevel: likes > 100 ? "Very High" : likes > 30 ? "High" : "Medium",
+      engagementLevel: likes > 100 ? "Very High" : likes > 30 ? "High" : likes > 5 ? "Medium" : "Low",
     };
   });
 

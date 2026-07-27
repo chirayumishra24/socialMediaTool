@@ -572,9 +572,10 @@ export default function InstagramAnalyzer() {
                       post.engagementLevel === "Very High" ? "bg-emerald-500 text-white" :
                       post.engagementLevel === "High" ? "bg-blue-500 text-white" :
                       post.engagementLevel === "Medium" ? "bg-amber-500 text-white" :
+                      post.engagementLevel === "Low" ? "bg-rose-400 text-white" :
                       "bg-slate-300 text-slate-600"
                     }`}>
-                      {post.engagementLevel}
+                      {post.contentType || "Post"}
                     </div>
                   </div>
                 ))}

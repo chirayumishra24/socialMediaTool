@@ -177,7 +177,7 @@ function AppContent({ defaultTab = "dashboard" }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#F0F4F8] relative overflow-hidden flex flex-col lg:flex-row font-sans">
+    <div className="h-screen bg-[#F0F4F8] relative overflow-hidden flex flex-col lg:flex-row font-sans">
       {/* Decorative Floating 3D/Glass Objects in Background */}
       <div className="absolute top-10 left-10 w-32 h-32 rounded-full bg-blue-300/20 blur-2xl pointer-events-none" />
       <div className="absolute bottom-10 right-10 w-48 h-48 rounded-full bg-purple-300/10 blur-3xl pointer-events-none" />
@@ -313,7 +313,7 @@ function AppContent({ defaultTab = "dashboard" }) {
       </div>
 
       {/* Content wrapper with integrated header */}
-      <div className="flex-1 p-6 md:p-8 xl:p-10 flex flex-col gap-8 min-w-0 z-10 overflow-y-auto h-screen custom-scroll pb-20">
+      <div className="flex-1 p-6 md:p-8 xl:p-10 flex flex-col gap-8 min-w-0 z-10 overflow-y-auto custom-scroll">
         
         {/* Global Header */}
         <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

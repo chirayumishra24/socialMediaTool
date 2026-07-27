@@ -15,7 +15,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${plusJakarta.variable} font-sans h-full antialiased`} style={{ colorScheme: "light" }}>
-      <body className="min-h-full flex flex-col bg-[var(--bg)] text-[var(--txt)]">{children}</body>
+      <body className="h-full overflow-hidden flex flex-col bg-[var(--bg)] text-[var(--txt)]">{children}</body>
     </html>
   );
 }
