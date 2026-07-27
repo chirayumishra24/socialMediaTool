@@ -285,6 +285,15 @@ export function saveAnalysis(data) {
   return entry;
 }
 
+export function getAnalysisHistory() {
+  return readJSON(KEYS.ig_analysis);
+}
+
+export function useAnalysisHistory() {
+  const rawValue = useStorageString(KEYS.ig_analysis, "[]");
+  return useMemo(() => parseArraySnapshot(rawValue), [rawValue]);
+}
+
 export function saveStrategy(data) {
   const all = getSavedStrategies();
   const entry = {
