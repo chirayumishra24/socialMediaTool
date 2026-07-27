@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { BarChart as BarChartIcon, Search, MousePointerClick, Clapperboard, Rocket, TrendingUp, Users, Clock, Globe, Hash, Eye, ShieldAlert } from "lucide-react";
+import { useState, useEffect } from "react";
+import { BarChart as BarChartIcon, Search, MousePointerClick, Clapperboard, Rocket, TrendingUp, Users, Clock, Globe, Hash, Eye, ShieldAlert, Loader2, Film, Images, Image as ImageIcon, MapPin, Activity } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from "recharts";
 import { useContentHistory, usePerformanceInsights, useResearchHistory, useStats } from "@/lib/storage";
 import MetaDashboard from "./MetaDashboard";
 
 export default function Analytics() {
-  const [activeTab, setActiveTab] = useState("pipeline"); // pipeline, meta
+  const [activeTab, setActiveTab] = useState("pipeline"); // pipeline, meta, deep
+  const [deepData, setDeepData] = useState(null);
+  const [deepLoading, setDeepLoading] = useState(false);
   const stats = useStats();
   const content = useContentHistory();
   const research = useResearchHistory();
@@ -59,10 +61,30 @@ export default function Analytics() {
           >
             Meta Insights
           </button>
+          <button
+            onClick={() => {
+              setActiveTab("deep");
+              if (!deepData && !deepLoading) {
+                setDeepLoading(true);
+                fetch("/api/meta/insights/deep?period=days_28")
+                  .then((r) => r.json())
+                  .then((data) => { if (data.success) setDeepData(data); })
+                  .catch(() => {})
+                  .finally(() => setDeepLoading(false));
+              }
+            }}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeTab === "deep" ? "bg-white text-txt shadow-sm" : "text-txt-muted hover:text-txt"
+            }`}
+          >
+            Deep Insights
+          </button>
         </div>
       </div>
 
-      {activeTab === "meta" ? (
+      {activeTab === "deep" ? (
+        <DeepInsightsPanel data={deepData} loading={deepLoading} />
+      ) : activeTab === "meta" ? (
         <MetaDashboard />
       ) : (
         <>
@@ -289,6 +311,237 @@ function MiniMetric({ label, value }) {
     <div className="p-3 rounded-lg bg-white border border-border/60">
       <p className="text-[9px] font-black text-txt-muted uppercase tracking-wider">{label}</p>
       <p className="text-sm font-black text-txt mt-1">{value}</p>
+    </div>
+  );
+}
+
+function DeepInsightsPanel({ data, loading }) {
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-4">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <p className="text-sm text-txt-muted font-bold">Fetching deep insights from Meta...</p>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="text-center py-16 text-txt-muted">
+        <Activity className="w-12 h-12 mx-auto mb-4 opacity-30" />
+        <p className="font-bold">Deep Insights Unavailable</p>
+        <p className="text-sm mt-1">Connect your Meta account to unlock deep analytics.</p>
+      </div>
+    );
+  }
+
+  const snapshot = data.snapshot || {};
+  const account = snapshot.account || {};
+  const cb = snapshot.contentBreakdown || {};
+  const heatmap = data.heatmap || {};
+  const trends = data.trends || {};
+
+  const formatData = [
+    { name: "Reels", reach: cb.reels?.avgReach || 0, engagement: cb.reels?.avgEngagement || 0, saves: cb.reels?.avgSaves || 0, count: cb.reels?.count || 0, icon: Film, color: "#8B5CF6" },
+    { name: "Carousels", reach: cb.carousels?.avgReach || 0, engagement: cb.carousels?.avgEngagement || 0, saves: cb.carousels?.avgSaves || 0, count: cb.carousels?.count || 0, icon: Images, color: "#3B82F6" },
+    { name: "Static", reach: cb.static?.avgReach || 0, engagement: cb.static?.avgEngagement || 0, saves: cb.static?.avgSaves || 0, count: cb.static?.count || 0, icon: ImageIcon, color: "#F59E0B" },
+  ];
+
+  const accountCards = [
+    { label: "28-Day Reach", value: (account.reach_28d || 0).toLocaleString(), icon: <Eye className="w-5 h-5" />, trend: trends.direction?.reach },
+    { label: "28-Day Impressions", value: (account.impressions_28d || 0).toLocaleString(), icon: <TrendingUp className="w-5 h-5" />, trend: trends.direction?.impressions },
+    { label: "Profile Views (7d)", value: (account.profileViews_7d || 0).toLocaleString(), icon: <Users className="w-5 h-5" />, trend: trends.direction?.profileViews },
+    { label: "Website Clicks (7d)", value: (account.websiteClicks_7d || 0).toLocaleString(), icon: <Globe className="w-5 h-5" />, trend: trends.direction?.websiteClicks },
+  ];
+
+  const HOURS = Array.from({ length: 24 }, (_, i) => i);
+  const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+  return (
+    <div className="space-y-6">
+      {/* Account Metrics Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {accountCards.map((card) => (
+          <div key={card.label} className="p-5 rounded-2xl bg-bg-card border border-border shadow-sm group hover:border-primary/20 transition-all">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl bg-bg-elevated flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                {card.icon}
+              </div>
+              {card.trend && (
+                <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg ${
+                  card.trend === "up" ? "bg-emerald-50 text-emerald-600" :
+                  card.trend === "down" ? "bg-rose-50 text-rose-600" :
+                  "bg-slate-50 text-slate-500"
+                }`}>
+                  {card.trend === "up" ? "↑" : card.trend === "down" ? "↓" : "—"}
+                </span>
+              )}
+            </div>
+            <p className="text-2xl font-black text-txt tracking-tight">{card.value}</p>
+            <p className="text-[10px] font-bold text-txt-muted uppercase tracking-widest mt-1">{card.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Format Comparison */}
+      <div className="rounded-2xl bg-bg-card border border-border p-6 shadow-sm">
+        <h4 className="text-sm font-black text-txt mb-5 flex items-center gap-2">
+          <Clapperboard className="w-4 h-4 text-primary" /> Format Performance Comparison
+        </h4>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {formatData.map((f) => {
+            const FIcon = f.icon;
+            return (
+              <div key={f.name} className="rounded-2xl border border-border p-5 bg-white hover:shadow-md transition-all">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: f.color + "15", color: f.color }}>
+                    <FIcon className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-black text-txt">{f.name}</p>
+                    <p className="text-[10px] text-txt-muted font-bold">{f.count} posts analyzed</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <p className="text-[9px] font-black text-txt-muted uppercase">Avg Reach</p>
+                    <p className="text-base font-black text-txt">{f.reach.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-black text-txt-muted uppercase">Avg Eng.</p>
+                    <p className="text-base font-black text-txt">{f.engagement.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-black text-txt-muted uppercase">Avg Saves</p>
+                    <p className="text-base font-black text-txt">{f.saves.toLocaleString()}</p>
+                  </div>
+                </div>
+                {/* Reach bar visualization */}
+                <div className="mt-3 h-2 rounded-full bg-slate-100 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${Math.min(100, (f.reach / Math.max(...formatData.map((d) => d.reach), 1)) * 100)}%`,
+                      backgroundColor: f.color,
+                    }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Optimal Posting Heatmap */}
+      {heatmap.available && (
+        <div className="rounded-2xl bg-bg-card border border-border p-6 shadow-sm">
+          <h4 className="text-sm font-black text-txt mb-2 flex items-center gap-2">
+            <Clock className="w-4 h-4 text-primary" /> Optimal Posting Heatmap
+          </h4>
+          <p className="text-[11px] text-txt-muted mb-5">
+            Best hours: <span className="font-bold text-primary">{(heatmap.bestHours || []).map((h) => `${h}:00`).join(", ")}</span>
+            {" · "}Best days: <span className="font-bold text-primary">{(heatmap.bestDays || []).join(", ")}</span>
+          </p>
+          <div className="overflow-x-auto">
+            <div className="min-w-[700px]">
+              {/* Hour labels */}
+              <div className="flex mb-1 ml-10">
+                {HOURS.filter((h) => h % 3 === 0).map((h) => (
+                  <div key={h} className="flex-1 text-[9px] text-txt-muted font-bold text-center">{h}:00</div>
+                ))}
+              </div>
+              {/* Grid */}
+              {WEEKDAYS.map((day, dayIdx) => (
+                <div key={day} className="flex items-center gap-1 mb-0.5">
+                  <span className="w-9 text-[10px] font-bold text-txt-muted text-right pr-1">{day}</span>
+                  <div className="flex flex-1 gap-[1px]">
+                    {HOURS.map((hour) => {
+                      const value = heatmap.heatmap?.[dayIdx]?.[hour] || 0;
+                      const maxVal = Math.max(...(heatmap.heatmap || []).flat(), 1);
+                      const intensity = value / maxVal;
+                      const isBest = (heatmap.bestHours || []).includes(hour) && (heatmap.bestDays || []).includes(WEEKDAYS[dayIdx]);
+
+                      return (
+                        <div
+                          key={hour}
+                          className={`flex-1 h-5 rounded-[3px] transition-all ${isBest ? "ring-1 ring-primary ring-offset-1" : ""}`}
+                          style={{
+                            backgroundColor: `rgba(124, 58, 237, ${Math.max(0.05, intensity)})`,
+                          }}
+                          title={`${day} ${hour}:00 — ${value} active followers`}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Audience Demographics */}
+      {snapshot.audienceDemographics && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Top Cities */}
+          <div className="rounded-2xl bg-bg-card border border-border p-6 shadow-sm">
+            <h4 className="text-sm font-black text-txt mb-4 flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-primary" /> Top Cities
+            </h4>
+            <div className="space-y-2.5">
+              {(snapshot.audienceDemographics.topCities || []).slice(0, 8).map(([city, count]) => {
+                const maxCount = snapshot.audienceDemographics.topCities?.[0]?.[1] || 1;
+                return (
+                  <div key={city} className="flex items-center gap-3">
+                    <span className="text-xs font-bold text-txt w-32 truncate">{city}</span>
+                    <div className="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-violet-500 to-indigo-500"
+                        style={{ width: `${(count / maxCount) * 100}%` }}
+                      />
+                    </div>
+                    <span className="text-[10px] font-bold text-txt-muted w-10 text-right">{count}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Top Countries */}
+          <div className="rounded-2xl bg-bg-card border border-border p-6 shadow-sm">
+            <h4 className="text-sm font-black text-txt mb-4 flex items-center gap-2">
+              <Globe className="w-4 h-4 text-primary" /> Top Countries
+            </h4>
+            <div className="space-y-2.5">
+              {(snapshot.audienceDemographics.topCountries || []).slice(0, 8).map(([country, count]) => {
+                const maxCount = snapshot.audienceDemographics.topCountries?.[0]?.[1] || 1;
+                return (
+                  <div key={country} className="flex items-center gap-3">
+                    <span className="text-xs font-bold text-txt w-32 truncate">{country}</span>
+                    <div className="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-500"
+                        style={{ width: `${(count / maxCount) * 100}%` }}
+                      />
+                    </div>
+                    <span className="text-[10px] font-bold text-txt-muted w-10 text-right">{count}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Trends Summary */}
+      {trends.available && (
+        <div className="rounded-2xl bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-100 p-6">
+          <h4 className="text-sm font-black text-violet-800 mb-2 flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-violet-600" /> Week-over-Week Trends
+          </h4>
+          <p className="text-xs text-violet-600 font-medium">{trends.summary}</p>
+        </div>
+      )}
     </div>
   );
 }

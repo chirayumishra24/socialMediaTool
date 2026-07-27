@@ -1231,3 +1231,123 @@
 [2026-07-25T11:08:16.530Z] Successfully retrieved @skillizee.io from Meta Graph API
 
 
+[2026-07-25T16:54:17.785Z] Received POST request
+{
+  "username": "skillizee.io"
+}
+
+[2026-07-25T16:54:17.786Z] Dashboard requested username: "skillizee.io"
+
+
+[2026-07-25T16:54:17.787Z] Cleaned username: "skillizee.io"
+
+
+[2026-07-25T16:54:17.788Z] Received POST request
+{
+  "username": "skillizee.io"
+}
+
+[2026-07-25T16:54:17.789Z] Dashboard requested username: "skillizee.io"
+
+
+[2026-07-25T16:54:17.789Z] Cleaned username: "skillizee.io"
+
+
+[2026-07-25T16:54:22.256Z] Meta credentials are ready. Fetching profile for @skillizee.io from Meta API...
+
+
+[2026-07-25T16:54:23.930Z] Meta credentials are ready. Fetching profile for @skillizee.io from Meta API...
+
+
+[2026-07-25T16:54:28.525Z] Meta Graph API lookup skipped/failed: Error validating access token: Session has expired on Saturday, 25-Jul-26 05:00:00 PDT. The current time is Saturday, 25-Jul-26 09:54:28 PDT.
+
+
+[2026-07-25T16:54:28.526Z] Cache miss for "skillizee.io" and Meta API unavailable/skipped. Requesting manual input fallback.
+
+
+[2026-07-25T16:54:30.413Z] Meta Graph API lookup skipped/failed: Error validating access token: Session has expired on Saturday, 25-Jul-26 05:00:00 PDT. The current time is Saturday, 25-Jul-26 09:54:30 PDT.
+
+
+[2026-07-25T16:54:30.414Z] Cache miss for "skillizee.io" and Meta API unavailable/skipped. Requesting manual input fallback.
+
+
+[2026-07-27T04:37:00.925Z] Received POST request
+{
+  "username": "skillizee.io"
+}
+
+[2026-07-27T04:37:00.925Z] Dashboard requested username: "skillizee.io"
+
+
+[2026-07-27T04:37:00.926Z] Cleaned username: "skillizee.io"
+
+
+[2026-07-27T04:37:00.927Z] Received POST request
+{
+  "username": "skillizee.io"
+}
+
+[2026-07-27T04:37:00.927Z] Dashboard requested username: "skillizee.io"
+
+
+[2026-07-27T04:37:00.927Z] Cleaned username: "skillizee.io"
+
+
+[2026-07-27T04:37:04.075Z] Meta credentials are ready. Fetching profile for @skillizee.io from Meta API...
+
+
+[2026-07-27T04:37:05.290Z] Meta credentials are ready. Fetching profile for @skillizee.io from Meta API...
+
+
+[2026-07-27T04:37:09.377Z] Meta Graph API lookup skipped/failed: Error validating access token: Session has expired on Saturday, 25-Jul-26 05:00:00 PDT. The current time is Sunday, 26-Jul-26 21:37:09 PDT.
+
+
+[2026-07-27T04:37:09.378Z] Cache miss for "skillizee.io" and Meta API unavailable/skipped. Requesting manual input fallback.
+
+
+[2026-07-27T04:37:10.865Z] Meta Graph API lookup skipped/failed: Error validating access token: Session has expired on Saturday, 25-Jul-26 05:00:00 PDT. The current time is Sunday, 26-Jul-26 21:37:10 PDT.
+
+
+[2026-07-27T04:37:10.866Z] Cache miss for "skillizee.io" and Meta API unavailable/skipped. Requesting manual input fallback.
+
+
+[2026-07-27T04:37:14.483Z] Received POST request
+{
+  "username": "skillizee.io"
+}
+
+[2026-07-27T04:37:14.484Z] Dashboard requested username: "skillizee.io"
+
+
+[2026-07-27T04:37:14.484Z] Cleaned username: "skillizee.io"
+
+
+[2026-07-27T04:37:14.501Z] Received POST request
+{
+  "username": "skillizee.io"
+}
+
+[2026-07-27T04:37:14.502Z] Dashboard requested username: "skillizee.io"
+
+
+[2026-07-27T04:37:14.502Z] Cleaned username: "skillizee.io"
+
+
+[2026-07-27T04:37:16.295Z] Meta credentials are ready. Fetching profile for @skillizee.io from Meta API...
+
+
+[2026-07-27T04:37:17.347Z] Meta credentials are ready. Fetching profile for @skillizee.io from Meta API...
+
+
+[2026-07-27T04:37:22.428Z] Meta Graph API lookup skipped/failed: Error validating access token: Session has expired on Saturday, 25-Jul-26 05:00:00 PDT. The current time is Sunday, 26-Jul-26 21:37:22 PDT.
+
+
+[2026-07-27T04:37:22.428Z] Cache miss for "skillizee.io" and Meta API unavailable/skipped. Requesting manual input fallback.
+
+
+[2026-07-27T04:37:22.434Z] Meta Graph API lookup skipped/failed: Error validating access token: Session has expired on Saturday, 25-Jul-26 05:00:00 PDT. The current time is Sunday, 26-Jul-26 21:37:22 PDT.
+
+
+[2026-07-27T04:37:22.435Z] Cache miss for "skillizee.io" and Meta API unavailable/skipped. Requesting manual input fallback.
+
+

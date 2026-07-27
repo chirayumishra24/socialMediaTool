@@ -8,6 +8,7 @@
 import { fetchInstagramProfileFromMeta } from "./instagram";
 import { fetchFacebookPageProfile, fetchFacebookPagePosts, getPageInsights } from "./facebook";
 import { getConnectionStatus } from "./meta-auth";
+import { fetchAccountInsights, fetchAudienceDemographics, buildOptimalPostingHeatmap } from "./deep-insights";
 
 // ─── Unified Metrics Shape ─────────────────────────────────────
 
@@ -58,6 +59,14 @@ async function fetchInstagramMetrics(username) {
   const totalEngagement = posts.reduce((s, p) => s + p.likes + p.comments, 0);
   const totalViews = posts.reduce((s, p) => s + p.views, 0);
 
+  // Fetch deep insights in parallel (non-blocking — fallback to empty on failure)
+  const [accountInsights, demographics] = await Promise.all([
+    fetchAccountInsights("days_28").catch(() => ({})),
+    fetchAudienceDemographics().catch(() => ({ available: false })),
+  ]);
+
+  const heatmap = buildOptimalPostingHeatmap(demographics?.onlineFollowers || {});
+
   return {
     platform: "instagram",
     accountName: profile.username,
@@ -77,6 +86,19 @@ async function fetchInstagramMetrics(username) {
       topFormat: analysis.topFormat,
       postingFrequency: analysis.postingFrequency,
     },
+    deepInsights: {
+      reach: accountInsights?.reach?.value || 0,
+      impressions: accountInsights?.impressions?.value || 0,
+      profileViews: accountInsights?.profile_views?.value || 0,
+      websiteClicks: accountInsights?.website_clicks?.value || 0,
+      followerGrowth: accountInsights?.follower_count?.timeSeries || [],
+    },
+    audience: demographics?.available ? {
+      topCities: Object.entries(demographics.city || {}).sort((a, b) => b[1] - a[1]).slice(0, 5),
+      topCountries: Object.entries(demographics.country || {}).sort((a, b) => b[1] - a[1]).slice(0, 5),
+      genderAge: demographics.genderAge || {},
+    } : null,
+    optimalTimes: heatmap,
     topContent: posts.length > 0
       ? [...posts].sort((a, b) => (b.likes + b.comments) - (a.likes + a.comments)).slice(0, 3)
       : [],

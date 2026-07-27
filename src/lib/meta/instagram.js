@@ -23,7 +23,7 @@ function normalizePermalink(value) {
   }
 }
 
-async function getInstagramSyncConfig() {
+export async function getInstagramSyncConfig() {
   try {
     const accessToken = await getValidAccessToken();
     const instagramAccountId = await getInstagramAccountId();
@@ -49,7 +49,7 @@ async function getInstagramSyncConfig() {
   }
 }
 
-async function graphRequest(path, params = {}) {
+export async function graphRequest(path, params = {}) {
   const config = await getInstagramSyncConfig();
   if (!config.ready) {
     throw new Error(`Missing Meta configuration: ${config.missing.join(", ")}`);
