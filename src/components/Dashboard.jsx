@@ -4,10 +4,18 @@ import { useEffect, useMemo, useState } from "react";
 import {
   MoreHorizontal,
   ChevronDown,
-  Zap
+  Zap,
+  Bookmark,
+  Calendar,
+  Sparkles,
+  Trash2,
+  FileText,
+  Clock,
+  TrendingUp,
+  Target,
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
-import { useContentHistory, usePerformanceInsights, useResearchHistory, useSettingsSnapshot, useStats } from "@/lib/storage";
+import { useContentHistory, usePerformanceInsights, useResearchHistory, useSettingsSnapshot, useStats, useSavedStrategies, deleteStrategy } from "@/lib/storage";
 
 export default function Dashboard({ onNavigate, onStartResearch, onGoToStudio }) {
   const { user } = useAuth();
@@ -489,8 +497,260 @@ export default function Dashboard({ onNavigate, onStartResearch, onGoToStudio })
           </div>
         </div>
 
+      {/* Saved Strategies & Calendars Section */}
+      <SavedStrategiesSection
+        onNavigate={onNavigate}
+        onStartResearch={onStartResearch}
+        onGoToStudio={onGoToStudio}
+      />
+
+    </div>
+  );
+}
+
+/* Saved Strategies & Calendars Component */
+function SavedStrategiesSection({ onNavigate, onStartResearch, onGoToStudio }) {
+  const savedStrategies = useSavedStrategies();
+  const contentHistory = useContentHistory();
+  const [activeTab, setActiveTab] = useState("strategies");
+  const [expandedId, setExpandedId] = useState(null);
+
+  return (
+    <div className="bg-white border border-slate-100 p-6 rounded-[2rem] shadow-premium flex flex-col gap-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-sm">
+            <Bookmark className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-base font-extrabold text-[#0B192C]">Saved Strategies & Calendars</h3>
+            <p className="text-[11px] text-slate-400 font-semibold">Quick access to your saved AI content plans, strategies, and draft calendars</p>
+          </div>
+        </div>
+
+        {/* Tab Pills */}
+        <div className="flex items-center bg-slate-100/80 p-1 rounded-xl">
+          <button
+            onClick={() => setActiveTab("strategies")}
+            className={`px-3.5 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+              activeTab === "strategies"
+                ? "bg-indigo-600 text-white shadow-sm"
+                : "text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            Saved Strategies ({savedStrategies.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("calendars")}
+            className={`px-3.5 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+              activeTab === "calendars"
+                ? "bg-indigo-600 text-white shadow-sm"
+                : "text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            Content & Drafts ({contentHistory.length})
+          </button>
+        </div>
       </div>
 
+      {activeTab === "strategies" ? (
+        savedStrategies.length === 0 ? (
+          <div className="text-center py-10 px-4 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center mx-auto mb-3">
+              <Sparkles className="w-6 h-6" />
+            </div>
+            <h4 className="text-sm font-black text-slate-700">No Saved Strategies Yet</h4>
+            <p className="text-xs text-slate-400 max-w-sm mx-auto mt-1 font-medium">
+              Generate an AI strategy in the Content Planner and click "Save Strategy" to save it here for instant reuse.
+            </p>
+            <button
+              onClick={() => onNavigate("calendar")}
+              className="mt-4 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md cursor-pointer inline-flex items-center gap-2"
+            >
+              <Calendar className="w-4 h-4" /> Go to Content Planner
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {savedStrategies.map((strat) => {
+              const isExpanded = expandedId === strat.id;
+              const insights = strat.insights || {};
+              const format = insights.bestFormat || "Reel";
+              const formattedDate = strat.savedAt
+                ? new Date(strat.savedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                : "Saved Strategy";
+
+              return (
+                <div
+                  key={strat.id}
+                  className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 hover:border-indigo-200 hover:bg-white transition-all shadow-sm flex flex-col justify-between gap-3 group"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="px-2.5 py-1 rounded-lg bg-indigo-100 text-indigo-700 text-[10px] font-black uppercase tracking-wider">
+                        {strat.niche || "General"}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-[10px] font-bold text-slate-400">{formattedDate}</span>
+                        <button
+                          onClick={() => deleteStrategy(strat.id)}
+                          className="p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
+                          title="Delete strategy"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="text-xs font-black text-slate-800 flex items-center justify-between">
+                        <span>{strat.type || "AI Calendar Strategy"}</span>
+                        <span className="text-[10px] font-bold text-slate-500">
+                          {strat.calendarCount || strat.calendar?.length || 0} Posts
+                        </span>
+                      </h4>
+                      {insights.formatInsight && (
+                        <p className="text-[11px] text-slate-500 font-medium leading-relaxed mt-1 line-clamp-2">
+                          {insights.formatInsight}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Meta badges */}
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-100 text-[10px] font-bold">
+                        Top Format: {format}
+                      </span>
+                      {insights.bestPostingHours && (
+                        <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-100 text-[10px] font-bold">
+                          Peak: {insights.bestPostingHours.map(h => `${h}:00`).join(", ")}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Topics */}
+                    {insights.trendingTopics && insights.trendingTopics.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {insights.trendingTopics.slice(0, 3).map((t) => (
+                          <span key={t} className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[9px] font-semibold">
+                            #{t}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Expand preview if calendar posts exist */}
+                  {isExpanded && strat.calendar && strat.calendar.length > 0 && (
+                    <div className="border-t border-slate-100 pt-3 space-y-2 max-h-48 overflow-y-auto custom-scroll pr-1">
+                      <p className="text-[10px] font-black uppercase text-slate-400">Strategy Posts Preview</p>
+                      {strat.calendar.slice(0, 5).map((post, idx) => (
+                        <div key={idx} className="p-2 rounded-xl bg-slate-100/60 text-[11px] font-medium flex items-center justify-between gap-2">
+                          <div className="truncate">
+                            <span className="font-bold text-slate-700">{post.day || post.date}: </span>
+                            <span className="text-slate-600">{post.topic}</span>
+                          </div>
+                          {onStartResearch && (
+                            <button
+                              onClick={() => onStartResearch(post.topic)}
+                              className="text-[9px] font-bold text-indigo-600 hover:underline shrink-0 cursor-pointer"
+                            >
+                              Research →
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+                    <button
+                      onClick={() => onNavigate("calendar")}
+                      className="flex-1 py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                    >
+                      <Calendar className="w-3.5 h-3.5" /> Open in Planner
+                    </button>
+                    {strat.calendar && strat.calendar.length > 0 && (
+                      <button
+                        onClick={() => setExpandedId(isExpanded ? null : strat.id)}
+                        className="py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-[10px] font-bold transition-all cursor-pointer"
+                      >
+                        {isExpanded ? "Hide Preview" : "Preview Posts"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )
+      ) : (
+        /* Saved Calendars & Draft Content */
+        contentHistory.length === 0 ? (
+          <div className="text-center py-10 px-4 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+            <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-500 flex items-center justify-center mx-auto mb-3">
+              <FileText className="w-6 h-6" />
+            </div>
+            <h4 className="text-sm font-black text-slate-700">No Draft Content Saved</h4>
+            <p className="text-xs text-slate-400 max-w-sm mx-auto mt-1 font-medium">
+              Create scripts, carousel frameworks, or reel drafts in the Content Studio to view them here.
+            </p>
+            <button
+              onClick={() => onNavigate("studio")}
+              className="mt-4 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all shadow-md cursor-pointer inline-flex items-center gap-2"
+            >
+              <FileText className="w-4 h-4" /> Open Content Studio
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {contentHistory.slice(0, 6).map((item) => (
+              <div
+                key={item.id}
+                className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 hover:border-purple-200 hover:bg-white transition-all shadow-sm flex flex-col justify-between gap-3"
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className="px-2 py-0.5 rounded-md bg-purple-100 text-purple-700 text-[9px] font-black uppercase tracking-wider">
+                      {item.format?.replace(/_/g, " ") || "Draft"}
+                    </span>
+                    <span className="text-[9px] font-bold text-slate-400">
+                      {item.savedAt ? new Date(item.savedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}
+                    </span>
+                  </div>
+                  <h4 className="text-xs font-black text-slate-800 line-clamp-1">
+                    {item.keyword || item.title || "Untitled Draft"}
+                  </h4>
+                  {item.script && (
+                    <p className="text-[10px] text-slate-500 font-medium line-clamp-2 mt-1 leading-relaxed">
+                      {item.script}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                  <span className="text-[9px] font-bold text-slate-400 capitalize">
+                    Status: {item.status || "Draft"}
+                  </span>
+                  <button
+                    onClick={() => {
+                      if (onGoToStudio) {
+                        onGoToStudio({ keyword: item.keyword || item.title, format: item.format });
+                      } else {
+                        onNavigate("studio");
+                      }
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 text-[10px] font-bold transition-all cursor-pointer"
+                  >
+                    Open in Studio →
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      )}
     </div>
   );
 }

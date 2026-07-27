@@ -31,7 +31,7 @@ import {
   LayoutGrid,
   List,
 } from "lucide-react";
-import { useContentHistory } from "@/lib/storage";
+import { useContentHistory, saveStrategy } from "@/lib/storage";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -87,16 +87,18 @@ export default function ContentCalendar({ onSelectPost, onSendToResearch, onSend
   const handleSaveCalendarStrategy = () => {
     if (!aiCalendar) return;
     try {
-      const existing = JSON.parse(localStorage.getItem("skilizee_saved_strategies") || "[]");
-      const entry = {
+      saveStrategy({
         id: `strategy_${Date.now()}`,
+        niche: niche || "General",
         savedAt: new Date().toISOString(),
         type: "AI Calendar Strategy",
         insights: aiCalendar.insights,
         calendarCount: (aiCalendar.calendar || []).length,
-      };
-      existing.unshift(entry);
-      localStorage.setItem("skilizee_saved_strategies", JSON.stringify(existing.slice(0, 20)));
+        calendar: aiCalendar.calendar || [],
+        formatDistribution: aiCalendar.formatDistribution || {},
+        rangeStart: aiCalendar.rangeStart || "",
+        rangeEnd: aiCalendar.rangeEnd || "",
+      });
       setSavedToast(true);
       setTimeout(() => setSavedToast(false), 3000);
     } catch (e) {

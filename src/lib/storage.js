@@ -8,6 +8,7 @@ const KEYS = {
   research: "skilizee_research",
   content: "skilizee_content",
   ig_analysis: "skilizee_ig_analysis",
+  strategies: "skilizee_saved_strategies",
 };
 
 const STORAGE_EVENT = "skilizee-storage-updated";
@@ -284,13 +285,33 @@ export function saveAnalysis(data) {
   return entry;
 }
 
-export function getAnalysisHistory() {
-  return readJSON(KEYS.ig_analysis);
+export function saveStrategy(data) {
+  const all = getSavedStrategies();
+  const entry = {
+    ...data,
+    id: data.id || `strategy_${Date.now()}`,
+    savedAt: data.savedAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  all.unshift(entry);
+  if (all.length > 30) all.length = 30;
+  writeJSON(KEYS.strategies, all);
+  return entry;
 }
 
-export function useAnalysisHistory() {
-  const rawValue = useStorageString(KEYS.ig_analysis, "[]");
+export function getSavedStrategies() {
+  return readJSON(KEYS.strategies);
+}
+
+export function useSavedStrategies() {
+  const rawValue = useStorageString(KEYS.strategies, "[]");
   return useMemo(() => parseArraySnapshot(rawValue), [rawValue]);
 }
+
+export function deleteStrategy(id) {
+  const all = getSavedStrategies().filter(s => s.id !== id);
+  writeJSON(KEYS.strategies, all);
+}
+
 
 
