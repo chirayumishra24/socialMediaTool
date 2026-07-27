@@ -496,6 +496,7 @@ export default function Dashboard({ onNavigate, onStartResearch, onGoToStudio })
             <Bar height={15} label="66+" />
           </div>
         </div>
+      </div>
 
       {/* Saved Strategies & Calendars Section */}
       <SavedStrategiesSection
