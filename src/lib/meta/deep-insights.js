@@ -17,22 +17,26 @@ import { getFacebookPageCredentials } from "./meta-auth";
 // ─── Account-Level Instagram Insights ──────────────────────────
 
 const ACCOUNT_METRICS_PERIODIC = [
-  "impressions",
   "reach",
   "follower_count",
   "profile_views",
   "website_clicks",
-  "email_contacts",
-  "get_directions_clicks",
-  "phone_call_clicks",
-  "text_message_clicks",
+  "accounts_engaged",
+  "total_interactions",
+  "likes",
+  "comments",
+  "shares",
+  "saves",
+  "profile_links_taps",
+  "views",
 ];
 
-const AUDIENCE_METRICS = [
-  "audience_city",
-  "audience_country",
-  "audience_gender_age",
-  "online_followers",
+// v22.0: audience_city/country/gender_age replaced by demographic breakdowns
+const AUDIENCE_BREAKDOWN_METRICS = [
+  { metric: "follower_demographics", breakdown: "city", key: "city" },
+  { metric: "follower_demographics", breakdown: "country", key: "country" },
+  { metric: "follower_demographics", breakdown: "age,gender", key: "genderAge" },
+  { metric: "online_followers", breakdown: null, key: "onlineFollowers" },
 ];
 
 /**
@@ -48,10 +52,11 @@ export async function fetchAccountInsights(period = "days_28") {
 
   const results = {};
 
-  // Batch metrics in groups — some may fail based on account type
+  // Batch in groups of 5 — some metrics may fail based on account type
   const metricBatches = [
     ACCOUNT_METRICS_PERIODIC.slice(0, 5),
-    ACCOUNT_METRICS_PERIODIC.slice(5),
+    ACCOUNT_METRICS_PERIODIC.slice(5, 10),
+    ACCOUNT_METRICS_PERIODIC.slice(10),
   ];
 
   for (const batch of metricBatches) {
@@ -103,38 +108,46 @@ export async function fetchAudienceDemographics() {
     available: false,
   };
 
-  // Each audience metric fetched individually — they fail independently
-  for (const metric of AUDIENCE_METRICS) {
+  // v22.0: Use metric_type=total_value with breakdowns for demographics
+  for (const { metric, breakdown, key } of AUDIENCE_BREAKDOWN_METRICS) {
     try {
+      const params = { metric, period: "lifetime", metric_type: "total_value" };
+      if (breakdown) {
+        params.breakdown = breakdown;
+      }
+
       const payload = await graphRequest(
         `/${config.instagramAccountId}/insights`,
-        { metric, period: "lifetime" }
+        params
       );
 
       const entry = payload?.data?.[0];
       if (!entry) continue;
 
-      const latestValue = entry.values?.[entry.values.length - 1]?.value;
-      if (!latestValue) continue;
-
-      demographics.available = true;
-
-      switch (metric) {
-        case "audience_city":
-          demographics.city = latestValue;
-          break;
-        case "audience_country":
-          demographics.country = latestValue;
-          break;
-        case "audience_gender_age":
-          demographics.genderAge = latestValue;
-          break;
-        case "online_followers":
-          demographics.onlineFollowers = latestValue;
-          break;
+      // v22.0 returns total_value with breakdowns in results array
+      const totalValue = entry.total_value;
+      if (totalValue?.breakdowns?.[0]?.results) {
+        // Convert breakdowns to { dimension_value: value } map
+        const resultMap = {};
+        for (const r of totalValue.breakdowns[0].results) {
+          const dimKey = r.dimension_values?.join(".") || r.dimension_values?.[0] || "unknown";
+          resultMap[dimKey] = r.value;
+        }
+        demographics[key] = resultMap;
+        demographics.available = true;
+      } else if (totalValue?.value !== undefined) {
+        demographics[key] = totalValue.value;
+        demographics.available = true;
+      } else {
+        // Fallback: try legacy values array
+        const latestValue = entry.values?.[entry.values.length - 1]?.value;
+        if (latestValue) {
+          demographics[key] = latestValue;
+          demographics.available = true;
+        }
       }
     } catch (err) {
-      console.warn(`[Deep Insights] ${metric} unavailable:`, err.message);
+      console.warn(`[Deep Insights] ${key} unavailable:`, err.message);
     }
   }
 
@@ -143,13 +156,13 @@ export async function fetchAudienceDemographics() {
 
 // ─── Post-Level Deep Insights ──────────────────────────────────
 
-const POST_METRICS_IMAGE = ["impressions", "reach", "saved", "total_interactions"];
-const POST_METRICS_VIDEO = ["impressions", "reach", "saved", "shares", "total_interactions", "video_views"];
+const POST_METRICS_IMAGE = ["reach", "saves", "total_interactions", "views"];
+const POST_METRICS_VIDEO = ["reach", "saves", "shares", "total_interactions", "views"];
 const POST_METRICS_REEL = [
-  "impressions", "reach", "saved", "shares", "total_interactions",
-  "plays", "ig_reels_avg_watch_time", "ig_reels_video_view_total_time",
+  "reach", "saves", "shares", "total_interactions",
+  "plays", "ig_reels_avg_watch_time", "ig_reels_video_view_total_time", "views",
 ];
-const POST_METRICS_CAROUSEL = ["impressions", "reach", "saved", "shares", "total_interactions"];
+const POST_METRICS_CAROUSEL = ["reach", "saves", "shares", "total_interactions", "views"];
 
 /**
  * Fetch deep insights for a single post, adapting metrics by media type.
@@ -242,12 +255,11 @@ export async function fetchAllPostsWithDeepInsights(limit = 50) {
       timestamp: post.timestamp || null,
       hashtags: (post.caption || "").match(/#[\w]+/g) || [],
       insights: {
-        impressions: insights.impressions || 0,
         reach: insights.reach || 0,
-        saved: insights.saved || 0,
+        saved: insights.saves || insights.saved || 0,
         shares: insights.shares || 0,
         totalInteractions: insights.total_interactions || 0,
-        videoViews: insights.video_views || insights.plays || 0,
+        videoViews: insights.views || insights.plays || 0,
         avgWatchTime: insights.ig_reels_avg_watch_time || 0,
         totalWatchTime: insights.ig_reels_video_view_total_time || 0,
       },
