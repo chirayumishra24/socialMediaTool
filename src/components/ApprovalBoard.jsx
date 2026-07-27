@@ -482,118 +482,120 @@ export default function ApprovalBoard({ onPublishPost }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 items-start">
+      <div className="space-y-8">
         {boardStages.map((stage) => {
           const stageItems = getFilteredItems(stage.id);
           const StageIcon = stage.icon;
 
           return (
             <section key={stage.id} className="rounded-[2rem] border border-border bg-white shadow-sm overflow-hidden">
-              <div className={`flex items-center gap-4 px-5 py-5 border-b border-border/80 ${stage.bg}`}>
+              <div className={`flex items-center gap-4 px-6 py-5 border-b border-border/80 ${stage.bg}`}>
                 <div className={`w-10 h-10 rounded-2xl bg-white border border-border flex items-center justify-center shadow-sm ${stage.color}`}>
                   <StageIcon className={`w-5 h-5 ${stage.color}`} strokeWidth={3} />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="text-[12px] font-black text-txt uppercase tracking-[0.2em]">{stage.label}</h4>
-                  <p className="text-[10px] font-bold text-txt-muted uppercase tracking-[0.15em] mt-1">
+                  <h4 className="text-[13px] font-black text-txt uppercase tracking-[0.2em]">{stage.label}</h4>
+                  <p className="text-[10px] font-bold text-txt-muted uppercase tracking-[0.15em] mt-0.5">
                     {stageItems.length} item{stageItems.length === 1 ? "" : "s"}
                   </p>
                 </div>
-                <span className="ml-auto text-[11px] font-black text-white bg-txt px-3 py-1 rounded-xl shadow-sm">
+                <span className="ml-auto text-[11px] font-black text-white bg-txt px-3.5 py-1 rounded-xl shadow-sm">
                   {stageItems.length}
                 </span>
               </div>
 
-              <div className="p-4 space-y-4 min-h-[420px]">
+              <div className="p-6">
                 {stageItems.length === 0 ? (
-                  <div className="rounded-[1.5rem] border border-dashed border-border bg-bg-elevated/30 px-5 py-10 text-center">
-                    <p className="text-sm font-bold text-txt-muted">No items here.</p>
+                  <div className="rounded-[1.5rem] border border-dashed border-border bg-bg-elevated/30 px-6 py-8 text-center">
+                    <p className="text-sm font-bold text-txt-muted">No items in {stage.label.toLowerCase()}.</p>
                   </div>
                 ) : (
-                  stageItems.map((item) => {
-                    const script = findScript(item);
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                    {stageItems.map((item) => {
+                      const script = findScript(item);
 
-                    return (
-                      <article
-                        key={item.id}
-                        className="group p-5 rounded-[1.75rem] bg-white border border-border/80 hover:border-primary/30 hover:shadow-[0_20px_40px_-18px_rgba(10,37,64,0.18)] transition-all relative overflow-hidden ring-1 ring-black/5"
-                      >
-                        <div className={`absolute inset-x-0 top-0 h-1 ${stage.accent} opacity-0 group-hover:opacity-100 transition-opacity`} />
-                        <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
-                          <ChevronRight className="w-4 h-4 text-primary" />
-                        </div>
-
-                        <div className="space-y-4">
-                          <div className="flex flex-wrap items-center gap-2 pr-6">
-                            {item.research?.impact === "CRITICAL" && (
-                              <span className="px-2 py-0.5 rounded-md bg-danger text-white text-[8px] font-black animate-pulse">
-                                CRITICAL
-                              </span>
-                            )}
-                            <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[8px] font-black uppercase tracking-widest">
-                              {script?.format?.split("_").join(" ") || "General"}
-                            </span>
-                            <span className="px-2 py-0.5 rounded-md bg-bg-elevated border border-border text-[8px] font-black text-txt-muted uppercase tracking-widest">
-                              {item.location || "IN"}
-                            </span>
-                            {getBoardStage(item.status) === "published" && (
-                              <span className="px-2 py-0.5 rounded-md bg-success/10 text-success text-[8px] font-black uppercase tracking-widest flex items-center gap-1">
-                                <Rocket className="w-2 h-2" /> Live
-                              </span>
-                            )}
+                      return (
+                        <article
+                          key={item.id}
+                          className="group p-5 rounded-[1.75rem] bg-white border border-border/80 hover:border-primary/30 hover:shadow-[0_20px_40px_-18px_rgba(10,37,64,0.18)] transition-all relative overflow-hidden ring-1 ring-black/5 flex flex-col justify-between gap-4"
+                        >
+                          <div className={`absolute inset-x-0 top-0 h-1 ${stage.accent} opacity-0 group-hover:opacity-100 transition-opacity`} />
+                          <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+                            <ChevronRight className="w-4 h-4 text-primary" />
                           </div>
 
-                          <div>
-                            <p className="text-[16px] font-black text-txt leading-[1.25] tracking-tight group-hover:text-primary transition-colors">
-                              {item.keyword}
-                            </p>
-                            <p className="text-[10px] font-bold text-txt-muted uppercase tracking-[0.15em] mt-2 flex items-center gap-1.5">
-                              <Clock className="w-3 h-3" />
-                              {new Date(item.savedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-                            </p>
-                          </div>
-
-                          {getBoardStage(item.status) === "published" ? (
-                            <div className="grid grid-cols-2 gap-2">
-                              <MetricPill label="Views" value={script?.performance?.views || 0} tone="success" />
-                              <MetricPill label="Clicks" value={script?.performance?.clicks || 0} tone="primary" />
-                            </div>
-                          ) : item.research?.recommendedStrategy ? (
-                            <div className="p-3 rounded-2xl bg-bg-elevated/40 border border-border/40 group-hover:bg-primary/5 group-hover:border-primary/10 transition-colors">
-                              <p className="text-[9px] font-black text-primary-hover mb-2 uppercase tracking-widest flex items-center gap-2">
-                                <Lightbulb className="w-3.5 h-3.5" /> Strategy
-                              </p>
-                              <p className="text-[11px] text-txt-secondary leading-relaxed font-medium line-clamp-2">
-                                {item.research.recommendedStrategy.bestAngle}
-                              </p>
-                            </div>
-                          ) : null}
-
-                          {script?.tagSnapshot?.length > 0 && (
-                            <div className="flex flex-wrap gap-2">
-                              {script.tagSnapshot.slice(0, 3).map((tag) => (
-                                <span
-                                  key={tag}
-                                  className="px-2.5 py-1 rounded-lg text-[9px] font-black bg-bg-elevated border border-border text-txt-secondary"
-                                >
-                                  {tag}
+                          <div className="space-y-4">
+                            <div className="flex flex-wrap items-center gap-2 pr-6">
+                              {item.research?.impact === "CRITICAL" && (
+                                <span className="px-2 py-0.5 rounded-md bg-danger text-white text-[8px] font-black animate-pulse">
+                                  CRITICAL
                                 </span>
-                              ))}
+                              )}
+                              <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[8px] font-black uppercase tracking-widest">
+                                {script?.format?.split("_").join(" ") || "General"}
+                              </span>
+                              <span className="px-2 py-0.5 rounded-md bg-bg-elevated border border-border text-[8px] font-black text-txt-muted uppercase tracking-widest">
+                                {item.location || "IN"}
+                              </span>
+                              {getBoardStage(item.status) === "published" && (
+                                <span className="px-2 py-0.5 rounded-md bg-success/10 text-success text-[8px] font-black uppercase tracking-widest flex items-center gap-1">
+                                  <Rocket className="w-2 h-2" /> Live
+                                </span>
+                              )}
                             </div>
-                          )}
 
-                          {script?.publication?.publishedUrl && (
-                            <a
-                              href={script.publication.publishedUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center gap-2 text-[10px] font-black text-primary uppercase tracking-[0.15em] hover:underline"
-                            >
-                              <LinkIcon className="w-3.5 h-3.5" /> Open Live Post
-                            </a>
-                          )}
+                            <div>
+                              <p className="text-[16px] font-black text-txt leading-[1.25] tracking-tight group-hover:text-primary transition-colors">
+                                {item.keyword}
+                              </p>
+                              <p className="text-[10px] font-bold text-txt-muted uppercase tracking-[0.15em] mt-2 flex items-center gap-1.5">
+                                <Clock className="w-3 h-3" />
+                                {new Date(item.savedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                              </p>
+                            </div>
 
-                          <div className="flex flex-col gap-2 pt-1">
+                            {getBoardStage(item.status) === "published" ? (
+                              <div className="grid grid-cols-2 gap-2">
+                                <MetricPill label="Views" value={script?.performance?.views || 0} tone="success" />
+                                <MetricPill label="Clicks" value={script?.performance?.clicks || 0} tone="primary" />
+                              </div>
+                            ) : item.research?.recommendedStrategy ? (
+                              <div className="p-3 rounded-2xl bg-bg-elevated/40 border border-border/40 group-hover:bg-primary/5 group-hover:border-primary/10 transition-colors">
+                                <p className="text-[9px] font-black text-primary-hover mb-2 uppercase tracking-widest flex items-center gap-2">
+                                  <Lightbulb className="w-3.5 h-3.5" /> Strategy
+                                </p>
+                                <p className="text-[11px] text-txt-secondary leading-relaxed font-medium line-clamp-2">
+                                  {item.research.recommendedStrategy.bestAngle}
+                                </p>
+                              </div>
+                            ) : null}
+
+                            {script?.tagSnapshot?.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {script.tagSnapshot.slice(0, 3).map((tag) => (
+                                  <span
+                                    key={tag}
+                                    className="px-2.5 py-1 rounded-lg text-[9px] font-black bg-bg-elevated border border-border text-txt-secondary"
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            {script?.publication?.publishedUrl && (
+                              <a
+                                href={script.publication.publishedUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-2 text-[10px] font-black text-primary uppercase tracking-[0.15em] hover:underline"
+                              >
+                                <LinkIcon className="w-3.5 h-3.5" /> Open Live Post
+                              </a>
+                            )}
+                          </div>
+
+                          <div className="flex flex-col gap-2 pt-2 border-t border-border/40">
                             {script && (
                               <button
                                 onClick={() => openPreview(item, script)}
@@ -635,10 +637,10 @@ export default function ApprovalBoard({ onPublishPost }) {
                               )}
                             </div>
                           </div>
-                        </div>
-                      </article>
-                    );
-                  })
+                        </article>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
             </section>
