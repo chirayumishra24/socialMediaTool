@@ -252,7 +252,7 @@ export default function ContentCalendar({ onSelectPost }) {
       {/* Insights Panel */}
       {insights && (
         <div className="rounded-[2rem] bg-white border border-border shadow-sm overflow-hidden">
-          <button
+          <div
             onClick={() => setShowInsights(!showInsights)}
             className="w-full flex items-center justify-between p-5 cursor-pointer hover:bg-slate-50/50 transition-colors"
           >
@@ -281,7 +281,7 @@ export default function ContentCalendar({ onSelectPost }) {
               </button>
               {showInsights ? <ChevronUp className="w-4 h-4 text-txt-muted" /> : <ChevronDown className="w-4 h-4 text-txt-muted" />}
             </div>
-          </button>
+          </div>
 
           {showInsights && (
             <div className="px-5 pb-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 border-t border-border pt-5">
