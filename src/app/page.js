@@ -27,7 +27,9 @@ import {
   ChevronLeft,
   ChevronRight,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
+  Menu,
+  X
 } from "lucide-react";
 
 function Instagram(props) {
@@ -118,6 +120,7 @@ function AppContent({ defaultTab = "dashboard" }) {
   const [scheduledPrefillDate, setScheduledPrefillDate] = useState("");
   const [selectedPostToEdit, setSelectedPostToEdit] = useState(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -184,8 +187,164 @@ function AppContent({ defaultTab = "dashboard" }) {
       <div className="absolute top-1/3 right-1/4 w-20 h-20 rounded-full bg-pink-300/5 blur-xl pointer-events-none" />
       <div className="absolute bottom-1/3 left-1/4 w-28 h-28 rounded-full bg-indigo-300/10 blur-2xl pointer-events-none" />
 
-      {/* Global Sidebar (Collapsible, Inline Accordion, No Scrollbar) */}
-      <aside className={`w-full ${isSidebarCollapsed ? "lg:w-[76px]" : "lg:w-[230px]"} transition-all duration-300 bg-white border-b lg:border-b-0 lg:border-r border-slate-100 flex flex-row lg:flex-col items-center lg:items-stretch justify-between lg:justify-start p-3 lg:p-4 shrink-0 gap-4 z-30 overflow-visible`}>
+      {/* Mobile Top Navbar with Hamburger Toggle (< lg) */}
+      <aside className="w-full lg:hidden bg-white border-b border-slate-100 p-3.5 flex items-center justify-between z-30 shrink-0 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-500 via-indigo-500 to-cyan-400 p-[2px] shadow-md flex items-center justify-center shrink-0">
+            <div className="w-full h-full bg-white rounded-[0.6rem] flex items-center justify-center">
+              <div className="w-4 h-4 rounded-md bg-gradient-to-tr from-purple-500 to-indigo-600 flex items-center justify-center text-white text-[10px] font-black">
+                S
+              </div>
+            </div>
+          </div>
+          <span className="text-sm font-black text-slate-800 tracking-tight">
+            Skilizee<span className="text-indigo-600">.ai</span>
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all cursor-pointer flex items-center gap-2"
+            aria-label="Toggle Navigation Menu"
+          >
+            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            <span className="text-xs font-black text-slate-700 uppercase tracking-wider">Menu</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Mobile Navigation Drawer Modal */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm lg:hidden flex flex-col justify-start animate-fade-in p-4">
+          <div className="w-full max-h-[90vh] bg-white rounded-3xl p-5 overflow-y-auto flex flex-col gap-6 shadow-2xl border border-slate-100">
+            {/* Header inside drawer */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-500 to-indigo-600 flex items-center justify-center text-white text-xs font-black shadow-md">
+                  S
+                </div>
+                <div>
+                  <p className="text-sm font-black text-slate-900">Skilizee<span className="text-indigo-600">.ai</span></p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Navigation Menu</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Mobile Nav Links */}
+            <nav className="flex flex-col gap-2">
+              <SidebarGroupNav
+                icon={Home}
+                label="Home"
+                active={["dashboard", "discover"].includes(activeTab)}
+                activeTab={activeTab}
+                onSelectTab={(id) => {
+                  setActiveTab(id);
+                  setIsMobileMenuOpen(false);
+                }}
+                items={[
+                  { id: "dashboard", label: "📊 Dashboard" },
+                  { id: "discover", label: "📈 Trends & Signals" },
+                ]}
+              />
+              <SidebarGroupNav
+                icon={Video}
+                label="Studio"
+                active={["studio", "research", "composer", "approval"].includes(activeTab)}
+                activeTab={activeTab}
+                onSelectTab={(id) => {
+                  if (id === "composer") {
+                    setComposerInitialContent("");
+                    setScheduledPrefillDate("");
+                    setSelectedPostToEdit(null);
+                  }
+                  setActiveTab(id);
+                  setIsMobileMenuOpen(false);
+                }}
+                items={[
+                  { id: "studio", label: "🎬 Content Studio" },
+                  { id: "research", label: "🧪 R&D Lab" },
+                  { id: "composer", label: "✍️ Compose Post" },
+                  { id: "approval", label: "✅ Approval Queue" },
+                ]}
+              />
+              <SidebarGroupNav
+                icon={Calendar}
+                label="Schedule"
+                active={activeTab === "calendar"}
+                activeTab={activeTab}
+                onSelectTab={(id) => {
+                  setActiveTab(id);
+                  setIsMobileMenuOpen(false);
+                }}
+                items={[
+                  { id: "calendar", label: "🗓️ Calendar" },
+                ]}
+              />
+              <SidebarGroupNav
+                icon={BarChart3}
+                label="Analytics"
+                active={["instagram-analyzer", "campaign-hub", "analytics"].includes(activeTab)}
+                activeTab={activeTab}
+                onSelectTab={(id) => {
+                  setActiveTab(id);
+                  setIsMobileMenuOpen(false);
+                }}
+                items={[
+                  { id: "instagram-analyzer", label: "✨ IG Audit & Tags" },
+                  { id: "campaign-hub", label: "📑 Campaign Hub" },
+                  { id: "analytics", label: "📊 Channel Analytics" },
+                ]}
+              />
+              <SidebarGroupNav
+                icon={Sliders}
+                label="Settings"
+                active={["settings", "admin"].includes(activeTab)}
+                activeTab={activeTab}
+                onSelectTab={(id) => {
+                  setActiveTab(id);
+                  setIsMobileMenuOpen(false);
+                }}
+                items={[
+                  { id: "settings", label: "🎛️ Meta Setup" },
+                  ...(user.isAdmin ? [{ id: "admin", label: "🔐 Admin Portal" }] : []),
+                ]}
+              />
+            </nav>
+
+            {/* User Profile & Log Out in Mobile Menu */}
+            <div className="border-t border-slate-100 pt-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-indigo-600 text-white font-bold flex items-center justify-center text-xs">
+                  {user?.name?.slice(0, 2).toUpperCase() || "SM"}
+                </div>
+                <div className="text-left">
+                  <p className="text-xs font-black text-slate-800">{user?.name || "User"}</p>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase">{user?.isAdmin ? "Admin" : "Director"}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  logout();
+                }}
+                className="px-3 py-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-bold flex items-center gap-2 cursor-pointer transition-all"
+              >
+                <LogOut className="w-4 h-4" /> Log Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop Sidebar (hidden on mobile, visible lg:) */}
+      <aside className={`hidden lg:flex ${isSidebarCollapsed ? "lg:w-[76px]" : "lg:w-[230px]"} transition-all duration-300 bg-white border-r border-slate-100 flex-col items-stretch justify-start p-4 shrink-0 gap-4 z-30 overflow-visible`}>
         {/* Brand Logo & Collapse Toggle Header */}
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-3">
@@ -197,7 +356,7 @@ function AppContent({ defaultTab = "dashboard" }) {
               </div>
             </div>
             {!isSidebarCollapsed && (
-              <span className="text-xs font-black text-slate-800 tracking-tight hidden lg:block">
+              <span className="text-xs font-black text-slate-800 tracking-tight">
                 Skilizee<span className="text-indigo-600">.ai</span>
               </span>
             )}
@@ -206,14 +365,14 @@ function AppContent({ defaultTab = "dashboard" }) {
           <button
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
             title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-            className="w-7 h-7 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-100 text-slate-400 hover:text-indigo-600 hidden lg:flex items-center justify-center transition-all cursor-pointer"
+            className="w-7 h-7 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-100 text-slate-400 hover:text-indigo-600 flex items-center justify-center transition-all cursor-pointer"
           >
             {isSidebarCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
           </button>
         </div>
 
         {/* Navigation Links */}
-        <nav className="flex flex-row lg:flex-col items-center lg:items-stretch gap-1 sm:gap-2 w-full">
+        <nav className="flex flex-col items-stretch gap-2 w-full">
           <SidebarGroupNav
             icon={Home}
             label="Home"
@@ -289,7 +448,7 @@ function AppContent({ defaultTab = "dashboard" }) {
         <button
           onClick={logout}
           title="Log Out"
-          className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-all cursor-pointer mt-auto hidden lg:flex self-center"
+          className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-all cursor-pointer mt-auto self-center"
         >
           <LogOut className="w-4 h-4" />
         </button>
