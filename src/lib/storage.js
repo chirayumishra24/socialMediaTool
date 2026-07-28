@@ -9,6 +9,8 @@ const KEYS = {
   content: "skilizee_content",
   ig_analysis: "skilizee_ig_analysis",
   strategies: "skilizee_saved_strategies",
+  active_strategy: "skilizee_active_strategy",
+  active_calendar: "skilizee_active_calendar",
 };
 
 const STORAGE_EVENT = "skilizee-storage-updated";
@@ -322,5 +324,71 @@ export function deleteStrategy(id) {
   writeJSON(KEYS.strategies, all);
 }
 
+// ═══ ACTIVE STRATEGY & CALENDAR CONTEXT (Client-side) ═══
 
+function readJSONObject(key) {
+  if (!canUseStorage()) return null;
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch { return null; }
+}
 
+function writeJSONObject(key, value) {
+  if (!canUseStorage()) return;
+  if (value === null) {
+    localStorage.removeItem(key);
+  } else {
+    localStorage.setItem(key, JSON.stringify(value));
+  }
+  window.dispatchEvent(new CustomEvent(STORAGE_EVENT, { detail: { key } }));
+}
+
+export function setClientActiveStrategy(strategy) {
+  writeJSONObject(KEYS.active_strategy, strategy ? { ...strategy, _clientPersistedAt: new Date().toISOString() } : null);
+}
+
+export function getClientActiveStrategy() {
+  return readJSONObject(KEYS.active_strategy);
+}
+
+export function setClientActiveCalendar(calendar) {
+  writeJSONObject(KEYS.active_calendar, calendar ? { ...calendar, _clientPersistedAt: new Date().toISOString() } : null);
+}
+
+export function getClientActiveCalendar() {
+  return readJSONObject(KEYS.active_calendar);
+}
+
+/**
+ * Check if a calendar's format distribution aligns with a strategy's weeklyFormatMix.
+ * Returns { aligned: boolean, mismatches: string[] }
+ */
+export function checkStrategyCalendarAlignment(strategy, calendar) {
+  if (!strategy || !calendar) return { aligned: true, mismatches: [] };
+
+  const mismatches = [];
+  const mix = strategy.weeklyFormatMix || {};
+  const dist = calendar.formatDistribution || {};
+
+  // Check format counts
+  const formatMap = { reels: "reels", carousels: "carousels", staticPosts: "static", stories: "stories" };
+  for (const [stratKey, distKey] of Object.entries(formatMap)) {
+    const expected = mix[stratKey]?.count;
+    const actual = dist[distKey]?.count;
+    if (expected != null && actual != null && expected !== actual) {
+      mismatches.push(`${stratKey}: strategy says ${expected}/week, calendar has ${actual}`);
+    }
+  }
+
+  // Check pillar coverage
+  const strategyPillars = (strategy.contentPillars || []).map(p => p.name?.toLowerCase());
+  const calendarPillars = [...new Set((calendar.calendar || []).map(e => e.pillar?.toLowerCase()).filter(Boolean))];
+  const missingPillars = strategyPillars.filter(p => p && !calendarPillars.includes(p));
+  if (missingPillars.length > 0) {
+    mismatches.push(`Missing pillars in calendar: ${missingPillars.join(", ")}`);
+  }
+
+  return { aligned: mismatches.length === 0, mismatches };
+}

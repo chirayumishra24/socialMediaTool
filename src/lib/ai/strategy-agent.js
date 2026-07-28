@@ -4,6 +4,7 @@
  */
 
 import { generate } from "./ai-client.js";
+import { getActiveCalendar, getCalendarDigest, setActiveStrategy } from "./strategy-context.js";
 
 /**
  * Generate a comprehensive Instagram marketing strategy.
@@ -14,7 +15,12 @@ import { generate } from "./ai-client.js";
 export async function generateStrategy(profileData, profileContext) {
   const prompt = buildStrategyPrompt(profileData, profileContext);
   const raw = await generate(prompt, { tier: "pro", jsonMode: true, maxRetries: 2 });
-  return normalizeStrategy(raw);
+  const strategy = normalizeStrategy(raw);
+
+  // Persist to shared context so the calendar agent can reference it
+  setActiveStrategy(strategy);
+
+  return strategy;
 }
 
 // ─── Prompt Builder ─────────────────────────────────────────
@@ -142,7 +148,12 @@ Return your response as a JSON object with EXACTLY this structure:
   "summary": "2-3 sentence executive summary of the strategy"
 }
 
-CRITICAL: Return ONLY valid JSON. No markdown, no explanation outside the JSON.`;
+CRITICAL: Return ONLY valid JSON. No markdown, no explanation outside the JSON.
+
+${(() => {
+  const calendarDigest = getCalendarDigest(getActiveCalendar());
+  return calendarDigest ? `\n${calendarDigest}` : "";
+})()}`;
 }
 
 // ─── Response Normalizer ────────────────────────────────────

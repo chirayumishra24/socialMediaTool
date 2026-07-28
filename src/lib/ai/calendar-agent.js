@@ -23,6 +23,7 @@ import {
   computeTrends,
   buildSnapshotFromInsights,
 } from "../meta/analytics-store.js";
+import { getActiveStrategy, getStrategyDigest, setActiveCalendar } from "./strategy-context.js";
 
 // ─── Main Pipeline ─────────────────────────────────────────────
 
@@ -102,6 +103,9 @@ export async function generateContentCalendar(options = {}) {
 
   const aiOutput = await generate(prompt, { tier: "pro", jsonMode: true, maxRetries: 2 });
   const calendar = parseCalendarResponse(aiOutput);
+
+  // Persist to shared context so the strategy agent can reference it
+  setActiveCalendar(calendar);
 
   console.log("[Calendar Agent] Pipeline complete.");
 
@@ -391,7 +395,12 @@ CRITICAL RULES:
 4. All "reasoning" fields must cite specific numbers from the data above.
 5. "estimatedReach" should be based on the avg reach of that format from the table.
 6. The "description" field is MANDATORY and must be detailed (at least 2-3 sentences).
-7. Return ONLY valid JSON. No markdown, no explanation.`;
+7. Return ONLY valid JSON. No markdown, no explanation.
+
+${(() => {
+  const strategyDigest = getStrategyDigest(getActiveStrategy());
+  return strategyDigest ? `\n${strategyDigest}` : "";
+})()}`;
 }
 
 // ─── Response Parser ───────────────────────────────────────────

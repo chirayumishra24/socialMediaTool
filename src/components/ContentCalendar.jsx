@@ -31,7 +31,7 @@ import {
   LayoutGrid,
   List,
 } from "lucide-react";
-import { useContentHistory, saveStrategy } from "@/lib/storage";
+import { useContentHistory, saveStrategy, setClientActiveCalendar, getClientActiveStrategy, checkStrategyCalendarAlignment } from "@/lib/storage";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -83,6 +83,9 @@ export default function ContentCalendar({ onSelectPost, onSendToResearch, onSend
   const [postsPerWeek, setPostsPerWeek] = useState(5);
   const items = useContentHistory();
 
+  const activeStrategy = useMemo(() => getClientActiveStrategy(), [aiCalendar]);
+  const alignment = useMemo(() => checkStrategyCalendarAlignment(activeStrategy, aiCalendar), [activeStrategy, aiCalendar]);
+
   // ─── Save Strategy ─────────────────────────────────────────────
   const handleSaveCalendarStrategy = () => {
     if (!aiCalendar) return;
@@ -126,7 +129,10 @@ export default function ContentCalendar({ onSelectPost, onSendToResearch, onSend
     fetch("/api/meta/calendar")
       .then((r) => r.json())
       .then((data) => {
-        if (data.calendar) setAiCalendar(data.calendar);
+        if (data.calendar) {
+          setAiCalendar(data.calendar);
+          setClientActiveCalendar(data.calendar);
+        }
       })
       .catch(() => {});
 
@@ -180,6 +186,7 @@ export default function ContentCalendar({ onSelectPost, onSendToResearch, onSend
       const data = await res.json();
       if (data.success && data.calendar) {
         setAiCalendar(data.calendar);
+        setClientActiveCalendar(data.calendar);
         setShowInsights(true);
         setCalendarEdits({});
         localStorage.removeItem("skilizee_calendar_edits");
@@ -443,7 +450,18 @@ export default function ContentCalendar({ onSelectPost, onSendToResearch, onSend
                 <TrendingUp className="w-4 h-4" />
               </div>
               <div className="text-left">
-                <h4 className="text-sm font-black text-txt">AI Insights Summary</h4>
+                <div className="flex items-center gap-2">
+                  <h4 className="text-sm font-black text-txt">AI Insights Summary</h4>
+                  {activeStrategy && (
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase flex items-center gap-1 ${
+                      alignment.aligned 
+                        ? "bg-emerald-50 text-emerald-600 border border-emerald-200" 
+                        : "bg-amber-50 text-amber-600 border border-amber-200"
+                    }`}>
+                      {alignment.aligned ? "✓ Strategy Aligned" : "⚠️ Strategy Mismatch"}
+                    </span>
+                  )}
+                </div>
                 <p className="text-[11px] text-txt-muted font-medium mt-0.5">
                   {insights.formatInsight || `Best format: ${insights.bestFormat}`}
                 </p>

@@ -8,6 +8,7 @@
 
 import { NextResponse } from "next/server";
 import { generateContentCalendar } from "@/lib/ai/calendar-agent";
+import { setActiveCalendar } from "@/lib/ai/strategy-context";
 
 // In-memory cache of the last generated calendar
 let lastCalendar = null;
@@ -30,6 +31,9 @@ export async function POST(request) {
 
     console.log("[Calendar API] Generating calendar with options:", options);
     const calendar = await generateContentCalendar(options);
+
+    // Persist to shared context so the strategy agent can reference it
+    setActiveCalendar(calendar);
 
     // Cache it
     lastCalendar = {

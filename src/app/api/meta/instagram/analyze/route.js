@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateStrategy } from "@/lib/ai/strategy-agent";
+import { setActiveStrategy } from "@/lib/ai/strategy-context";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -16,6 +17,9 @@ export async function POST(req) {
     }
 
     const strategy = await generateStrategy(profileData, profileContext || {});
+
+    // Also persist at the API layer for redundancy
+    setActiveStrategy(strategy);
 
     return NextResponse.json({ ok: true, strategy });
   } catch (error) {

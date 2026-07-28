@@ -29,7 +29,7 @@ import {
   Download,
   Check
 } from "lucide-react";
-import { saveAnalysis, useAnalysisHistory } from "@/lib/storage";
+import { saveAnalysis, useAnalysisHistory, setClientActiveStrategy, getClientActiveCalendar, checkStrategyCalendarAlignment } from "@/lib/storage";
 
 export default function InstagramAnalyzer() {
   // ─── State ──────────────────────────────────────────────
@@ -44,6 +44,9 @@ export default function InstagramAnalyzer() {
   
   const [savedToast, setSavedToast] = useState(false);
   const history = useAnalysisHistory();
+
+  const activeCalendar = useMemo(() => getClientActiveCalendar(), [strategy]);
+  const alignment = useMemo(() => checkStrategyCalendarAlignment(strategy, activeCalendar), [strategy, activeCalendar]);
 
   const handleSaveStrategy = () => {
     if (!strategy || !profileData) return;
@@ -271,6 +274,9 @@ export default function InstagramAnalyzer() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Analysis failed");
       setStrategy(data.strategy);
+
+      // Persist to client-side shared context for calendar alignment
+      setClientActiveStrategy(data.strategy);
       
       // Save to localStorage history
       saveAnalysis({
@@ -713,6 +719,13 @@ export default function InstagramAnalyzer() {
               <div className="flex items-center gap-3 mb-2">
                 <Sparkles className="w-6 h-6" />
                 <h2 className="text-lg font-extrabold">AI Marketing Strategy</h2>
+                {activeCalendar && (
+                  <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase border ${
+                    alignment.aligned ? "bg-emerald-400/20 border-emerald-300 text-emerald-200" : "bg-amber-400/20 border-amber-300 text-amber-200"
+                  }`}>
+                    {alignment.aligned ? "✓ Calendar Aligned" : "⚠️ Calendar Mismatch"}
+                  </span>
+                )}
               </div>
               <p className="text-sm font-medium opacity-90 leading-relaxed max-w-3xl">{strategy.summary}</p>
               <p className="text-[9px] font-bold uppercase tracking-wider opacity-60 mt-3">Generated {new Date(strategy.generatedAt || Date.now()).toLocaleString()}</p>
