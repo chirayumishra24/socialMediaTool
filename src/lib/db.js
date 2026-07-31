@@ -8,7 +8,7 @@ const LOCAL_DB_PATH = "e:/skilizee/users-db.json";
 const DEFAULT_USERS = [
   {
     email: "pa1@skillizee.io",
-    password: "Admin@kittu",
+    password: "Admin@123",
     roles: ["linkedin", "social_media", "podcast", "admin"],
     isAdmin: true,
     name: "Primary Admin"
