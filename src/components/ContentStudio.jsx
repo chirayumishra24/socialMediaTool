@@ -333,9 +333,7 @@ export default function ContentStudio({ researchContext, onSchedulePost }) {
                 {tab === "script" && (
                   <div className="p-10 flex-1 relative">
                     <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none"><PenTool className="w-32 h-32" /></div>
-                    <pre className="text-[15px] text-txt-secondary leading-loose whitespace-pre-wrap font-sans custom-scroll max-h-[700px] overflow-y-auto pr-6 selection:bg-primary/10">
-                      {result.script}
-                    </pre>
+                    <StreamingText text={result.script} />
                   </div>
                 )}
 
@@ -436,4 +434,61 @@ export default function ContentStudio({ researchContext, onSchedulePost }) {
 
 function Field({ label, children }) {
   return (<div><label className="block text-[10px] font-black text-txt-muted uppercase tracking-[0.15em] mb-3 ml-1">{label}</label>{children}</div>);
+}
+
+function StreamingText({ text, speed = 35, chunkSize = 5 }) {
+  const [displayedText, setDisplayedText] = useState("");
+  const [isDone, setIsDone] = useState(false);
+  const containerRef = useEffect ? { current: null } : null;
+
+  useEffect(() => {
+    if (!text) {
+      setDisplayedText("");
+      setIsDone(true);
+      return;
+    }
+
+    setDisplayedText("");
+    setIsDone(false);
+
+    const words = text.split(/(\s+)/);
+    let index = 0;
+
+    const timer = setInterval(() => {
+      index += chunkSize;
+      if (index >= words.length) {
+        setDisplayedText(text);
+        setIsDone(true);
+        clearInterval(timer);
+      } else {
+        setDisplayedText(words.slice(0, index).join(""));
+      }
+    }, speed);
+
+    return () => clearInterval(timer);
+  }, [text, speed, chunkSize]);
+
+  return (
+    <div className="relative group">
+      {!isDone && (
+        <div className="flex items-center justify-between mb-4 pb-2 border-b border-border/50">
+          <span className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2 animate-pulse">
+            <span className="w-2 h-2 rounded-full bg-primary" /> Live Writing Script...
+          </span>
+          <button
+            onClick={() => { setDisplayedText(text); setIsDone(true); }}
+            className="text-[10px] font-black uppercase tracking-wider px-3 py-1 bg-bg-elevated border border-border rounded-lg text-primary hover:bg-primary/10 transition-all cursor-pointer shadow-sm"
+          >
+            Skip Typing ⚡
+          </button>
+        </div>
+      )}
+      <pre className="text-[15px] text-txt-secondary leading-loose whitespace-pre-wrap font-sans custom-scroll max-h-[700px] overflow-y-auto pr-6 selection:bg-primary/10">
+        {displayedText}
+        {!isDone && (
+          <span className="inline-block w-2.5 h-4 ml-1 bg-primary animate-pulse align-middle rounded-sm" />
+        )}
+      </pre>
+    </div>
+  );
 }

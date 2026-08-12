@@ -62,7 +62,19 @@ export default function PostComposer({ onPublished, initialContent = "" }) {
       });
       const data = await res.json();
       if (data.script) {
-        setCaption(data.script);
+        // Stream text in chunks of 5 words every 35ms
+        const words = data.script.split(/(\s+)/);
+        let index = 0;
+        setCaption("");
+        const timer = setInterval(() => {
+          index += 5;
+          if (index >= words.length) {
+            setCaption(data.script);
+            clearInterval(timer);
+          } else {
+            setCaption(words.slice(0, index).join(""));
+          }
+        }, 35);
       }
     } catch (err) {
       console.error("Caption enhancement failed:", err);
