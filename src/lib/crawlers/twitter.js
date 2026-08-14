@@ -13,8 +13,20 @@ const NITTER_INSTANCES = [
   "https://nitter.net",
 ];
 
+import { scrapeSocialSearch } from "./scraper-api";
+
 export async function searchX(query) {
-  // Try RapidAPI first (real data)
+  // 1. Try ScraperAPI residential crawler first (real indexed Tweets & Threads)
+  try {
+    const scraperApiResults = await scrapeSocialSearch("x", query, 10);
+    if (scraperApiResults && scraperApiResults.length > 0) {
+      return scraperApiResults;
+    }
+  } catch (err) {
+    console.warn("[Twitter Crawler] ScraperAPI search failed, trying fallback:", err.message);
+  }
+
+  // 2. Try RapidAPI if configured
   const apiKey = process.env.RAPIDAPI_KEY;
   if (apiKey) {
     try {
@@ -25,11 +37,11 @@ export async function searchX(query) {
     }
   }
 
-  // Fallback to Nitter RSS
+  // 3. Fallback to Nitter RSS
   const nitterResults = await searchViaNitter(query);
   if (nitterResults.length > 0) return nitterResults;
 
-  // Last resort: hardcoded templates
+  // 4. Last resort: contextual fallback
   return generateFallback(query);
 }
 

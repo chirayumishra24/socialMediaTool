@@ -22,8 +22,20 @@ const EDUCATION_ACCOUNTS = [
   "digitallearning", "edtechindia", "teacherlife",
 ];
 
+import { scrapeSocialSearch } from "./scraper-api";
+
 export async function searchInstagram(query) {
-  // RapidAPI for live global search
+  // 1. Try ScraperAPI residential crawler first (real indexed Instagram Reels & Posts)
+  try {
+    const scraperApiResults = await scrapeSocialSearch("instagram", query, 10);
+    if (scraperApiResults && scraperApiResults.length > 0) {
+      return scraperApiResults;
+    }
+  } catch (err) {
+    console.warn("[Instagram Crawler] ScraperAPI attempt failed, trying fallback:", err.message);
+  }
+
+  // 2. Try RapidAPI if configured
   const apiKey = process.env.RAPIDAPI_KEY;
   if (apiKey) {
     try {
@@ -40,11 +52,12 @@ export async function searchInstagram(query) {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({ username, maxId: "" }),
-            signal: AbortSignal.timeout(10000),
+            signal: AbortSignal.timeout(8000),
           });
 
           if (!res.ok) continue;
-          const data = await res.json();
+          const data = await res.json().catch(() => null);
+          if (!data) continue;
 
           const posts = extractPosts(data, username, query);
           results.push(...posts);

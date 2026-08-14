@@ -335,12 +335,12 @@ export default function Dashboard({ onNavigate, onStartResearch, onGoToStudio })
             </p>
             <div className="flex items-baseline gap-2 mt-1">
               <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                {stats.totalResearch + stats.totalScripts}
+                {(stats?.totalResearch || 0) + (stats?.totalScripts || 0)}
               </h3>
               <span className="text-xs font-semibold text-slate-400">assets generated</span>
             </div>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-1">
-              {stats.approved} approved scripts • {savedStrategies.length} strategy packs
+              {stats?.approved || 0} approved scripts • {savedStrategies?.length || 0} strategy packs
             </p>
           </div>
         </div>

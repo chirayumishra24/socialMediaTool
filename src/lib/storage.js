@@ -179,20 +179,38 @@ export function getWorkflowStage(entry) {
   return entry?.status || "saved";
 }
 
-// ═══ ANALYTICS ═══
+// ═══ ANALYTICS & STATS ═══
+export function getStats() {
+  const research = getResearchHistory();
+  const content = getContentHistory();
+  return {
+    totalResearch: Array.isArray(research) ? research.length : 0,
+    totalScripts: Array.isArray(content) ? content.length : 0,
+    totalContent: Array.isArray(content) ? content.length : 0,
+    pendingApproval: (Array.isArray(research) ? research : []).filter(r => (r.status || "pending") === "pending").length,
+    approved: (Array.isArray(content) ? content : []).filter(c => c.status === "approved" || c.workflowStage === "approved").length,
+    published: (Array.isArray(content) ? content : []).filter(c => c.status === "published" || c.workflowStage === "published").length,
+    totalClicks: (Array.isArray(content) ? content : []).reduce((acc, c) => acc + (c.performance?.clicks || 0), 0),
+    totalViews: (Array.isArray(content) ? content : []).reduce((acc, c) => acc + (c.performance?.views || 0), 0),
+  };
+}
+
 export function useStats() {
   const research = useResearchHistory();
   const content = useContentHistory();
 
   return useMemo(() => {
+    const researchArr = Array.isArray(research) ? research : [];
+    const contentArr = Array.isArray(content) ? content : [];
     const stats = {
-      totalResearch: research.length,
-      pendingApproval: research.filter(r => (r.status || "pending") === "pending").length,
-      approved: research.filter(r => r.status === "approved").length,
-      published: research.filter(r => r.status === "published").length,
-      totalContent: content.length,
-      totalClicks: content.reduce((acc, c) => acc + (c.performance?.clicks || 0), 0),
-      totalViews: content.reduce((acc, c) => acc + (c.performance?.views || 0), 0),
+      totalResearch: researchArr.length,
+      totalScripts: contentArr.length,
+      totalContent: contentArr.length,
+      pendingApproval: researchArr.filter(r => (r.status || "pending") === "pending").length,
+      approved: contentArr.filter(c => c.status === "approved" || c.workflowStage === "approved").length,
+      published: contentArr.filter(c => c.status === "published" || c.workflowStage === "published").length,
+      totalClicks: contentArr.reduce((acc, c) => acc + (c.performance?.clicks || 0), 0),
+      totalViews: contentArr.reduce((acc, c) => acc + (c.performance?.views || 0), 0),
     };
     return stats;
   }, [research, content]);
@@ -202,12 +220,13 @@ export function usePerformanceInsights() {
   const content = useContentHistory();
 
   return useMemo(() => {
+    const contentArr = Array.isArray(content) ? content : [];
     const platformMap = {};
     const tagMap = {};
     let totalClicks = 0;
     let totalViews = 0;
 
-    content.forEach(c => {
+    contentArr.forEach(c => {
       const clicks = c.performance?.clicks || 0;
       const views = c.performance?.views || 0;
       const platform = c.publication?.platform || "unknown";
@@ -235,7 +254,7 @@ export function usePerformanceInsights() {
       .map(([tag, data]) => ({ tag, ...data }))
       .sort((a, b) => b.totalClicks - a.totalClicks);
 
-    const topContent = content
+    const topContent = contentArr
       .map(c => ({
         id: c.id,
         keyword: c.keyword,

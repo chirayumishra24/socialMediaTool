@@ -30,7 +30,10 @@ import {
   Save,
   LayoutGrid,
   List,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
+import { useToast } from "@/components/ui/Toast";
 import { useContentHistory, saveStrategy, setClientActiveCalendar, getClientActiveStrategy, checkStrategyCalendarAlignment } from "@/lib/storage";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -46,14 +49,14 @@ const FORMAT_COLORS = {
   Reel: "bg-purple-50 border-purple-200 text-purple-700",
   Carousel: "bg-blue-50 border-blue-200 text-blue-700",
   Static: "bg-amber-50 border-amber-200 text-amber-700",
-  Story: "bg-pink-50 border-pink-200 text-pink-700",
+  Story: "bg-emerald-50 border-emerald-200 text-emerald-700",
 };
 
 const FORMAT_BADGE_COLORS = {
-  Reel: "from-purple-500 to-fuchsia-500",
-  Carousel: "from-blue-500 to-indigo-500",
-  Static: "from-amber-500 to-orange-500",
-  Story: "from-pink-500 to-rose-500",
+  Reel: "from-purple-500 to-indigo-600",
+  Carousel: "from-blue-500 to-cyan-600",
+  Static: "from-amber-500 to-orange-600",
+  Story: "from-emerald-500 to-teal-600",
 };
 
 // ─── Helper: format date for display ───────────────────────────
@@ -67,16 +70,23 @@ function toDateStr(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
-export default function ContentCalendar({ onSelectPost, onSendToResearch, onSendToStudio }) {
+export default function ContentCalendar({ onSelectPost, onStartResearch }) {
+  const toast = useToast();
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [filterFormat, setFilterFormat] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [showAiModal, setShowAiModal] = useState(false);
   const [metaScheduled, setMetaScheduled] = useState([]);
   const [loading, setLoading] = useState(false);
   const [aiCalendar, setAiCalendar] = useState(null);
   const [generating, setGenerating] = useState(false);
   const [showInsights, setShowInsights] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState(null);
+  const [selectedMetaPost, setSelectedMetaPost] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [editingEntry, setEditingEntry] = useState(null);
   const [scheduleLoading, setScheduleLoading] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(null);
   const [savedToast, setSavedToast] = useState(false);
   const [viewMode, setViewMode] = useState("monthly"); // "weekly" | "monthly"
   const [niche, setNiche] = useState("Education / EdTech");
@@ -220,6 +230,45 @@ export default function ContentCalendar({ onSelectPost, onSendToResearch, onSend
     } finally {
       setScheduleLoading(null);
     }
+  };
+
+  // ─── Delete Meta Scheduled Post ────────────────────────────────
+  const handleDeleteScheduledPost = async (postId) => {
+    if (!postId) return;
+    setDeleteLoading(postId);
+    try {
+      const res = await fetch(`/api/meta/schedule?id=${encodeURIComponent(postId)}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setMetaScheduled((prev) => prev.filter((p) => p.id !== postId));
+        setSelectedMetaPost(null);
+        setConfirmDeleteId(null);
+        toast.success("Broadcast Cancelled", "Scheduled post removed from Meta queue.");
+      } else {
+        toast.error("Delete Failed", "Could not delete scheduled post from server.");
+      }
+    } catch (err) {
+      console.error("Failed to delete scheduled post:", err);
+      toast.error("Network Error", err.message || "Failed to cancel scheduled post.");
+    } finally {
+      setDeleteLoading(null);
+    }
+  };
+
+  // ─── Delete AI Entry from Calendar ─────────────────────────────
+  const handleDeleteAiEntry = (entry) => {
+    if (!entry || !aiCalendar?.calendar) return;
+    const key = `${entry.date}_${entry.topic?.slice(0, 20)}`;
+    const filtered = aiCalendar.calendar.filter((e) => {
+      const eKey = `${e.date}_${e.topic?.slice(0, 20)}`;
+      return eKey !== key;
+    });
+    const updatedCal = { ...aiCalendar, calendar: filtered };
+    setAiCalendar(updatedCal);
+    setClientActiveCalendar(updatedCal);
+    setSelectedEntry(null);
+    toast.info("Idea Discarded", "Calendar entry was removed.");
   };
 
   // ─── Save edited entry ─────────────────────────────────────────
@@ -597,7 +646,12 @@ export default function ContentCalendar({ onSelectPost, onSendToResearch, onSend
                         key={item.id}
                         item={item}
                         onClickAi={() => setSelectedEntry(item.aiEntry)}
+                        onClickMeta={() => setSelectedMetaPost(item.fullPost)}
                         onClickOther={() => onSelectPost && onSelectPost(item)}
+                        onDeleteMeta={(e) => {
+                          e.stopPropagation();
+                          handleDeleteScheduledPost(item.id);
+                        }}
                       />
                     ))}
                   </div>
@@ -635,7 +689,12 @@ export default function ContentCalendar({ onSelectPost, onSendToResearch, onSend
                         key={item.id}
                         item={item}
                         onClickAi={() => setSelectedEntry(item.aiEntry)}
+                        onClickMeta={() => setSelectedMetaPost(item.fullPost)}
                         onClickOther={() => onSelectPost && onSelectPost(item)}
+                        onDeleteMeta={(e) => {
+                          e.stopPropagation();
+                          handleDeleteScheduledPost(item.id);
+                        }}
                       />
                     ))}
                     {itemsToday.length === 0 && (
@@ -737,9 +796,17 @@ export default function ContentCalendar({ onSelectPost, onSendToResearch, onSend
               <div className="flex items-center gap-2 flex-wrap">
                 <button
                   onClick={() => setEditingEntry({ ...selectedEntry })}
-                  className="flex items-center gap-1.5 py-2 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 py-2 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] transition-all cursor-pointer"
                 >
                   <Edit3 className="w-3.5 h-3.5" /> Edit
+                </button>
+
+                <button
+                  onClick={() => handleDeleteAiEntry(selectedEntry)}
+                  className="flex items-center gap-1.5 py-2 px-3.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-bold text-[11px] transition-all cursor-pointer"
+                  title="Remove this suggestion from calendar"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Discard
                 </button>
 
                 {onSendToResearch && (
@@ -748,9 +815,9 @@ export default function ContentCalendar({ onSelectPost, onSendToResearch, onSend
                       onSendToResearch(selectedEntry.topic);
                       setSelectedEntry(null);
                     }}
-                    className="flex items-center gap-1.5 py-2 px-4 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 font-bold text-[11px] transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 py-2 px-3.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 font-bold text-[11px] transition-all cursor-pointer"
                   >
-                    <FlaskConical className="w-3.5 h-3.5" /> Send to R&D Lab
+                    <FlaskConical className="w-3.5 h-3.5" /> R&D Lab
                   </button>
                 )}
 
@@ -760,9 +827,9 @@ export default function ContentCalendar({ onSelectPost, onSendToResearch, onSend
                       onSendToStudio(selectedEntry.topic, selectedEntry.format);
                       setSelectedEntry(null);
                     }}
-                    className="flex items-center gap-1.5 py-2 px-4 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold text-[11px] transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 py-2 px-3.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold text-[11px] transition-all cursor-pointer"
                   >
-                    <FileText className="w-3.5 h-3.5" /> Generate Script
+                    <FileText className="w-3.5 h-3.5" /> Script
                   </button>
                 )}
 
@@ -779,6 +846,147 @@ export default function ContentCalendar({ onSelectPost, onSendToResearch, onSend
                   Schedule
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ Scheduled Meta Post Detail & Delete Modal ═══ */}
+      {selectedMetaPost && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-6"
+          onClick={() => setSelectedMetaPost(null)}
+        >
+          <div
+            className="bg-white dark:bg-slate-900 rounded-[2rem] max-w-lg w-full shadow-2xl p-6 space-y-5 max-h-[85vh] overflow-y-auto border border-slate-200 dark:border-slate-800 animate-fade-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-black">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-black text-slate-900 dark:text-white">Scheduled Meta Post</h3>
+                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
+                      selectedMetaPost.status === "published"
+                        ? "bg-emerald-100 text-emerald-700"
+                        : selectedMetaPost.status === "failed"
+                        ? "bg-rose-100 text-rose-700"
+                        : "bg-indigo-100 text-indigo-700"
+                    }`}>
+                      {selectedMetaPost.status || "queued"}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+                    {selectedMetaPost.scheduledAt
+                      ? new Date(selectedMetaPost.scheduledAt).toLocaleString()
+                      : "Scheduled Broadcast"}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedMetaPost(null)}
+                className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4 text-slate-400" />
+              </button>
+            </div>
+
+            {/* Target Channels */}
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Target Channels:</span>
+              <div className="flex gap-1.5">
+                {(selectedMetaPost.platforms || ["instagram"]).map((p) => (
+                  <span key={p} className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-700 dark:text-slate-200 capitalize">
+                    {p}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Media Preview if attached */}
+            {selectedMetaPost.mediaUrl && (
+              <div className="rounded-2xl overflow-hidden bg-slate-900 border border-slate-200 dark:border-slate-800">
+                <img
+                  src={selectedMetaPost.mediaUrl}
+                  alt="Scheduled media attachment"
+                  referrerPolicy="no-referrer"
+                  className="w-full h-44 object-cover"
+                />
+              </div>
+            )}
+
+            {/* Caption */}
+            <div className="rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-4">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Post Caption</p>
+              <p className="text-xs text-slate-800 dark:text-slate-200 font-medium leading-relaxed whitespace-pre-wrap">
+                {selectedMetaPost.caption}
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-3">
+              {confirmDeleteId === selectedMetaPost.id ? (
+                <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-2xl p-3.5 flex items-center justify-between gap-3 animate-fade-in">
+                  <div className="flex items-center gap-2 text-rose-700 dark:text-rose-300">
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <span className="text-xs font-bold">Cancel and delete this scheduled broadcast?</span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => setConfirmDeleteId(null)}
+                      className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 font-bold text-xs border border-slate-200 dark:border-slate-700 transition-all cursor-pointer"
+                    >
+                      Keep Post
+                    </button>
+                    <button
+                      onClick={() => handleDeleteScheduledPost(selectedMetaPost.id)}
+                      disabled={deleteLoading === selectedMetaPost.id}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition-all shadow-sm cursor-pointer disabled:opacity-50"
+                    >
+                      {deleteLoading === selectedMetaPost.id ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-3 h-3" />
+                      )}
+                      <span>Confirm Delete</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  {/* Delete Scheduled Post trigger */}
+                  <button
+                    onClick={() => setConfirmDeleteId(selectedMetaPost.id)}
+                    className="flex items-center gap-1.5 py-2.5 px-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 font-bold text-xs transition-all cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete Scheduled Post</span>
+                  </button>
+
+                  <div className="flex items-center gap-2">
+                    {onSelectPost && (
+                      <button
+                        onClick={() => {
+                          onSelectPost({
+                            caption: selectedMetaPost.caption,
+                            scheduledDate: selectedMetaPost.scheduledAt?.slice(0, 10),
+                            mediaUrl: selectedMetaPost.mediaUrl,
+                          });
+                          setSelectedMetaPost(null);
+                        }}
+                        className="flex items-center gap-1.5 py-2.5 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs transition-all cursor-pointer"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                        <span>Edit in Composer</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -915,7 +1123,7 @@ export default function ContentCalendar({ onSelectPost, onSendToResearch, onSend
 
 // ─── Sub-components ────────────────────────────────────────────
 
-function CalendarEntryChip({ item, onClickAi, onClickOther }) {
+function CalendarEntryChip({ item, onClickAi, onClickMeta, onClickOther, onDeleteMeta }) {
   const isAi = item.type === "ai";
   const isMeta = item.type === "meta";
   const isPublished = item.status === "published";
@@ -954,13 +1162,24 @@ function CalendarEntryChip({ item, onClickAi, onClickOther }) {
 
   return (
     <div
-      onClick={onClickOther}
-      className={`p-1.5 rounded-lg border text-[9px] font-bold ${badgeColor} cursor-pointer hover:shadow-sm transition-all`}
+      onClick={isMeta ? onClickMeta : onClickOther}
+      className={`p-1.5 rounded-lg border text-[9px] font-bold ${badgeColor} cursor-pointer hover:shadow-sm transition-all group/chip relative`}
       title={`${item.title} (${item.status})`}
     >
-      <div className="truncate flex items-center gap-1">
-        {isMeta && (isPublished ? <Check className="w-2 h-2 shrink-0" /> : <Clock className="w-2 h-2 shrink-0" />)}
-        {item.title}
+      <div className="truncate flex items-center justify-between gap-1">
+        <div className="truncate flex items-center gap-1">
+          {isMeta && (isPublished ? <Check className="w-2 h-2 shrink-0" /> : <Clock className="w-2 h-2 shrink-0" />)}
+          {item.title}
+        </div>
+        {isMeta && onDeleteMeta && (
+          <button
+            onClick={onDeleteMeta}
+            className="opacity-0 group-hover/chip:opacity-100 p-0.5 rounded hover:bg-rose-100 text-rose-600 transition-opacity cursor-pointer"
+            title="Delete scheduled post"
+          >
+            <Trash2 className="w-2.5 h-2.5" />
+          </button>
+        )}
       </div>
       <div className="mt-0.5 uppercase opacity-80 flex items-center justify-between">
         <span>{item.format?.replace(/_/g, " ")}</span>
@@ -970,8 +1189,9 @@ function CalendarEntryChip({ item, onClickAi, onClickOther }) {
   );
 }
 
-function WeeklyEntryCard({ item, onClickAi, onClickOther }) {
+function WeeklyEntryCard({ item, onClickAi, onClickMeta, onClickOther, onDeleteMeta }) {
   const isAi = item.type === "ai";
+  const isMeta = item.type === "meta";
 
   if (isAi) {
     const FormatIcon = FORMAT_ICONS[item.format] || Film;
@@ -1002,10 +1222,21 @@ function WeeklyEntryCard({ item, onClickAi, onClickOther }) {
 
   return (
     <div
-      onClick={onClickOther}
-      className="rounded-2xl border border-border bg-white p-3 cursor-pointer hover:shadow-sm transition-all"
+      onClick={isMeta ? onClickMeta : onClickOther}
+      className="rounded-2xl border border-border bg-white p-3 cursor-pointer hover:shadow-sm transition-all group/wcard relative"
     >
-      <p className="text-[11px] font-bold text-txt line-clamp-2">{item.title}</p>
+      <div className="flex items-start justify-between gap-1">
+        <p className="text-[11px] font-bold text-txt line-clamp-2">{item.title}</p>
+        {isMeta && onDeleteMeta && (
+          <button
+            onClick={onDeleteMeta}
+            className="opacity-0 group-hover/wcard:opacity-100 p-1 rounded-lg hover:bg-rose-50 text-rose-500 transition-opacity cursor-pointer shrink-0"
+            title="Delete scheduled post"
+          >
+            <Trash2 className="w-3 h-3" />
+          </button>
+        )}
+      </div>
       <div className="mt-1 flex items-center justify-between">
         <span className="text-[9px] text-txt-muted font-medium">{item.format?.replace(/_/g, " ")}</span>
         <span className="text-[8px] font-black text-indigo-500">{item.type === "meta" ? "Queued" : "Draft"}</span>

@@ -25,6 +25,7 @@ import {
   Globe,
   MoreHorizontal,
   MessageSquare,
+  Upload,
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 
@@ -44,6 +45,10 @@ export default function PostComposer({ onPublished, initialContent = "", prefill
   const [selectedPlatforms, setSelectedPlatforms] = useState(["instagram"]);
   const [mediaUrl, setMediaUrl] = useState("");
   const [mediaPreview, setMediaPreview] = useState("");
+  const [isVideo, setIsVideo] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [showUrlModal, setShowUrlModal] = useState(false);
+  const [urlInput, setUrlInput] = useState("");
   const [scheduling, setScheduling] = useState(Boolean(prefillDate));
   const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split("T")[0];
   const [scheduledDate, setScheduledDate] = useState(prefillDate || tomorrow);
@@ -58,7 +63,16 @@ export default function PostComposer({ onPublished, initialContent = "", prefill
       setScheduledDate(prefillDate);
       setScheduling(true);
     }
-  }, [initialContent, prefillDate]);
+    if (postToEdit) {
+      if (postToEdit.caption || postToEdit.content) setCaption(postToEdit.caption || postToEdit.content);
+      const media = postToEdit.mediaUrl || postToEdit.thumbnail || postToEdit.url;
+      if (media) {
+        setMediaUrl(media);
+        setMediaPreview(media);
+        setIsVideo(!!(postToEdit.isVideo || media.match(/\.(mp4|mov|webm)/i)));
+      }
+    }
+  }, [initialContent, prefillDate, postToEdit]);
 
   const togglePlatform = (platformId) => {
     setSelectedPlatforms((prev) =>
@@ -94,7 +108,7 @@ export default function PostComposer({ onPublished, initialContent = "", prefill
           audience: "general",
         }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (data.script) {
         setCaption(data.script);
         toast.ai("Caption Enhanced", "Added emotional hooks, emojis, and hashtags.");
@@ -132,7 +146,7 @@ export default function PostComposer({ onPublished, initialContent = "", prefill
         body: JSON.stringify(body),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
         toast.error("Publish Failed", data.error || "Could not publish post.");
@@ -153,10 +167,45 @@ export default function PostComposer({ onPublished, initialContent = "", prefill
   const handleMediaUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setImageError(false);
+
+    const isVid = file.type.startsWith("video/") || /\.(mp4|mov|webm|mkv)$/i.test(file.name);
+    setIsVideo(isVid);
+
     const reader = new FileReader();
-    reader.onload = (ev) => setMediaPreview(ev.target.result);
+    reader.onload = (ev) => {
+      if (ev.target?.result) {
+        setMediaPreview(ev.target.result);
+      }
+    };
     reader.readAsDataURL(file);
-    setMediaUrl(URL.createObjectURL(file));
+
+    try {
+      const blobUrl = URL.createObjectURL(file);
+      setMediaUrl(blobUrl);
+    } catch {
+      // Fallback to data url
+    }
+  };
+
+  const handleApplyUrl = () => {
+    if (!urlInput.trim()) return;
+    setImageError(false);
+    const cleanUrl = urlInput.trim();
+    const isVid = /\.(mp4|mov|webm)(\?.*)?$/i.test(cleanUrl);
+    setIsVideo(isVid);
+    setMediaPreview(cleanUrl);
+    setMediaUrl(cleanUrl);
+    setShowUrlModal(false);
+    setUrlInput("");
+    toast.success("Media Attached", "External media URL linked to post.");
+  };
+
+  const clearMedia = () => {
+    setMediaPreview("");
+    setMediaUrl("");
+    setImageError(false);
+    setIsVideo(false);
   };
 
   return (
@@ -259,31 +308,98 @@ export default function PostComposer({ onPublished, initialContent = "", prefill
         </div>
 
         {/* Media Upload Box */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 shadow-sm">
-          <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
-            Media Asset (Photo / Reel / Carousel Cover)
-          </label>
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 shadow-sm space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              Media Asset (Photo / Reel / Carousel Cover)
+            </label>
+            <button
+              onClick={() => setShowUrlModal(!showUrlModal)}
+              className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <Globe className="w-3 h-3" />
+              <span>{showUrlModal ? "Cancel" : "Attach via URL"}</span>
+            </button>
+          </div>
 
-          {mediaPreview ? (
-            <div className="relative rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-              <img src={mediaPreview} alt="Upload preview" className="w-full h-52 object-cover" />
+          {showUrlModal && (
+            <div className="flex items-center gap-2 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 animate-fade-in">
+              <input
+                type="url"
+                value={urlInput}
+                onChange={(e) => setUrlInput(e.target.value)}
+                placeholder="Paste direct image or video URL (https://...)"
+                className="flex-1 px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 outline-none"
+              />
               <button
-                onClick={() => {
-                  setMediaPreview("");
-                  setMediaUrl("");
-                }}
-                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 cursor-pointer transition-all"
+                onClick={handleApplyUrl}
+                className="px-3.5 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 cursor-pointer transition-all"
               >
-                <X className="w-4 h-4" />
+                Apply
               </button>
             </div>
+          )}
+
+          {mediaPreview ? (
+            <div className="relative rounded-2xl overflow-hidden bg-slate-900 border border-slate-200 dark:border-slate-800 group">
+              {isVideo ? (
+                <video
+                  src={mediaPreview}
+                  controls
+                  className="w-full h-56 object-contain bg-black"
+                />
+              ) : (
+                <img
+                  src={mediaPreview}
+                  alt="Post media preview"
+                  referrerPolicy="no-referrer"
+                  crossOrigin="anonymous"
+                  onError={() => setImageError(true)}
+                  className={`w-full h-56 object-cover transition-opacity duration-300 ${
+                    imageError ? "opacity-30" : "opacity-100"
+                  }`}
+                />
+              )}
+
+              {imageError && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-slate-900/80 text-white">
+                  <AlertCircle className="w-8 h-8 text-amber-400 mb-2" />
+                  <p className="text-xs font-bold text-slate-200">Media preview couldn't load</p>
+                  <p className="text-[10px] text-slate-400 mt-1 max-w-xs">
+                    The external host may restrict hotlinking. The URL is still saved.
+                  </p>
+                </div>
+              )}
+
+              {/* Badges & Actions */}
+              <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-[10px] font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+                {isVideo ? "🎥 Video / Reel" : "🖼️ Photo"}
+              </div>
+
+              <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                <label className="w-8 h-8 rounded-full bg-black/70 backdrop-blur-md text-white flex items-center justify-center hover:bg-black cursor-pointer transition-all">
+                  <Upload className="w-4 h-4" />
+                  <input type="file" accept="image/*,video/*" onChange={handleMediaUpload} className="hidden" />
+                </label>
+                <button
+                  onClick={clearMedia}
+                  className="w-8 h-8 rounded-full bg-rose-600/90 backdrop-blur-md text-white flex items-center justify-center hover:bg-rose-700 cursor-pointer transition-all"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
           ) : (
-            <label className="flex flex-col items-center justify-center h-32 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-indigo-400 hover:bg-indigo-50/20 transition-all cursor-pointer">
-              <ImageIcon className="w-8 h-8 text-slate-300 dark:text-slate-600 mb-2" />
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-bold">
-                Click or drag &amp; drop to upload media
+            <label className="flex flex-col items-center justify-center h-36 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-indigo-400 hover:bg-indigo-50/20 dark:hover:bg-indigo-950/20 transition-all cursor-pointer group">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-2 group-hover:scale-110 transition-transform">
+                <ImageIcon className="w-5 h-5" />
+              </div>
+              <span className="text-xs text-slate-700 dark:text-slate-200 font-bold">
+                Click or drag &amp; drop media asset
               </span>
-              <span className="text-[10px] text-slate-400 mt-0.5">JPG, PNG, MP4 • Up to 50MB</span>
+              <span className="text-[10px] text-slate-400 mt-0.5">
+                PNG, JPG, WebP, MP4, MOV • Up to 50MB
+              </span>
               <input type="file" accept="image/*,video/*" onChange={handleMediaUpload} className="hidden" />
             </label>
           )}
@@ -436,8 +552,19 @@ export default function PostComposer({ onPublished, initialContent = "", prefill
 
                 {/* FB Media Area */}
                 <div className="w-full h-36 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-900 flex items-center justify-center overflow-hidden border border-slate-200/80 dark:border-slate-800 relative">
-                  {mediaPreview ? (
-                    <img src={mediaPreview} alt="" className="w-full h-full object-cover" />
+                  {mediaPreview && !imageError ? (
+                    isVideo ? (
+                      <video src={mediaPreview} autoPlay muted loop playsInline className="w-full h-full object-cover" />
+                    ) : (
+                      <img
+                        src={mediaPreview}
+                        alt="Facebook Post Media"
+                        referrerPolicy="no-referrer"
+                        crossOrigin="anonymous"
+                        onError={() => setImageError(true)}
+                        className="w-full h-full object-cover"
+                      />
+                    )
                   ) : (
                     <div className="flex flex-col items-center gap-1 text-slate-400">
                       <ImageIcon className="w-6 h-6 text-blue-500" />
@@ -498,8 +625,19 @@ export default function PostComposer({ onPublished, initialContent = "", prefill
 
                 {/* Media Area in Preview */}
                 <div className="w-full h-44 rounded-xl bg-gradient-to-br from-slate-100 to-indigo-50 dark:from-slate-800 dark:to-slate-900 flex items-center justify-center overflow-hidden border border-slate-100 dark:border-slate-800 relative">
-                  {mediaPreview ? (
-                    <img src={mediaPreview} alt="" className="w-full h-full object-cover" />
+                  {mediaPreview && !imageError ? (
+                    isVideo ? (
+                      <video src={mediaPreview} autoPlay muted loop playsInline className="w-full h-full object-cover" />
+                    ) : (
+                      <img
+                        src={mediaPreview}
+                        alt="Instagram Reel Preview"
+                        referrerPolicy="no-referrer"
+                        crossOrigin="anonymous"
+                        onError={() => setImageError(true)}
+                        className="w-full h-full object-cover"
+                      />
+                    )
                   ) : (
                     <div className="flex flex-col items-center gap-2 text-slate-400">
                       <Flame className="w-8 h-8 text-amber-500" />

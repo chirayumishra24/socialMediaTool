@@ -13,28 +13,45 @@ const RAPIDAPI_HOSTS = [
   { host: "instagram-scraper-api2.p.rapidapi.com", profilePath: "/v1/info", postsPath: "/v1/posts", postsMethod: "GET" },
 ];
 
+import { scrapeInstagramProfileWithScraperApi } from "./scraper-api";
+
 /**
  * Scrape a public Instagram profile.
  * @param {string} username
  * @returns {Promise<{profile, posts, analysis, source}>}
  */
 export async function scrapeProfile(username) {
-  const apiKey = process.env.RAPIDAPI_KEY;
-  if (!apiKey) throw new Error("RAPIDAPI_KEY is not configured");
-
   const cleanUsername = username.replace(/^@/, "").trim();
   if (!cleanUsername) throw new Error("Username is required");
 
-  // Try each API host
-  for (const api of RAPIDAPI_HOSTS) {
-    try {
-      const result = await tryApi(api, cleanUsername, apiKey);
-      if (result && result.posts.length > 0) {
-        return { ...result, source: api.host };
+  // 1. Try ScraperAPI first (uses residential proxies to scrape live profile metadata)
+  try {
+    const scraped = await scrapeInstagramProfileWithScraperApi(cleanUsername);
+    if (scraped && (scraped.followers > 0 || scraped.fullName)) {
+      return {
+        profile: scraped,
+        posts: [],
+        analysis: computeAnalytics([], scraped),
+        source: "scraperapi",
+      };
+    }
+  } catch (err) {
+    console.warn(`[IG Scraper] ScraperAPI failed for @${cleanUsername}:`, err.message);
+  }
+
+  // 2. Try RapidAPI hosts if key exists
+  const apiKey = process.env.RAPIDAPI_KEY;
+  if (apiKey) {
+    for (const api of RAPIDAPI_HOSTS) {
+      try {
+        const result = await tryApi(api, cleanUsername, apiKey);
+        if (result && result.posts.length > 0) {
+          return { ...result, source: api.host };
+        }
+      } catch (err) {
+        console.warn(`[IG Scraper] ${api.host} failed:`, err.message);
+        continue;
       }
-    } catch (err) {
-      console.warn(`[IG Scraper] ${api.host} failed:`, err.message);
-      continue;
     }
   }
 
