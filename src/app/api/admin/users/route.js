@@ -33,7 +33,7 @@ export async function POST(req) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     const { email, password, name, roles, isAdmin: makeAdmin } = body;
 
     if (!email || !password || !roles) {

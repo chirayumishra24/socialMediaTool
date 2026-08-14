@@ -11,7 +11,7 @@ export async function POST(req) {
       keyword, format, style, audience, location, research,
       brandVoice, performanceData,
       bundle = false, bundleFormats = ["instagram_reel", "x_thread", "linkedin_post"]
-    } = await req.json();
+    } = await req.json().catch(() => ({}));
 
     if (!keyword) {
       return NextResponse.json({ error: "Missing keyword" }, { status: 400 });

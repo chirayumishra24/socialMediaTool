@@ -3,7 +3,7 @@ import { authenticate } from "@/lib/db";
 
 export async function POST(req) {
   try {
-    const { email, password } = await req.json();
+    const { email, password } = await req.json().catch(() => ({}));
 
     if (!email || !password) {
       return NextResponse.json(

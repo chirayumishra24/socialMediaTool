@@ -10,7 +10,7 @@ export const maxDuration = 60; // IG publishing status polling can take some tim
  */
 export async function POST(req) {
   try {
-    const { caption, platforms, mediaUrl } = await req.json();
+    const { caption, platforms, mediaUrl } = await req.json().catch(() => ({}));
 
     if (!caption || typeof caption !== "string") {
       return NextResponse.json({ error: "Caption is required" }, { status: 400 });

@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { MonitorPlay, Camera, Hash, MessageSquare, Newspaper, Zap, BarChart2, Search, Globe, Heart, ArrowRight, Flame, Lightbulb, Target, Loader2, Sparkles, Compass, Repeat2, Play, User, ExternalLink, MessageCircle } from "lucide-react";
+import { useToast } from "@/components/ui/Toast";
 
 const PLATFORMS_LIST = [
   { id: "youtube", label: "YouTube", icon: MonitorPlay },
@@ -35,6 +36,7 @@ const LOCATIONS = [
 ];
 
 export default function ResearchLab({ onResearchComplete, onGoToStudio, initialKeyword }) {
+  const toast = useToast();
   const [keyword, setKeyword] = useState(initialKeyword || "");
   useEffect(() => { if (initialKeyword) setKeyword(initialKeyword); }, [initialKeyword]);
 
@@ -55,6 +57,7 @@ export default function ResearchLab({ onResearchComplete, onGoToStudio, initialK
     if (!keyword.trim()) return;
     if (sourceMode === "custom" && platformTargets.length === 0) {
       setError("Select at least one source before running R&D.");
+      toast.warning("Source Selection", "Select at least one platform source.");
       return;
     }
     setLoading(true); setError(null); setResult(null); setPlatformData(null); setTopKeywords(null);
@@ -72,11 +75,12 @@ export default function ResearchLab({ onResearchComplete, onGoToStudio, initialK
           language: "en",
         }),
       });
-      if (!res.ok) { const e = await res.json(); throw new Error(e.error || "Research failed"); }
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { throw new Error(data.error || "Research failed"); }
       setResult(data.research);
       setPlatformData(data.platformData);
       setTopKeywords(data.topKeywords || []);
+      toast.success("R&D Intelligence Completed", `Analyzed signals for "${keyword}"`);
 
       let savedResearch = null;
       try {
@@ -99,9 +103,12 @@ export default function ResearchLab({ onResearchComplete, onGoToStudio, initialK
         topKeywords: data.topKeywords || [], location, depth, sourceMode, platformTargets,
         researchedAt: new Date().toISOString(),
       });
-    } catch (e) { setError(e.message); }
+    } catch (e) { 
+      setError(e.message); 
+      toast.error("Research Failed", e.message);
+    }
     finally { setLoading(false); }
-  }, [depth, keyword, location, onResearchComplete, platformTargets, sourceMode]);
+  }, [depth, keyword, location, onResearchComplete, platformTargets, sourceMode, toast]);
 
   const toggleTarget = (targetId) => {
     setPlatformTargets((current) => (

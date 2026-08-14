@@ -30,8 +30,10 @@ import {
   Check
 } from "lucide-react";
 import { saveAnalysis, useAnalysisHistory, setClientActiveStrategy, getClientActiveCalendar, checkStrategyCalendarAlignment } from "@/lib/storage";
+import { useToast } from "@/components/ui/Toast";
 
 export default function InstagramAnalyzer() {
+  const toast = useToast();
   // ─── State ──────────────────────────────────────────────
   const [username, setUsername] = useState("skillizee.io");
   const [scraping, setScraping] = useState(false);
@@ -57,6 +59,7 @@ export default function InstagramAnalyzer() {
       strategy,
     });
     setSavedToast(true);
+    toast.success("Strategy Saved", `Saved profile audit for @${profileData.profile?.username}`);
     setTimeout(() => setSavedToast(false), 3000);
   };
 
@@ -64,6 +67,7 @@ export default function InstagramAnalyzer() {
     if (!strategy) return;
     const safeUser = profileData?.profile?.username || "instagram";
     const filename = `${safeUser}-marketing-strategy.doc`;
+    toast.info("Downloading Document", `Exporting ${filename}...`);
 
     const html = `
       <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">

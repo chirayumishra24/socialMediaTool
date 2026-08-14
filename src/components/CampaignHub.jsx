@@ -16,8 +16,10 @@ import {
   Loader2
 } from "lucide-react";
 import { exportToCSV } from "@/lib/export/excel-exporter";
+import { useToast } from "@/components/ui/Toast";
 
 export default function CampaignHub() {
+  const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [campaignData, setCampaignData] = useState(null);
 
@@ -135,6 +137,7 @@ export default function CampaignHub() {
       "Campaign Status": c.status,
     }));
     exportToCSV("Skillizee_Campaign_Performance_Report", rows);
+    toast.success("Report Exported", "Skillizee_Campaign_Performance_Report.csv downloaded.");
   };
 
   const handleExportPostsExcel = () => {
@@ -148,11 +151,11 @@ export default function CampaignHub() {
       "Saves": p.saves || 0,
       "Shares": p.shares || 0,
       "Published Date": p.timestamp ? new Date(p.timestamp).toLocaleDateString() : "N/A",
-      "Hashtags": (p.hashtags || []).join(" "),
-      "Caption": p.caption.replace(/\n/g, " "),
-      "Instagram URL": p.url,
+      "Hashtags": (p.hashtags || []).join(", "),
+      "Caption Snippet": (p.caption || "").slice(0, 100).replace(/\n/g, " "),
     }));
-    exportToCSV("Skillizee_Posts_Analytics_Report", rows);
+    exportToCSV("Skillizee_Live_Instagram_Posts_Report", rows);
+    toast.success("Posts Exported", "Skillizee_Live_Instagram_Posts_Report.csv downloaded.");
   };
 
   if (loading) {

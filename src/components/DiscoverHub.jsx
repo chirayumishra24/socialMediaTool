@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { Search, MonitorPlay, Camera, Hash, MessageSquare, Newspaper, Eye, Heart, ExternalLink, Zap, TrendingUp, Bell, ArrowRight } from "lucide-react";
+import { useToast } from "@/components/ui/Toast";
 
 const PLATFORMS = [
   { id: "youtube", label: "YouTube", icon: MonitorPlay, color: "bg-red-500/15 text-red-400 border-red-500/20" },
@@ -19,6 +20,7 @@ const NEWS_SIGNALS = [
 ];
 
 export default function DiscoverHub({ onStartResearch }) {
+  const toast = useToast();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -37,9 +39,13 @@ export default function DiscoverHub({ onStartResearch }) {
       if (!res.ok) throw new Error("Discovery failed");
       const data = await res.json();
       setResults(data.results || []);
-    } catch (e) { setError(e.message); }
+      toast.success("Signals Found", `Retrieved ${data.results?.length || 0} trending signals for "${term}"`);
+    } catch (e) { 
+      setError(e.message); 
+      toast.error("Discovery Error", e.message);
+    }
     finally { setLoading(false); }
-  }, [query, selectedPlatforms]);
+  }, [query, selectedPlatforms, toast]);
 
   return (
     <div className="p-6 lg:p-10 max-w-6xl mx-auto space-y-10 animate-fade-in">

@@ -78,9 +78,12 @@ async function scrapeYouTube(query, language = "en") {
     });
     const html = await res.text();
     const m = html.match(/var ytInitialData = ({.*?});<\/script>/s);
-    if (!m) return [];
-
-    const data = JSON.parse(m[1]);
+    let data;
+    try {
+      data = JSON.parse(m[1]);
+    } catch {
+      return [];
+    }
     const contents = data?.contents?.twoColumnSearchResultsRenderer?.primaryContents?.sectionListRenderer?.contents?.[0]?.itemSectionRenderer?.contents || [];
 
     return contents.filter((c) => c.videoRenderer).slice(0, 10).map((c) => {

@@ -38,7 +38,7 @@ export async function GET(req) {
  */
 export async function POST(req) {
   try {
-    const { caption, platforms, mediaUrl, scheduledAt } = await req.json();
+    const { caption, platforms, mediaUrl, scheduledAt } = await req.json().catch(() => ({}));
 
     if (!caption || typeof caption !== "string") {
       return NextResponse.json({ error: "Caption is required" }, { status: 400 });

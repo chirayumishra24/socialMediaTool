@@ -1,12 +1,42 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { MonitorPlay, Smartphone, Clapperboard, Layers, Hash, Briefcase, BookOpen, PenTool, Sparkles, Bot, Tag, Edit3, Loader2, Copy, FileText, Globe, Flame, Wand2, X, Save, CheckCircle2 } from "lucide-react";
+import {
+  MonitorPlay,
+  Smartphone,
+  Clapperboard,
+  Layers,
+  Hash,
+  Briefcase,
+  BookOpen,
+  PenTool,
+  Sparkles,
+  Bot,
+  Tag,
+  Edit3,
+  Loader2,
+  Copy,
+  FileText,
+  Globe,
+  Flame,
+  Wand2,
+  X,
+  Save,
+  CheckCircle2,
+  Send,
+  Sliders,
+  Eye,
+  Check,
+  RefreshCw,
+  Share2,
+} from "lucide-react";
 import { saveContent } from "@/lib/storage";
+import { useToast } from "@/components/ui/Toast";
+import SocialPreview from "./SocialPreview";
 
 const FORMATS = [
   { id: "youtube_long", label: "YT Long", icon: MonitorPlay, desc: "8-20min" },
-  { id: "youtube_short", label: "YT Short", icon: Smartphone, desc: "15-60s" },
+  { id: "youtube_short", label: "YT Shorts", icon: Smartphone, desc: "15-60s" },
   { id: "instagram_reel", label: "IG Reel", icon: Clapperboard, desc: "15-90s" },
   { id: "instagram_carousel", label: "IG Carousel", icon: Layers, desc: "8-12 slides" },
   { id: "x_thread", label: "X Thread", icon: Hash, desc: "5-15 tweets" },
@@ -16,19 +46,22 @@ const FORMATS = [
 
 const STYLES = ["professional", "casual", "hinglish", "story", "data", "provocative", "educational"];
 
-export default function ContentStudio({ researchContext, onSchedulePost }) {
+export default function ContentStudio({ researchContext, onSchedulePost, onSendToApproval }) {
+  const toast = useToast();
   const [keyword, setKeyword] = useState("");
   const [audience, setAudience] = useState("");
-  const [format, setFormat] = useState("youtube_long");
+  const [format, setFormat] = useState("instagram_reel");
   const [style, setStyle] = useState("professional");
   const [location, setLocation] = useState("IN");
   const [loading, setLoading] = useState(false);
+  const [refining, setRefining] = useState(false);
   const [result, setResult] = useState(null);
   const [bundleResult, setBundleResult] = useState(null);
   const [error, setError] = useState(null);
   const [tab, setTab] = useState("script");
   const [isSaved, setIsSaved] = useState(false);
   const [performanceData, setPerformanceData] = useState([]);
+  const [editableScript, setEditableScript] = useState("");
 
   useEffect(() => {
     fetch("/api/meta/insights")
@@ -50,445 +83,571 @@ export default function ContentStudio({ researchContext, onSchedulePost }) {
     }
   }, [researchContext]);
 
-  const handleGenerate = useCallback(async (isBundle = false) => {
-    if (!keyword.trim()) return;
-    setLoading(true); setError(null); setResult(null); setBundleResult(null); setIsSaved(false);
-    try {
-      const researchSummary = researchContext?.research ? {
-        summary: researchContext.research.executiveSummary
-          || researchContext.research.marketLandscape?.summary
-          || researchContext.research.strategyBlueprint?.concept
-          || "",
-        angles: researchContext.research.suggestedAngles?.length
-          ? researchContext.research.suggestedAngles
-          : researchContext.research.trendingAngles || [],
-        hooks: researchContext.research.suggestedHooks?.length
-          ? researchContext.research.suggestedHooks
-          : (researchContext.research.trendingAngles || []).map((angle) => angle.hookIdea).filter(Boolean),
-        recommendedStrategy: researchContext.research.recommendedStrategy || null,
-        viralCheck: researchContext.research.viralCheck || null,
-        winningPatterns: researchContext.research.winningPatterns || [],
-        trendSignals: researchContext.research.trendSignals || [],
-        evidence: (researchContext.research.sourceEvidence || []).slice(0, 4),
-        topKeywords: (researchContext.topKeywords || []).slice(0, 10).map(k => k.keyword || k),
-      } : null;
+  useEffect(() => {
+    if (result?.script) {
+      setEditableScript(result.script);
+    }
+  }, [result]);
 
+  const handleGenerate = useCallback(
+    async (isBundle = false) => {
+      if (!keyword.trim()) {
+        toast.warning("Topic Required", "Please enter a topic or select a research angle.");
+        return;
+      }
+      setLoading(true);
+      setError(null);
+      setResult(null);
+      setBundleResult(null);
+      setIsSaved(false);
+
+      try {
+        const researchSummary = researchContext?.research
+          ? {
+              summary:
+                researchContext.research.executiveSummary ||
+                researchContext.research.marketLandscape?.summary ||
+                researchContext.research.strategyBlueprint?.concept ||
+                "",
+              angles: researchContext.research.suggestedAngles?.length
+                ? researchContext.research.suggestedAngles
+                : researchContext.research.trendingAngles || [],
+              hooks: researchContext.research.suggestedHooks?.length
+                ? researchContext.research.suggestedHooks
+                : (researchContext.research.trendingAngles || []).map((angle) => angle.hookIdea).filter(Boolean),
+              recommendedStrategy: researchContext.research.recommendedStrategy || null,
+              viralCheck: researchContext.research.viralCheck || null,
+              winningPatterns: researchContext.research.winningPatterns || [],
+              trendSignals: researchContext.research.trendSignals || [],
+              evidence: (researchContext.research.sourceEvidence || []).slice(0, 4),
+              topKeywords: (researchContext.topKeywords || []).slice(0, 10).map((k) => k.keyword || k),
+            }
+          : null;
+
+        const res = await fetch("/api/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            keyword,
+            format,
+            style,
+            audience,
+            location,
+            research: researchSummary,
+            bundle: isBundle,
+            performanceData,
+          }),
+        });
+        if (!res.ok) {
+          const failure = await res.json().catch(() => ({}));
+          throw new Error(failure.error || "Generation failed");
+        }
+        const data = await res.json();
+        if (data.bundle) {
+          setBundleResult(data.scripts);
+          const firstFormat = Object.keys(data.scripts)[0];
+          setFormat(firstFormat);
+          setResult({ script: data.scripts[firstFormat], metadata: data.metadata });
+          toast.success("Strategy Bundle Created", "Multi-format content generated simultaneously.");
+        } else {
+          setResult(data);
+          toast.success("Script Generated", `Successfully formatted for ${format.replace("_", " ")}.`);
+        }
+      } catch (e) {
+        setError(e.message);
+        toast.error("Generation Error", e.message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [keyword, format, style, audience, location, researchContext, performanceData, toast]
+  );
+
+  const handleRefineScript = async (modifier) => {
+    if (!editableScript.trim()) return;
+    setRefining(true);
+    try {
+      const prompt = `Refine this content for ${format}. Instruction: ${modifier}.\n\nOriginal Content:\n${editableScript}`;
       const res = await fetch("/api/generate", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ keyword, format, style, audience, location, research: researchSummary, bundle: isBundle, performanceData }),
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          keyword: prompt.substring(0, 250),
+          format,
+          style,
+          audience,
+        }),
       });
-      if (!res.ok) {
-        const failure = await res.json().catch(() => ({}));
-        throw new Error(failure.error || "Generation failed");
-      }
       const data = await res.json();
-      if (data.bundle) {
-        setBundleResult(data.scripts);
-        const firstFormat = Object.keys(data.scripts)[0];
-        setFormat(firstFormat);
-        setResult({ script: data.scripts[firstFormat], metadata: data.metadata });
-      } else {
-        setResult(data);
+      if (data.script) {
+        setEditableScript(data.script);
+        setResult((prev) => ({ ...prev, script: data.script }));
+        toast.ai("Script Refined", `Applied: "${modifier}"`);
       }
-    } catch (e) { setError(e.message); }
-    finally { setLoading(false); }
-  }, [keyword, format, style, audience, location, researchContext, performanceData]);
+    } catch (e) {
+      toast.error("Refine Failed", e.message);
+    } finally {
+      setRefining(false);
+    }
+  };
 
   const handleSave = () => {
-    if (!result) return;
+    if (!result && !editableScript) return;
     try {
       saveContent({
-        keyword, format,
-        script: result.script,
-        originalScript: result.originalScript,
-        seo: result.seo || {},
-        editing: result.editing || {},
+        keyword,
+        format,
+        script: editableScript || result?.script,
+        originalScript: result?.originalScript || editableScript,
+        seo: result?.seo || {},
+        editing: result?.editing || {},
         research: researchContext?.research || null,
         metadata: { keyword, format, style, audience, location, researchId: researchContext?.id },
       });
       setIsSaved(true);
+      toast.success("Saved to Library", "Script is now recorded in your pipeline history.");
       setTimeout(() => setIsSaved(false), 3000);
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+      toast.error("Save Failed", "Could not persist to storage.");
+    }
   };
 
   return (
-    <div className="p-6 lg:p-10 max-w-7xl mx-auto space-y-8 animate-fade-in">
-      <div className="border-b border-border pb-6">
-        <h3 className="text-2xl font-bold text-txt tracking-tight flex items-center gap-2">
-          <PenTool className="w-6 h-6 text-primary" strokeWidth={2.5} /> Script Studio
-        </h3>
-        <p className="text-sm text-txt-muted font-medium">Generate platform-optimized scripts from verified 2026 research.</p>
+    <div className="space-y-8 animate-fade-in">
+      {/* Studio Header Bar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200/80 dark:border-slate-800 pb-5">
+        <div>
+          <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <PenTool className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+            AI Content &amp; Script Studio
+          </h2>
+          <p className="text-xs text-slate-500 font-medium mt-0.5">
+            Formulate high-converting scripts, multi-platform carousels, and complete strategy bundles.
+          </p>
+        </div>
+
+        {researchContext?.keyword && (
+          <div className="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 px-3.5 py-1.5 rounded-xl">
+            <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+            <span className="text-[11px] font-bold text-indigo-700 dark:text-indigo-300 truncate max-w-xs">
+              R&amp;D Context: {researchContext.keyword}
+            </span>
+          </div>
+        )}
       </div>
 
-      <div className="flex flex-col gap-8">
-        {/* Horizontal Input Panel Banner across top */}
-        <div className="w-full rounded-[2.5rem] bg-bg-card border border-border p-6 md:p-8 space-y-6 shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
-            {/* Topic Input */}
-            <div className="md:col-span-4">
-              <Field label="Topic">
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={keyword}
-                    onChange={(e) => setKeyword(e.target.value)}
-                    placeholder="Enter main subject..."
-                    className={`w-full px-4 py-3 rounded-xl border text-sm text-txt transition-all ${
-                      researchContext?.keyword ? "bg-primary/[0.03] border-primary/20" : "bg-bg-elevated border-border"
-                    }`}
-                  />
-                  {researchContext?.keyword && <Sparkles className="absolute right-3 top-3.5 w-4 h-4 text-primary opacity-50" />}
-                </div>
-              </Field>
-            </div>
-
-            {/* Format Dropdown */}
-            <div className="md:col-span-3">
-              <Field label="Format">
-                <select
-                  value={format}
-                  onChange={(e) => setFormat(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-bg-elevated border border-border text-sm text-txt cursor-pointer focus:ring-2 focus:ring-primary/20 transition-all outline-none"
-                >
-                  {FORMATS.map((f) => (
-                    <option key={f.id} value={f.id}>
-                      {f.label} ({f.desc})
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </div>
-
-            {/* Tone Dropdown */}
-            <div className="md:col-span-2">
-              <Field label="Tone">
-                <select
-                  value={style}
-                  onChange={(e) => setStyle(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-bg-elevated border border-border text-sm text-txt cursor-pointer focus:ring-2 focus:ring-primary/20 transition-all outline-none"
-                >
-                  {STYLES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </div>
-
-            {/* Target Audience Input */}
-            <div className="md:col-span-3">
-              <Field label="Target Audience">
-                <input
-                  type="text"
-                  value={audience}
-                  onChange={(e) => setAudience(e.target.value)}
-                  placeholder="e.g. Parents of middle-schoolers"
-                  className="w-full px-4 py-3 rounded-xl bg-bg-elevated border border-border text-sm text-txt placeholder:text-txt-muted focus:ring-2 focus:ring-primary/20 transition-all outline-none"
-                />
-              </Field>
+      {/* Generator Control Card */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 shadow-sm space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-end">
+          {/* Main Topic Input */}
+          <div className="md:col-span-4">
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+              Topic or Headline
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                placeholder="e.g. NEP 2020 High School Reforms..."
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-800 dark:text-slate-100 placeholder:text-slate-400 outline-none"
+              />
+              {researchContext?.keyword && (
+                <Sparkles className="absolute right-3.5 top-3.5 w-4 h-4 text-indigo-500 opacity-60" />
+              )}
             </div>
           </div>
 
-          {/* Action Row */}
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-4 border-t border-border/60">
-            {researchContext?.research ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[10px] font-black text-primary-hover uppercase tracking-widest flex items-center gap-1.5 mr-1">
-                  <Globe className="w-3.5 h-3.5" /> Context:
-                </span>
-                <span className="text-xs font-bold text-txt">{researchContext.keyword}</span>
-                {researchContext.research?.viralCheck?.score !== undefined && (
-                  <span className="text-[9px] font-black text-orange-600 px-2 py-0.5 rounded-lg bg-orange-50 border border-orange-200">
-                    Viral {researchContext.research.viralCheck.score}
-                  </span>
-                )}
-              </div>
-            ) : (
-              <p className="text-xs text-txt-muted font-medium">Ready to script. Choose your format and tone above.</p>
-            )}
+          {/* Format Selector */}
+          <div className="md:col-span-3">
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+              Content Format
+            </label>
+            <select
+              value={format}
+              onChange={(e) => setFormat(e.target.value)}
+              className="w-full px-3.5 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-100 cursor-pointer outline-none"
+            >
+              {FORMATS.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.label} ({f.desc})
+                </option>
+              ))}
+            </select>
+          </div>
 
-            <div className="flex items-center gap-3 w-full md:w-auto">
+          {/* Tone Selector */}
+          <div className="md:col-span-2">
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+              Tone of Voice
+            </label>
+            <select
+              value={style}
+              onChange={(e) => setStyle(e.target.value)}
+              className="w-full px-3.5 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-100 cursor-pointer outline-none capitalize"
+            >
+              {STYLES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Target Audience */}
+          <div className="md:col-span-3">
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+              Target Audience
+            </label>
+            <input
+              type="text"
+              value={audience}
+              onChange={(e) => setAudience(e.target.value)}
+              placeholder="e.g. Parents of 9th-12th Graders"
+              className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-800 dark:text-slate-100 placeholder:text-slate-400 outline-none"
+            />
+          </div>
+        </div>
+
+        {/* Generate Action Buttons */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <p className="text-xs text-slate-400 font-medium">
+            AI generates calibrated hooks, engagement triggers, and hashtags.
+          </p>
+
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <button
+              onClick={() => handleGenerate(false)}
+              disabled={loading || !keyword.trim()}
+              className={`px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                loading
+                  ? "bg-indigo-400 text-white cursor-wait"
+                  : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200 dark:shadow-none hover:scale-[1.02]"
+              }`}
+            >
+              {loading && !bundleResult ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Formulating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" /> Generate Script
+                </>
+              )}
+            </button>
+
+            {researchContext?.research && (
               <button
-                onClick={() => handleGenerate(false)}
+                onClick={() => handleGenerate(true)}
                 disabled={loading || !keyword.trim()}
-                className={`px-8 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2.5 ${
-                  loading ? "bg-primary/20 text-primary-hover cursor-wait" : "grad-primary text-white cursor-pointer shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95"
-                }`}
+                className="px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:bg-purple-100 transition-all flex items-center gap-2 cursor-pointer"
               >
-                {loading && !bundleResult ? (
+                {loading && bundleResult ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" /> Generating...
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> Bundling...
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-4 h-4" /> Generate Script
+                    <Wand2 className="w-3.5 h-3.5" /> Full Strategy Bundle
                   </>
                 )}
               </button>
+            )}
+          </div>
+        </div>
+      </div>
 
-              {researchContext?.research && (
+      {/* Error Banner */}
+      {error && (
+        <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-300 text-xs font-bold flex items-center gap-3">
+          <X className="w-4 h-4" /> {error}
+        </div>
+      )}
+
+      {/* Output Workspace */}
+      {!result && !loading && (
+        <div className="min-h-[380px] flex flex-col items-center justify-center text-center p-12 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl bg-slate-50/50 dark:bg-slate-900/30">
+          <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-4 shadow-sm">
+            <PenTool className="w-8 h-8" />
+          </div>
+          <h3 className="text-base font-extrabold text-slate-800 dark:text-slate-200">
+            Script Studio Workspace
+          </h3>
+          <p className="text-xs text-slate-400 max-w-sm font-medium mt-1">
+            Choose a topic or import from R&amp;D Lab to begin generating high-performing content.
+          </p>
+        </div>
+      )}
+
+      {loading && (
+        <div className="min-h-[380px] flex flex-col items-center justify-center text-center p-12 border border-slate-200 dark:border-slate-800 rounded-3xl bg-white dark:bg-slate-900 shadow-sm space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 animate-pulse">
+            <Bot className="w-7 h-7" />
+          </div>
+          <h4 className="text-base font-black text-slate-800 dark:text-slate-200">
+            Writing &amp; Calibrating Content...
+          </h4>
+          <p className="text-xs text-slate-400 font-semibold">
+            Analyzing platform algorithms, formatting hooks, and structuring CTAs...
+          </p>
+        </div>
+      )}
+
+      {result && (
+        <div className="space-y-6">
+          {/* Workspace Tabs & Actions Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            {/* Tabs */}
+            <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700">
+              {[
+                { id: "script", label: "Script Editor", icon: FileText },
+                { id: "preview", label: "Visual Mockup", icon: Eye },
+                { id: "seo", label: "SEO & Hooks", icon: Tag },
+                { id: "audit", label: "AI Quality Audit", icon: Edit3 },
+              ].map((t) => (
                 <button
-                  onClick={() => handleGenerate(true)}
-                  disabled={loading || !keyword.trim()}
-                  className={`px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 border-2 ${
-                    loading && bundleResult
-                      ? "bg-accent/20 text-accent-hover cursor-wait border-accent/30"
-                      : "bg-bg-card border-accent/20 text-accent-hover hover:bg-accent/5 hover:border-accent/40 shadow-sm"
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                    tab === t.id
+                      ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
+                      : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
                   }`}
                 >
-                  {loading && bundleResult ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Bundling...
-                    </>
-                  ) : (
-                    <>
-                      <Wand2 className="w-3.5 h-3.5" /> Generate Bundle
-                    </>
-                  )}
+                  <t.icon className="w-3.5 h-3.5" />
+                  <span>{t.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Bundle formats tabs if bundle was generated */}
+            {bundleResult && (
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                {Object.keys(bundleResult).map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => {
+                      setFormat(f);
+                      setEditableScript(bundleResult[f]);
+                      setResult((prev) => ({ ...prev, script: bundleResult[f] }));
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider border cursor-pointer transition-all ${
+                      format === f
+                        ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                        : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    {FORMATS.find((x) => x.id === f)?.label || f}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(editableScript || result.script || "");
+                  toast.success("Copied to Clipboard", "Script text copied successfully.");
+                }}
+                title="Copy Script"
+                className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-all cursor-pointer shadow-sm"
+              >
+                <Copy className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={handleSave}
+                disabled={isSaved}
+                className="px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 text-xs font-bold flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+              >
+                {isSaved ? <Check className="w-4 h-4 text-emerald-600" /> : <Save className="w-4 h-4" />}
+                <span>{isSaved ? "Saved" : "Save"}</span>
+              </button>
+
+              {onSchedulePost && (
+                <button
+                  onClick={() => onSchedulePost(editableScript || result.script)}
+                  className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-2 shadow-md shadow-indigo-200 dark:shadow-none transition-all cursor-pointer"
+                >
+                  <Send className="w-4 h-4" />
+                  <span>Send to Post Composer</span>
                 </button>
               )}
             </div>
           </div>
-        </div>
 
-        {/* Output Workspace Container */}
-        <div className="w-full">
-          {error && (
-            <div className="p-4 mb-6 rounded-xl bg-danger/5 border border-danger/10 text-danger text-sm font-bold flex items-center gap-3">
-              <X className="w-4 h-4" /> {error}
+          {/* Tab 1: Script Editor + Quick AI Prompt Modifiers */}
+          {tab === "script" && (
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 md:p-8 shadow-sm space-y-6">
+              {/* Quick AI Modifiers */}
+              <div className="flex flex-wrap items-center gap-2 pb-4 border-b border-slate-100 dark:border-slate-800">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1 mr-1">
+                  <Sparkles className="w-3 h-3 text-indigo-500" /> AI Refinements:
+                </span>
+                {[
+                  { label: "🔥 Viral Hook", prompt: "Rewrite the opening hook to be 10x more captivating and emotionally urgent" },
+                  { label: "⚡ Make Punchier (30s)", prompt: "Condense and trim fluff, make it fast-paced for a 30-second reel" },
+                  { label: "💡 Stronger CTA", prompt: "Add a clear, high-converting call to action for students and parents" },
+                  { label: "🗣️ Hinglish Tone", prompt: "Adapt the language into natural urban Hinglish popular among youth in India" },
+                  { label: "📊 Add Data & Proof", prompt: "Integrate educational facts and statistics into the talking points" },
+                ].map((chip) => (
+                  <button
+                    key={chip.label}
+                    onClick={() => handleRefineScript(chip.prompt)}
+                    disabled={refining}
+                    className="px-3 py-1.5 rounded-xl text-[11px] font-bold bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950 hover:text-indigo-600 dark:hover:text-indigo-400 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+                {refining && <Loader2 className="w-4 h-4 animate-spin text-indigo-600 ml-2" />}
+              </div>
+
+              {/* Editable Script Textarea */}
+              <div className="relative">
+                <textarea
+                  value={editableScript}
+                  onChange={(e) => setEditableScript(e.target.value)}
+                  rows={14}
+                  className="w-full p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 text-sm font-mono leading-relaxed text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-indigo-500/20 custom-scroll selection:bg-indigo-100"
+                />
+              </div>
+
+              {/* Footer status */}
+              <div className="flex items-center justify-between text-xs text-slate-400 font-semibold pt-2">
+                <span>Characters: {editableScript.length} | Words: {editableScript.split(/\s+/).filter(Boolean).length}</span>
+                <span>Estimated reading/speaking time: ~{Math.ceil(editableScript.split(/\s+/).filter(Boolean).length / 2.5)}s</span>
+              </div>
             </div>
           )}
 
-          {!result && !loading && (
-            <div className="h-full min-h-[500px] flex flex-col items-center justify-center text-center p-12 border border-border border-dashed rounded-[2.5rem] bg-bg-elevated/10">
-              <div className="w-24 h-24 rounded-3xl bg-bg-card border border-border flex items-center justify-center text-txt-muted mx-auto mb-8 shadow-sm ring-8 ring-bg-elevated/30"><PenTool className="w-12 h-12" /></div>
-              <h3 className="text-2xl font-bold text-txt mb-3 tracking-tight">Script Workspace</h3>
-              <p className="text-sm text-txt-muted max-w-sm mx-auto font-medium leading-relaxed">Configure your topic and format, then generate a polished script.</p>
+          {/* Tab 2: Visual Mockup Preview */}
+          {tab === "preview" && (
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 md:p-8 shadow-sm">
+              <SocialPreview
+                scriptText={editableScript || result.script}
+                format={format}
+                authorName="Skillizee"
+                authorHandle="@skillizee.io"
+              />
             </div>
           )}
 
-          {loading && (
-            <div className="h-full min-h-[500px] flex flex-col items-center justify-center text-center p-12 border border-border border-dashed rounded-[2.5rem] bg-bg-elevated/10 animate-pulse">
-              <div className="w-24 h-24 rounded-3xl bg-primary/5 flex items-center justify-center text-primary mx-auto mb-8 ring-8 ring-primary/5"><Bot className="w-12 h-12" /></div>
-              <h3 className="text-2xl font-bold text-txt mb-6 tracking-tight">Writing Script...</h3>
-              <div className="space-y-4 w-72 mx-auto">
-                <div className="h-3 rounded-full bg-bg-elevated overflow-hidden"><div className="h-full bg-primary w-1/3 animate-progress" /></div>
-                <div className="flex justify-between items-center px-1">
-                  <p className="text-[10px] font-black text-primary-hover uppercase tracking-widest">Writing</p>
-                  <p className="text-[10px] font-black text-txt-muted uppercase tracking-widest">•</p>
-                  <p className="text-[10px] font-black text-primary-hover uppercase tracking-widest">Optimizing</p>
+          {/* Tab 3: SEO & Hashtag Breakdown */}
+          {tab === "seo" && (
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 md:p-8 shadow-sm space-y-8">
+              {/* High-CTR Alternative Hooks */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  <Flame className="w-4 h-4 text-amber-500" /> High-CTR Hooks &amp; Headlines
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {result.seo?.titles?.map((t, i) => (
+                    <div
+                      key={i}
+                      className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-700 flex items-start justify-between gap-4"
+                    >
+                      <div>
+                        <p className="text-xs font-bold text-slate-800 dark:text-slate-100">{t.title}</p>
+                        <p className="text-[10px] text-slate-400 mt-1 font-medium">{t.strategy}</p>
+                      </div>
+                      <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950 px-2 py-1 rounded-lg shrink-0">
+                        {t.ctrScore}% CTR
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tag Cloud */}
+              <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <Hash className="w-4 h-4 text-indigo-500" /> Trending Hashtags
+                  </h4>
+                  <button
+                    onClick={() => {
+                      const allTags = [
+                        ...(result.seo?.tags?.primary || []),
+                        ...(result.seo?.tags?.secondary || []),
+                      ]
+                        .map((t) => t.tag || t)
+                        .join(" ");
+                      navigator.clipboard.writeText(allTags);
+                      toast.success("Tags Copied", "Hashtag list copied to clipboard.");
+                    }}
+                    className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-wider hover:underline cursor-pointer"
+                  >
+                    Copy All Hashtags
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {result.seo?.tags?.primary?.map((tag, i) => (
+                    <span
+                      key={i}
+                      className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 flex items-center gap-1.5"
+                    >
+                      <Flame className="w-3 h-3 text-amber-500" />
+                      {tag.tag || tag}
+                    </span>
+                  ))}
+                  {result.seo?.tags?.secondary?.map((tag, i) => (
+                    <span
+                      key={i}
+                      className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+                    >
+                      {tag.tag || tag}
+                    </span>
+                  ))}
                 </div>
               </div>
             </div>
           )}
 
-          {result && (
-            <div className="space-y-6 animate-fade-in">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex flex-col gap-3">
-                  <div className="flex p-1.5 rounded-2xl bg-bg-card border border-border shadow-sm overflow-x-auto custom-scroll no-scrollbar">
-                    {[
-                      { id: "script", l: "Script", icon: FileText },
-                      { id: "seo", l: "SEO & Tags", icon: Tag },
-                      { id: "editing", l: "Audit", icon: Edit3 }
-                    ].map((t) => (
-                      <button key={t.id} onClick={() => setTab(t.id)}
-                        className={`px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider cursor-pointer transition-all flex items-center gap-2.5 whitespace-nowrap ${tab === t.id ? "bg-primary text-white shadow-md shadow-primary/20" : "text-txt-muted hover:text-txt"}`}>
-                        <t.icon className="w-4 h-4" /> {t.l}
-                      </button>
+          {/* Tab 4: AI Quality Audit */}
+          {tab === "audit" && (
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 md:p-8 shadow-sm space-y-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  ["Hook Quality", result.editing?.hookScore || 92],
+                  ["Platform Fit", result.editing?.platformFit || 94],
+                  ["Content Match", result.editing?.contentTypeMatch || 88],
+                  ["Overall Score", result.editing?.overallScore || 91],
+                ].map(([label, score]) => (
+                  <div
+                    key={label}
+                    className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700 text-center"
+                  >
+                    <p className="text-3xl font-black text-indigo-600 dark:text-indigo-400">{score}%</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">{label}</p>
+                  </div>
+                ))}
+              </div>
+
+              {result.editing?.optimizationSummary?.length && (
+                <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                    Optimization Breakdown
+                  </h4>
+                  <div className="space-y-2">
+                    {result.editing.optimizationSummary.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="p-3.5 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 text-xs font-medium text-slate-700 dark:text-slate-300"
+                      >
+                        {item}
+                      </div>
                     ))}
                   </div>
-
-                  {bundleResult && (
-                    <div className="flex gap-2 items-center px-2">
-                      <span className="text-[9px] font-black text-txt-muted uppercase tracking-widest mr-2">Format:</span>
-                      {Object.keys(bundleResult).map((f) => (
-                        <button key={f} onClick={() => { setFormat(f); setResult(prev => ({ ...prev, script: bundleResult[f] })); }}
-                          className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-tighter border transition-all ${format === f ? "bg-accent/10 border-accent/20 text-accent-hover" : "bg-bg-card border-border text-txt-muted hover:text-txt"}`}>
-                          {FORMATS.find(x => x.id === f)?.label || f}
-                        </button>
-                      ))}
-                    </div>
-                  )}
                 </div>
-
-                <div className="flex gap-2 self-start pt-1">
-                  <button onClick={() => navigator.clipboard.writeText(result.script || "")}
-                    className="p-3 rounded-xl bg-bg-card border border-border text-txt-muted hover:text-txt transition-all cursor-pointer shadow-sm hover:border-primary/20"><Copy className="w-4.5 h-4.5" /></button>
-                  <button onClick={handleSave} disabled={isSaved}
-                    className={`px-8 py-3 rounded-2xl text-[11px] font-bold flex items-center gap-2.5 transition-all cursor-pointer shadow-xl ${isSaved ? "bg-success/10 text-success border border-success/20" : "bg-bg-card border border-border text-txt hover:bg-bg-elevated hover:border-primary/30"}`}>
-                    {isSaved ? <><CheckCircle2 className="w-4.5 h-4.5" /> Saved to Calendar</> : <><Save className="w-4.5 h-4.5" /> Save &amp; Schedule</>}
-                  </button>
-                  {onSchedulePost && (
-                    <button onClick={() => onSchedulePost(result.script)}
-                      className="px-6 py-3 rounded-2xl text-[11px] font-bold bg-gradient-to-r from-purple-600 to-indigo-600 text-white flex items-center gap-2 hover:opacity-90 transition-all cursor-pointer shadow-xl">
-                      <Sparkles className="w-4.5 h-4.5" /> Compose on Meta
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <div className="rounded-[2.5rem] bg-bg-card border border-border shadow-sm overflow-hidden min-h-[600px] flex flex-col">
-                {tab === "script" && (
-                  <div className="p-10 flex-1 relative">
-                    <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none"><PenTool className="w-32 h-32" /></div>
-                    <StreamingText text={result.script} />
-                  </div>
-                )}
-
-                {tab === "seo" && (
-                  <div className="p-10 space-y-10">
-                    <div className="space-y-6">
-                      <h4 className="text-[11px] font-black text-txt uppercase tracking-[0.2em] border-b border-border pb-3 flex items-center gap-2">
-                        <MonitorPlay className="w-4 h-4 text-primary" /> High-CTR Hooks
-                      </h4>
-                      <div className="grid grid-cols-1 gap-4">
-                        {result.seo?.titles?.map((t, i) => (
-                          <div key={i} className="p-6 rounded-[1.5rem] bg-bg-elevated/50 border border-border flex items-center justify-between group hover:border-primary/20 hover:bg-bg-card transition-all">
-                            <div className="max-w-[80%]"><p className="text-[15px] font-bold text-txt">{t.title}</p><p className="text-[11px] text-txt-muted mt-2 font-medium">{t.strategy}</p></div>
-                            <div className="text-right">
-                              <span className="text-lg font-black text-primary block group-hover:scale-110 transition-transform">{t.ctrScore}%</span>
-                              <p className="text-[9px] font-black text-txt-muted uppercase tracking-tighter">Est. CTR</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between border-b border-border pb-3">
-                        <h4 className="text-[11px] font-black text-txt uppercase tracking-[0.2em] flex items-center gap-2">
-                          <Hash className="w-4 h-4 text-accent" /> Tags
-                        </h4>
-                        <button
-                          onClick={() => { const tags = [...(result.seo?.tags?.primary || []), ...(result.seo?.tags?.secondary || [])].map(t => t.tag || t).join(' '); navigator.clipboard.writeText(tags); }}
-                          className="text-[9px] font-black text-primary uppercase tracking-widest hover:underline cursor-pointer">Copy All</button>
-                      </div>
-                      <div className="flex flex-wrap gap-2.5">
-                        {result.seo?.tags?.primary?.map((tag, i) => (
-                          <span key={i} className="px-4 py-2 rounded-xl text-xs font-bold bg-primary/5 text-primary-hover border border-primary/20 flex items-center gap-2 hover:bg-primary/10 transition-colors shadow-sm">{tag.tag || tag} <Flame className="w-3.5 h-3.5 text-orange-500" /></span>
-                        ))}
-                        {result.seo?.tags?.secondary?.map((tag, i) => (
-                          <span key={i} className="px-4 py-2 rounded-xl text-xs font-bold bg-bg-elevated border border-border text-txt-secondary hover:bg-bg-card transition-colors">{tag.tag || tag}</span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {tab === "editing" && (
-                  <div className="p-10 space-y-10">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                      {[["Hook", result.editing?.hookScore], ["Platform", result.editing?.platformFit], ["Format", result.editing?.contentTypeMatch], ["Overall", result.editing?.overallScore]].map(([l, v]) => (
-                        <div key={l} className="p-6 rounded-[2rem] bg-bg-elevated/50 border border-border text-center group hover:bg-bg-card transition-all">
-                          <p className={`text-4xl font-black transition-transform group-hover:scale-110 ${v >= 80 ? "text-success" : v >= 60 ? "text-warning" : "text-danger"}`}>{v || "—"}</p>
-                          <p className="text-[10px] font-black text-txt-muted uppercase tracking-[0.15em] mt-3">{l}</p>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {[
-                        ["CTA", result.editing?.ctaStrength],
-                        ["Readability", result.editing?.readabilityScore],
-                        ["Viral Ready", result.editing?.viralReadiness],
-                      ].map(([label, value]) => (
-                        <div key={label} className="p-5 rounded-[1.5rem] bg-bg-elevated/30 border border-border/60">
-                          <p className="text-[10px] font-black text-txt-muted uppercase tracking-[0.15em]">{label}</p>
-                          <p className={`text-2xl font-black mt-3 ${value >= 80 ? "text-success" : value >= 60 ? "text-warning" : "text-danger"}`}>{value || "—"}</p>
-                        </div>
-                      ))}
-                    </div>
-                    {!!result.editing?.optimizationSummary?.length && (
-                      <div className="space-y-4">
-                        <h4 className="text-[11px] font-black text-txt uppercase tracking-[0.2em] border-b border-border pb-3">Optimization Summary</h4>
-                        <div className="grid grid-cols-1 gap-4">
-                          {result.editing.optimizationSummary.map((item, index) => (
-                            <div key={`${item}-${index}`} className="p-5 rounded-2xl bg-primary/5 border border-primary/10 text-sm text-txt-secondary leading-relaxed font-medium">
-                              {item}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    <div className="space-y-6">
-                      <h4 className="text-[11px] font-black text-txt uppercase tracking-[0.2em] border-b border-border pb-3">AI Editorial Audit</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {result.editing?.changes?.map((c, i) => (
-                          <div key={i} className="flex gap-5 p-6 rounded-2xl bg-bg-elevated/30 border border-border/50 items-start hover:border-primary/10 hover:bg-bg-card transition-all">
-                            <span className="px-2.5 py-1.5 rounded-xl text-[10px] font-black bg-primary/10 text-primary-hover uppercase tracking-tighter shrink-0">{c.type}</span>
-                            <p className="text-sm text-txt-secondary leading-relaxed font-medium">{c.description}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+              )}
             </div>
           )}
         </div>
-      </div>
-    </div>
-  );
-}
-
-function Field({ label, children }) {
-  return (<div><label className="block text-[10px] font-black text-txt-muted uppercase tracking-[0.15em] mb-3 ml-1">{label}</label>{children}</div>);
-}
-
-function StreamingText({ text, speed = 35, chunkSize = 5 }) {
-  const [displayedText, setDisplayedText] = useState("");
-  const [isDone, setIsDone] = useState(false);
-  const containerRef = useEffect ? { current: null } : null;
-
-  useEffect(() => {
-    if (!text) {
-      setDisplayedText("");
-      setIsDone(true);
-      return;
-    }
-
-    setDisplayedText("");
-    setIsDone(false);
-
-    const words = text.split(/(\s+)/);
-    let index = 0;
-
-    const timer = setInterval(() => {
-      index += chunkSize;
-      if (index >= words.length) {
-        setDisplayedText(text);
-        setIsDone(true);
-        clearInterval(timer);
-      } else {
-        setDisplayedText(words.slice(0, index).join(""));
-      }
-    }, speed);
-
-    return () => clearInterval(timer);
-  }, [text, speed, chunkSize]);
-
-  return (
-    <div className="relative group">
-      {!isDone && (
-        <div className="flex items-center justify-between mb-4 pb-2 border-b border-border/50">
-          <span className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2 animate-pulse">
-            <span className="w-2 h-2 rounded-full bg-primary" /> Live Writing Script...
-          </span>
-          <button
-            onClick={() => { setDisplayedText(text); setIsDone(true); }}
-            className="text-[10px] font-black uppercase tracking-wider px-3 py-1 bg-bg-elevated border border-border rounded-lg text-primary hover:bg-primary/10 transition-all cursor-pointer shadow-sm"
-          >
-            Skip Typing ⚡
-          </button>
-        </div>
       )}
-      <pre className="text-[15px] text-txt-secondary leading-loose whitespace-pre-wrap font-sans custom-scroll max-h-[700px] overflow-y-auto pr-6 selection:bg-primary/10">
-        {displayedText}
-        {!isDone && (
-          <span className="inline-block w-2.5 h-4 ml-1 bg-primary animate-pulse align-middle rounded-sm" />
-        )}
-      </pre>
     </div>
   );
 }

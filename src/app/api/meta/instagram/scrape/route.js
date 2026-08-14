@@ -34,7 +34,7 @@ export async function OPTIONS() {
 
 export async function POST(req) {
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     writeDebugLog("Received POST request", body);
 
     const { username } = body;

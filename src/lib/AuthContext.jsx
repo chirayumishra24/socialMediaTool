@@ -53,12 +53,12 @@ export function AuthProvider({ children }) {
         body: JSON.stringify({ email, password }),
       });
 
+      const data = await res.json().catch(() => ({}));
+
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Login failed");
+        throw new Error(data.error || "Login failed");
       }
 
-      const data = await res.json();
       if (data.success && data.user) {
         setUser(data.user);
         localStorage.setItem("skilizee_user", JSON.stringify(data.user));

@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req) {
   try {
-    const { publishedUrl = "", postId = "" } = await req.json();
+    const { publishedUrl = "", postId = "" } = await req.json().catch(() => ({}));
 
     if (!String(publishedUrl).trim() && !String(postId).trim()) {
       const config = await getInstagramSyncStatus();

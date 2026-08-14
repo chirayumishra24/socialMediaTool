@@ -16,24 +16,28 @@ import { getFacebookPageCredentials } from "./meta-auth";
 
 // ─── Account-Level Instagram Insights ──────────────────────────
 
-// v22.0: These metrics work with period (time-series)
-const ACCOUNT_METRICS_TIMESERIES = [
-  "reach",
-  "follower_count",
-];
+// v22.0: Metrics compatible with period (time-series)
+// Note: reach supports days_28/week/day; follower_count ONLY supports day
+const METRIC_PERIOD_MAP = {
+  reach: ["days_28", "week", "day"],
+  follower_count: ["day"],
+};
 
-// v22.0: These metrics require metric_type=total_value
-const ACCOUNT_METRICS_TOTAL = [
-  "profile_views",
-  "website_clicks",
-  "accounts_engaged",
-  "total_interactions",
-  "likes",
-  "comments",
-  "shares",
-  "saves",
-  "profile_links_taps",
-  "views",
+// Metrics compatible with metric_type=total_value
+// accounts_engaged, total_interactions, views support days_28/week/day
+// profile_views, website_clicks, profile_links_taps support day
+const TOTAL_VALUE_METRIC_CONFIGS = [
+  { metric: "reach", period: "days_28" },
+  { metric: "accounts_engaged", period: "days_28" },
+  { metric: "total_interactions", period: "days_28" },
+  { metric: "views", period: "days_28" },
+  { metric: "profile_views", period: "day" },
+  { metric: "website_clicks", period: "day" },
+  { metric: "profile_links_taps", period: "day" },
+  { metric: "likes", period: "day" },
+  { metric: "comments", period: "day" },
+  { metric: "shares", period: "day" },
+  { metric: "saves", period: "day" },
 ];
 
 // v22.0: audience_city/country/gender_age replaced by demographic breakdowns
@@ -59,11 +63,11 @@ export async function fetchAccountInsights(period = "days_28") {
 
   const results = {};
 
-  // Group 1: Time-series metrics (use period, no metric_type)
+  // Group 1: Time-series reach metric
   try {
     const payload = await graphRequest(
       `/${config.instagramAccountId}/insights`,
-      { metric: ACCOUNT_METRICS_TIMESERIES.join(","), period }
+      { metric: "reach", period }
     );
 
     for (const entry of payload?.data || []) {
@@ -81,20 +85,41 @@ export async function fetchAccountInsights(period = "days_28") {
       };
     }
   } catch (err) {
-    console.warn(`[Deep Insights] Time-series metrics failed:`, err.message);
+    console.warn(`[Deep Insights] Reach time-series failed:`, err.message);
   }
 
-  // Group 2: Total value metrics (require metric_type=total_value)
-  const totalBatches = [
-    ACCOUNT_METRICS_TOTAL.slice(0, 5),
-    ACCOUNT_METRICS_TOTAL.slice(5),
-  ];
+  // Follower count (Meta Graph API requires period=day)
+  try {
+    const payload = await graphRequest(
+      `/${config.instagramAccountId}/insights`,
+      { metric: "follower_count", period: "day" }
+    );
 
-  for (const batch of totalBatches) {
+    for (const entry of payload?.data || []) {
+      const latestValue = entry.values?.[entry.values.length - 1];
+      results["follower_count"] = {
+        value: latestValue?.value ?? 0,
+        endTime: latestValue?.end_time || null,
+        title: entry.title || "Follower Count",
+        description: entry.description || "",
+        period: "day",
+        timeSeries: (entry.values || []).map((v) => ({
+          value: v.value ?? 0,
+          endTime: v.end_time || null,
+        })),
+      };
+    }
+  } catch (err) {
+    console.warn(`[Deep Insights] Follower count time-series skipped:`, err.message);
+  }
+
+  // Group 2: Total value metrics (queried individually with their supported periods)
+  for (const { metric, period: metricPeriod } of TOTAL_VALUE_METRIC_CONFIGS) {
     try {
+      const effectivePeriod = (period === "days_28" && metricPeriod === "day") ? "day" : (period || metricPeriod);
       const payload = await graphRequest(
         `/${config.instagramAccountId}/insights`,
-        { metric: batch.join(","), period, metric_type: "total_value" }
+        { metric, period: effectivePeriod, metric_type: "total_value" }
       );
 
       for (const entry of payload?.data || []) {
@@ -103,11 +128,11 @@ export async function fetchAccountInsights(period = "days_28") {
           value: totalVal,
           title: entry.title || entry.name,
           description: entry.description || "",
-          period: entry.period || period,
+          period: entry.period || effectivePeriod,
         };
       }
-    } catch (err) {
-      console.warn(`[Deep Insights] Total-value metrics batch failed:`, err.message);
+    } catch {
+      // Gracefully ignore individual metrics unsupported on specific account types
     }
   }
 

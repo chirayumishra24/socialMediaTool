@@ -25,7 +25,7 @@ export async function GET() {
  */
 export async function POST(req) {
   try {
-    const { code } = await req.json();
+    const { code } = await req.json().catch(() => ({}));
 
     if (!code || typeof code !== "string") {
       return NextResponse.json(

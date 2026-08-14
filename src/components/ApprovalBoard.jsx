@@ -58,6 +58,7 @@ import {
   useContentHistory,
   useResearchHistory,
 } from "@/lib/storage";
+import { useToast } from "@/components/ui/Toast";
 
 const STAGES = [
   { id: "pending", label: "Pending Review", shortLabel: "Pending", icon: Clock, color: "text-warning", bg: "bg-warning/5", accent: "bg-warning" },
@@ -86,6 +87,7 @@ function getBoardStage(status) {
 }
 
 export default function ApprovalBoard({ onPublishPost }) {
+  const toast = useToast();
   const items = useResearchHistory();
   const scripts = useContentHistory();
 
@@ -103,12 +105,15 @@ export default function ApprovalBoard({ onPublishPost }) {
 
   const updateStatus = (id, status) => {
     updateResearchStatus(id, status);
+    toast.info("Status Updated", `Moved item to "${status}" queue.`);
   };
 
   const handleApproveAll = () => {
-    items
-      .filter((item) => (item.status || "pending") === "pending")
-      .forEach((item) => updateResearchStatus(item.id, "approved"));
+    const pendingItems = items.filter((item) => (item.status || "pending") === "pending");
+    pendingItems.forEach((item) => updateResearchStatus(item.id, "approved"));
+    if (pendingItems.length > 0) {
+      toast.success("Bulk Approved", `Approved ${pendingItems.length} items.`);
+    }
   };
 
   const hydratePublishForm = (script) => ({

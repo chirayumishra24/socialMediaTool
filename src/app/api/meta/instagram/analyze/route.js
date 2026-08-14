@@ -7,7 +7,7 @@ export const maxDuration = 60;
 
 export async function POST(req) {
   try {
-    const { profileData, profileContext } = await req.json();
+    const { profileData, profileContext } = await req.json().catch(() => ({}));
 
     if (!profileData || !profileData.profile) {
       return NextResponse.json(
