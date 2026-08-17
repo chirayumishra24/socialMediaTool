@@ -428,201 +428,278 @@ function AppContent({ defaultTab = "dashboard" }) {
       {/* Desktop Sidebar (hidden on mobile, visible lg:) */}
       <aside
         className={`hidden lg:flex ${
-          isSidebarCollapsed ? "lg:w-[80px]" : "lg:w-[240px]"
-        } transition-all duration-300 bg-white dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-800 flex-col items-stretch justify-start p-4 shrink-0 gap-4 z-30 overflow-visible shadow-sm`}
+          isSidebarCollapsed ? "lg:w-[76px] px-2.5 py-4" : "lg:w-[260px] p-4"
+        } transition-all duration-300 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-r border-slate-200/80 dark:border-slate-800/80 flex-col items-stretch justify-between shrink-0 gap-3 z-30 overflow-visible shadow-[1px_0_12px_rgba(0,0,0,0.03)]`}
       >
-        {/* Brand Logo & Collapse Toggle */}
-        <div className="flex items-center justify-between w-full pb-2 border-b border-slate-100 dark:border-slate-800/80">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 p-[2px] shadow-md flex items-center justify-center transition-transform hover:scale-105 shrink-0">
-              <div className="w-full h-full bg-white dark:bg-slate-900 rounded-[0.95rem] flex items-center justify-center">
-                <span className="bg-gradient-to-tr from-indigo-600 to-purple-600 bg-clip-text text-transparent text-sm font-black">
-                  S
-                </span>
-              </div>
+        {/* Top Section: Brand + Search + Navigation */}
+        <div className="flex flex-col items-stretch gap-3 w-full min-h-0 flex-1">
+          {/* Brand Logo & Collapse Toggle */}
+          <div className={`flex items-center ${isSidebarCollapsed ? "flex-col gap-2.5 pb-2" : "justify-between pb-2"} w-full border-b border-slate-100 dark:border-slate-800/80`}>
+            <div className={`flex items-center ${isSidebarCollapsed ? "justify-center" : "gap-3"}`}>
+              <button
+                onClick={() => setActiveTab("dashboard")}
+                title="Go to Executive Dashboard"
+                className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 p-[2px] shadow-md shadow-indigo-500/15 flex items-center justify-center transition-transform hover:scale-105 shrink-0 cursor-pointer"
+              >
+                <div className="w-full h-full bg-white dark:bg-slate-900 rounded-[0.9rem] flex items-center justify-center">
+                  <span className="bg-gradient-to-tr from-indigo-600 to-purple-600 bg-clip-text text-transparent text-sm font-black">
+                    S
+                  </span>
+                </div>
+              </button>
+              {!isSidebarCollapsed && (
+                <div className="flex flex-col">
+                  <span className="text-sm font-black text-slate-900 dark:text-white tracking-tight leading-none">
+                    Skilizee<span className="text-indigo-600 dark:text-indigo-400">.ai</span>
+                  </span>
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                    Social Suite
+                  </span>
+                </div>
+              )}
             </div>
-            {!isSidebarCollapsed && (
-              <div className="flex flex-col">
-                <span className="text-sm font-black text-slate-900 dark:text-white tracking-tight leading-none">
-                  Skilizee<span className="text-indigo-600 dark:text-indigo-400">.ai</span>
-                </span>
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">
-                  Social Suite
-                </span>
-              </div>
-            )}
+
+            <button
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              className={`${
+                isSidebarCollapsed
+                  ? "w-8 h-8 rounded-xl bg-slate-100/80 dark:bg-slate-800/80 hover:bg-indigo-600 hover:text-white text-slate-400 dark:text-slate-300"
+                  : "w-7 h-7 rounded-lg bg-slate-100/60 dark:bg-slate-800/60 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400"
+              } transition-all cursor-pointer flex items-center justify-center shrink-0 shadow-sm`}
+            >
+              {isSidebarCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+            </button>
           </div>
 
-          <button
-            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-            className="w-7 h-7 rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-indigo-600 transition-all cursor-pointer flex items-center justify-center"
-          >
-            {isSidebarCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
-          </button>
-        </div>
-
-        {/* Quick Shortcut / Search Bar in Sidebar */}
-        {!isSidebarCollapsed ? (
-          <button
-            onClick={() => setIsCommandPaletteOpen(true)}
-            className="w-full px-3 py-2 rounded-xl bg-slate-100/70 dark:bg-slate-800/70 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all cursor-pointer"
-          >
-            <span className="flex items-center gap-2 text-xs font-semibold">
-              <Search className="w-3.5 h-3.5" />
-              Quick search...
-            </span>
-            <kbd className="text-[10px] font-mono font-bold bg-white dark:bg-slate-700 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-600 text-slate-500">
-              ⌘K
-            </kbd>
-          </button>
-        ) : (
-          <button
-            onClick={() => setIsCommandPaletteOpen(true)}
-            title="Search (Cmd+K)"
-            className="w-10 h-10 rounded-xl bg-slate-100/80 dark:bg-slate-800 hover:bg-indigo-50 hover:text-indigo-600 text-slate-400 self-center flex items-center justify-center transition-all cursor-pointer"
-          >
-            <Search className="w-4 h-4" />
-          </button>
-        )}
-
-        {/* Navigation Links */}
-        <nav className="flex flex-col items-stretch gap-1.5 w-full flex-1 overflow-y-auto custom-scroll pr-0.5">
-          <SidebarGroupNav
-            icon={Home}
-            label="Home"
-            collapsed={isSidebarCollapsed}
-            active={["dashboard", "discover"].includes(activeTab)}
-            activeTab={activeTab}
-            onSelectTab={setActiveTab}
-            items={[
-              { id: "dashboard", label: "📊 Dashboard" },
-              { id: "discover", label: "📈 Trends & Signals" },
-            ]}
-          />
-          <SidebarGroupNav
-            icon={Video}
-            label="Studio"
-            collapsed={isSidebarCollapsed}
-            active={["studio", "research", "composer", "approval"].includes(activeTab)}
-            activeTab={activeTab}
-            onSelectTab={(id) => {
-              if (id === "composer") {
-                setComposerInitialContent("");
-                setScheduledPrefillDate("");
-                setSelectedPostToEdit(null);
-              }
-              setActiveTab(id);
-            }}
-            items={[
-              { id: "studio", label: "🎬 Content Studio" },
-              { id: "research", label: "🧪 R&D Lab Cycles" },
-              { id: "composer", label: "✍️ Post Composer" },
-              { id: "approval", label: "✅ Approval Queue" },
-            ]}
-          />
-          <SidebarGroupNav
-            icon={Calendar}
-            label="Schedule"
-            collapsed={isSidebarCollapsed}
-            active={activeTab === "calendar"}
-            activeTab={activeTab}
-            onSelectTab={setActiveTab}
-            items={[{ id: "calendar", label: "🗓️ Content Calendar" }]}
-          />
-          <SidebarGroupNav
-            icon={BarChart3}
-            label="Analytics"
-            collapsed={isSidebarCollapsed}
-            active={["instagram-analyzer", "campaign-hub", "analytics"].includes(activeTab)}
-            activeTab={activeTab}
-            onSelectTab={setActiveTab}
-            items={[
-              { id: "instagram-analyzer", label: "✨ IG Profile Audit" },
-              { id: "campaign-hub", label: "📑 Campaign Export Hub" },
-              { id: "analytics", label: "📊 Channel Analytics" },
-            ]}
-          />
-          <SidebarGroupNav
-            icon={Sliders}
-            label="Settings"
-            collapsed={isSidebarCollapsed}
-            active={["settings", "admin"].includes(activeTab)}
-            activeTab={activeTab}
-            onSelectTab={setActiveTab}
-            items={[
-              { id: "settings", label: "🎛️ Meta Channels" },
-              ...(user.isAdmin ? [{ id: "admin", label: "🔐 Admin Portal" }] : []),
-            ]}
-          />
-        </nav>
-
-        {/* Embedded Mini Social Hub in Sidebar */}
-        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-around">
-          <SocialIcon
-            color="bg-gradient-to-tr from-amber-500 via-pink-500 to-purple-600"
-            icon={Instagram}
-            label="Instagram Analytics"
-            onClick={() => setActiveTab("instagram-analyzer")}
-          />
-          <SocialIcon
-            color="bg-[#0077b5]"
-            icon={Linkedin}
-            label="LinkedIn Tool"
-            onClick={() => {
-              const url = process.env.NEXT_PUBLIC_LINKEDIN_URL || "https://linkedin-tool-one.vercel.app";
-              const sso = typeof window !== "undefined" ? localStorage.getItem("skilizee_sso") : null;
-              window.location.href = sso ? `${url}?sso=${sso}` : url;
-            }}
-          />
-          <SocialIcon
-            color="bg-[#ff0000]"
-            icon={Youtube}
-            label="YouTube Analytics"
-            onClick={() => setActiveTab("analytics")}
-          />
-          <SocialIcon
-            color="bg-indigo-600"
-            icon={Mic}
-            label="Podcast Studio"
-            onClick={() => {
-              const url = process.env.NEXT_PUBLIC_PODCAST_URL || "https://skillizee-products.web.app/";
-              const sso = typeof window !== "undefined" ? localStorage.getItem("skilizee_sso") : null;
-              window.location.href = sso ? `${url}?sso=${sso}` : url;
-            }}
-          />
-        </div>
-
-        {/* User Profile & Log Out Footer in Sidebar */}
-        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between w-full">
+          {/* Quick Shortcut / Search Bar in Sidebar */}
           {!isSidebarCollapsed ? (
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white font-bold flex items-center justify-center text-xs shrink-0 shadow-inner">
-                {user?.name?.slice(0, 2).toUpperCase() || "SM"}
-              </div>
-              <div className="truncate">
-                <p className="text-xs font-black text-slate-800 dark:text-slate-100 truncate">{user?.name || "User"}</p>
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                  {user?.isAdmin ? "Admin" : "Director"}
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div
-              title={user?.name || "User"}
-              className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white font-bold flex items-center justify-center text-xs mx-auto shadow-inner"
+            <button
+              onClick={() => setIsCommandPaletteOpen(true)}
+              className="w-full px-3 py-2 rounded-xl bg-slate-100/70 dark:bg-slate-800/70 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all cursor-pointer"
             >
-              {user?.name?.slice(0, 2).toUpperCase() || "SM"}
+              <span className="flex items-center gap-2 text-xs font-semibold">
+                <Search className="w-3.5 h-3.5" />
+                Quick search...
+              </span>
+              <kbd className="text-[10px] font-mono font-bold bg-white dark:bg-slate-700 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-600 text-slate-500">
+                ⌘K
+              </kbd>
+            </button>
+          ) : (
+            <div className="relative group flex justify-center w-full">
+              <button
+                onClick={() => setIsCommandPaletteOpen(true)}
+                className="w-10 h-10 rounded-xl bg-slate-100/80 dark:bg-slate-800/80 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-600 text-slate-400 flex items-center justify-center transition-all cursor-pointer shadow-sm"
+              >
+                <Search className="w-4 h-4" />
+              </button>
+              <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-1.5 bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-xs font-bold px-2.5 py-1 rounded-xl shadow-xl whitespace-nowrap z-50 pointer-events-none animate-fade-in">
+                <span>Quick Search</span>
+                <kbd className="text-[9px] font-mono bg-slate-800 dark:bg-slate-200 text-slate-200 dark:text-slate-800 px-1 py-0.5 rounded">⌘K</kbd>
+              </div>
             </div>
           )}
 
-          <button
-            onClick={logout}
-            title="Log Out"
-            className="w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-slate-400 hover:text-rose-600 transition-all cursor-pointer flex items-center justify-center shrink-0"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-          </button>
+          {/* Navigation Links */}
+          <nav className={`flex flex-col ${isSidebarCollapsed ? "items-center gap-2" : "items-stretch gap-1.5"} w-full flex-1 overflow-y-auto custom-scroll pr-0.5 pt-1`}>
+            <SidebarGroupNav
+              icon={Home}
+              label="Home"
+              collapsed={isSidebarCollapsed}
+              active={["dashboard", "discover"].includes(activeTab)}
+              activeTab={activeTab}
+              onSelectTab={setActiveTab}
+              items={[
+                { id: "dashboard", label: "📊 Executive Dashboard" },
+                { id: "discover", label: "📈 News & Signals" },
+              ]}
+            />
+            <SidebarGroupNav
+              icon={Video}
+              label="Studio"
+              collapsed={isSidebarCollapsed}
+              active={["studio", "research", "composer", "approval"].includes(activeTab)}
+              activeTab={activeTab}
+              onSelectTab={(id) => {
+                if (id === "composer") {
+                  setComposerInitialContent("");
+                  setScheduledPrefillDate("");
+                  setSelectedPostToEdit(null);
+                }
+                setActiveTab(id);
+              }}
+              items={[
+                { id: "studio", label: "🎬 Content Studio" },
+                { id: "research", label: "🧪 R&D Lab Cycles" },
+                { id: "composer", label: "✍️ Post Composer" },
+                { id: "approval", label: "✅ Approval Queue" },
+              ]}
+            />
+            <SidebarGroupNav
+              icon={Calendar}
+              label="Schedule"
+              collapsed={isSidebarCollapsed}
+              active={activeTab === "calendar"}
+              activeTab={activeTab}
+              onSelectTab={setActiveTab}
+              items={[{ id: "calendar", label: "🗓️ Content Calendar" }]}
+            />
+            <SidebarGroupNav
+              icon={BarChart3}
+              label="Analytics"
+              collapsed={isSidebarCollapsed}
+              active={["instagram-analyzer", "campaign-hub", "analytics"].includes(activeTab)}
+              activeTab={activeTab}
+              onSelectTab={setActiveTab}
+              items={[
+                { id: "instagram-analyzer", label: "✨ IG Profile Audit" },
+                { id: "campaign-hub", label: "📑 Campaign Export Hub" },
+                { id: "analytics", label: "📊 Channel Analytics" },
+              ]}
+            />
+            <SidebarGroupNav
+              icon={Sliders}
+              label="Settings"
+              collapsed={isSidebarCollapsed}
+              active={["settings", "admin"].includes(activeTab)}
+              activeTab={activeTab}
+              onSelectTab={setActiveTab}
+              items={[
+                { id: "settings", label: "🎛️ Meta Channels" },
+                ...(user.isAdmin ? [{ id: "admin", label: "🔐 Admin Portal" }] : []),
+              ]}
+            />
+          </nav>
+        </div>
+
+        {/* Bottom Section: Connected Apps & User Footer */}
+        <div className="flex flex-col gap-2.5 w-full shrink-0 pt-2 border-t border-slate-100 dark:border-slate-800">
+          {/* Connected Social Suite Apps */}
+          {!isSidebarCollapsed ? (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">
+                Connected Apps
+              </span>
+              <div className="flex items-center justify-between gap-1.5 px-0.5">
+                <SocialIcon
+                  color="bg-gradient-to-tr from-amber-500 via-pink-500 to-purple-600"
+                  icon={Instagram}
+                  label="Instagram Analytics"
+                  onClick={() => setActiveTab("instagram-analyzer")}
+                />
+                <SocialIcon
+                  color="bg-[#0077b5]"
+                  icon={Linkedin}
+                  label="LinkedIn Tool"
+                  onClick={() => {
+                    const url = process.env.NEXT_PUBLIC_LINKEDIN_URL || "https://linkedin-tool-one.vercel.app";
+                    const sso = typeof window !== "undefined" ? localStorage.getItem("skilizee_sso") : null;
+                    window.location.href = sso ? `${url}?sso=${sso}` : url;
+                  }}
+                />
+                <SocialIcon
+                  color="bg-[#ff0000]"
+                  icon={Youtube}
+                  label="YouTube Analytics"
+                  onClick={() => setActiveTab("analytics")}
+                />
+                <SocialIcon
+                  color="bg-indigo-600"
+                  icon={Mic}
+                  label="Podcast Studio"
+                  onClick={() => {
+                    const url = process.env.NEXT_PUBLIC_PODCAST_URL || "https://skillizee-products.web.app/";
+                    const sso = typeof window !== "undefined" ? localStorage.getItem("skilizee_sso") : null;
+                    window.location.href = sso ? `${url}?sso=${sso}` : url;
+                  }}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-100/70 dark:bg-slate-800/70 rounded-xl justify-items-center w-full max-w-[62px] mx-auto shadow-inner">
+              <SocialIcon
+                size="sm"
+                color="bg-gradient-to-tr from-amber-500 via-pink-500 to-purple-600"
+                icon={Instagram}
+                label="Instagram Analytics"
+                onClick={() => setActiveTab("instagram-analyzer")}
+              />
+              <SocialIcon
+                size="sm"
+                color="bg-[#0077b5]"
+                icon={Linkedin}
+                label="LinkedIn Tool"
+                onClick={() => {
+                  const url = process.env.NEXT_PUBLIC_LINKEDIN_URL || "https://linkedin-tool-one.vercel.app";
+                  const sso = typeof window !== "undefined" ? localStorage.getItem("skilizee_sso") : null;
+                  window.location.href = sso ? `${url}?sso=${sso}` : url;
+                }}
+              />
+              <SocialIcon
+                size="sm"
+                color="bg-[#ff0000]"
+                icon={Youtube}
+                label="YouTube Analytics"
+                onClick={() => setActiveTab("analytics")}
+              />
+              <SocialIcon
+                size="sm"
+                color="bg-indigo-600"
+                icon={Mic}
+                label="Podcast Studio"
+                onClick={() => {
+                  const url = process.env.NEXT_PUBLIC_PODCAST_URL || "https://skillizee-products.web.app/";
+                  const sso = typeof window !== "undefined" ? localStorage.getItem("skilizee_sso") : null;
+                  window.location.href = sso ? `${url}?sso=${sso}` : url;
+                }}
+              />
+            </div>
+          )}
+
+          {/* User Profile & Log Out Footer in Sidebar */}
+          <div className={`pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center ${isSidebarCollapsed ? "flex-col gap-2 justify-center" : "justify-between"} w-full`}>
+            {!isSidebarCollapsed ? (
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white font-bold flex items-center justify-center text-xs shrink-0 shadow-inner">
+                  {user?.name?.slice(0, 2).toUpperCase() || "SM"}
+                </div>
+                <div className="truncate">
+                  <p className="text-xs font-black text-slate-800 dark:text-slate-100 truncate">{user?.name || "User"}</p>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                    {user?.isAdmin ? "Admin" : "Director"}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="relative group">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white font-bold flex items-center justify-center text-xs shadow-md cursor-pointer">
+                  {user?.name?.slice(0, 2).toUpperCase() || "SM"}
+                </div>
+                <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 hidden group-hover:flex flex-col bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-xs px-2.5 py-1.5 rounded-xl shadow-xl whitespace-nowrap z-50 pointer-events-none animate-fade-in">
+                  <span className="font-black">{user?.name || "User"}</span>
+                  <span className="text-[9px] opacity-70 uppercase tracking-wider">{user?.isAdmin ? "Admin" : "Director"}</span>
+                </div>
+              </div>
+            )}
+
+            <div className={`flex items-center ${isSidebarCollapsed ? "flex-col gap-1.5 w-full" : "gap-1"}`}>
+              <button
+                onClick={toggleDarkMode}
+                title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                className="w-7 h-7 rounded-lg bg-slate-100/60 dark:bg-slate-800/60 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-all cursor-pointer flex items-center justify-center shrink-0"
+              >
+                {isDarkMode ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+              </button>
+              <button
+                onClick={logout}
+                title="Log Out"
+                className="w-7 h-7 rounded-lg bg-slate-100/60 dark:bg-slate-800/60 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-slate-400 hover:text-rose-600 transition-all cursor-pointer flex items-center justify-center shrink-0"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
         </div>
       </aside>
 
@@ -860,37 +937,44 @@ function SidebarGroupNav({ icon: Icon, label, active = false, items = [], active
 
   if (collapsed) {
     return (
-      <div className="relative group/sidebar">
+      <div className="relative group/sidebar flex justify-center w-full">
         <button
           onClick={() => onSelectTab(items[0]?.id)}
-          className={`w-11 h-11 rounded-2xl flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-all duration-200 ${
+          className={`w-11 h-11 rounded-2xl flex items-center justify-center cursor-pointer transition-all duration-200 relative ${
             active
-              ? "bg-indigo-600 text-white shadow-md shadow-indigo-200 dark:shadow-none scale-105"
-              : "text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400"
+              ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 ring-2 ring-indigo-400/30 scale-105"
+              : "text-slate-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 hover:text-indigo-600 dark:hover:text-indigo-400 hover:scale-105"
           }`}
         >
-          <Icon className="w-4 h-4 shrink-0" />
-          <span className="text-[7.5px] font-black uppercase tracking-wider">{label}</span>
+          <Icon className="w-5 h-5 shrink-0" />
+          {active && (
+            <span className="absolute -right-1 top-1/2 -translate-y-1/2 w-1.5 h-4 bg-indigo-600 dark:bg-indigo-400 rounded-l-full shadow-sm" />
+          )}
         </button>
 
-        {/* Hover Popover in Collapsed mode */}
-        <div className="absolute left-14 top-0 z-50 hidden group-hover/sidebar:block min-w-[200px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2 rounded-2xl shadow-2xl animate-scale-in">
-          <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider px-3 py-1 border-b border-slate-100 dark:border-slate-800">
-            {label}
-          </p>
-          <div className="flex flex-col gap-1 mt-1.5">
+        {/* Rich Hover Popover in Collapsed mode */}
+        <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 opacity-0 pointer-events-none group-hover/sidebar:opacity-100 group-hover/sidebar:pointer-events-auto translate-x-1 group-hover/sidebar:translate-x-0 transition-all duration-200 min-w-[210px] bg-white/98 dark:bg-slate-900/98 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800/90 p-2.5 rounded-2xl shadow-2xl animate-fade-in">
+          <div className="flex items-center justify-between px-2.5 py-1 mb-1 border-b border-slate-100 dark:border-slate-800">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              {label}
+            </span>
+            <span className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.5 rounded-md">
+              {items.length} {items.length === 1 ? "tool" : "tools"}
+            </span>
+          </div>
+          <div className="flex flex-col gap-1 mt-1">
             {items.map((subItem) => (
               <button
                 key={subItem.id}
                 onClick={() => onSelectTab(subItem.id)}
                 className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
                   activeTab === subItem.id
-                    ? "bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-black"
-                    : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                    ? "bg-indigo-600 text-white font-black shadow-sm"
+                    : "text-slate-700 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-800"
                 }`}
               >
                 <span>{subItem.label}</span>
-                {activeTab === subItem.id && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400" />}
+                {activeTab === subItem.id && <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
               </button>
             ))}
           </div>
@@ -952,16 +1036,21 @@ function SidebarGroupNav({ icon: Icon, label, active = false, items = [], active
   );
 }
 
-/* Floating / mini social icon helper */
-function SocialIcon({ color, icon: Icon, label, onClick }) {
+/* Floating / mini social icon helper with rich tooltips */
+function SocialIcon({ color, icon: Icon, label, onClick, size = "md" }) {
+  const isSm = size === "sm";
   return (
-    <button
-      onClick={onClick}
-      title={label}
-      className={`w-8 h-8 rounded-xl ${color} text-white flex items-center justify-center shadow-sm hover:scale-110 hover:-translate-y-0.5 transition-all cursor-pointer border-0`}
-    >
-      <Icon className="w-3.5 h-3.5 shrink-0" />
-    </button>
+    <div className="relative group/social">
+      <button
+        onClick={onClick}
+        className={`${isSm ? "w-6 h-6 rounded-lg" : "w-8 h-8 rounded-xl"} ${color} text-white flex items-center justify-center shadow-sm hover:scale-110 hover:-translate-y-0.5 transition-all cursor-pointer border-0`}
+      >
+        <Icon className={`${isSm ? "w-3 h-3" : "w-3.5 h-3.5"} shrink-0`} />
+      </button>
+      <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 opacity-0 pointer-events-none group-hover/social:opacity-100 group-hover/social:pointer-events-auto transition-all duration-150 bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-[10px] font-bold px-2 py-1 rounded-lg shadow-xl whitespace-nowrap z-50">
+        {label}
+      </div>
+    </div>
   );
 }
 
