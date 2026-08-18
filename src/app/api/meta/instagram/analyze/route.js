@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { generateStrategy } from "@/lib/ai/strategy-agent";
 import { setActiveStrategy } from "@/lib/ai/strategy-context";
+import { resolveAccountId } from "@/lib/accounts";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export async function POST(req) {
   try {
-    const { profileData, profileContext } = await req.json().catch(() => ({}));
+    const { profileData, profileContext, accountId: rawAccountId } = await req.json().catch(() => ({}));
+    const accountId = resolveAccountId(rawAccountId);
 
     if (!profileData || !profileData.profile) {
       return NextResponse.json(
@@ -19,7 +21,7 @@ export async function POST(req) {
     const strategy = await generateStrategy(profileData, profileContext || {});
 
     // Also persist at the API layer for redundancy
-    setActiveStrategy(strategy);
+    setActiveStrategy(strategy, accountId);
 
     return NextResponse.json({ ok: true, strategy });
   } catch (error) {

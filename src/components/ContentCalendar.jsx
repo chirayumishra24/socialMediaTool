@@ -241,7 +241,7 @@ export default function ContentCalendar({ onSelectPost, onStartResearch }) {
     if (!postId) return;
     setDeleteLoading(postId);
     try {
-      const res = await fetch(`/api/meta/schedule?id=${encodeURIComponent(postId)}`, {
+      const res = await fetch(`/api/meta/schedule?id=${encodeURIComponent(postId)}&accountId=${activeAccount.id}`, {
         method: "DELETE",
       });
       if (res.ok) {
@@ -270,7 +270,7 @@ export default function ContentCalendar({ onSelectPost, onStartResearch }) {
     });
     const updatedCal = { ...aiCalendar, calendar: filtered };
     setAiCalendar(updatedCal);
-    setClientActiveCalendar(updatedCal);
+    setClientActiveCalendar(updatedCal, activeAccount.storagePrefix);
     setSelectedEntry(null);
     toast.info("Idea Discarded", "Calendar entry was removed.");
   };
@@ -281,7 +281,7 @@ export default function ContentCalendar({ onSelectPost, onStartResearch }) {
     const key = `${edited.date}_${edited.topic?.slice(0, 20)}`;
     const newEdits = { ...calendarEdits, [key]: edited };
     setCalendarEdits(newEdits);
-    localStorage.setItem("skilizee_calendar_edits", JSON.stringify(newEdits));
+    localStorage.setItem(`${activeAccount.storagePrefix}_calendar_edits`, JSON.stringify(newEdits));
 
     // Update in aiCalendar state too
     if (aiCalendar?.calendar) {

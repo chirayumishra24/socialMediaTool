@@ -22,13 +22,14 @@ import {
   computeTrends,
   buildSnapshotFromInsights,
 } from "@/lib/meta/analytics-store";
+import { resolveAccountId } from "@/lib/accounts";
 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const period = searchParams.get("period") || "days_28";
     const postsLimit = Math.min(Number(searchParams.get("postsLimit")) || 50, 50);
-    const accountId = searchParams.get("accountId") || "skillizee";
+    const accountId = resolveAccountId(searchParams.get("accountId"));
 
     // Fetch everything in parallel
     const [accountInsights, demographics, postsWithInsights] = await Promise.all([

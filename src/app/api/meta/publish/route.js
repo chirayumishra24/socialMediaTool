@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { publishToMultiplePlatforms } from "@/lib/meta/publisher";
+import { resolveAccountId } from "@/lib/accounts";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60; // IG publishing status polling can take some time
@@ -11,7 +12,7 @@ export const maxDuration = 60; // IG publishing status polling can take some tim
 export async function POST(req) {
   try {
     const { caption, platforms, mediaUrl, accountId } = await req.json().catch(() => ({}));
-    const acctId = accountId || "skillizee";
+    const acctId = resolveAccountId(accountId);
 
     if (!caption || typeof caption !== "string") {
       return NextResponse.json({ error: "Caption is required" }, { status: 400 });

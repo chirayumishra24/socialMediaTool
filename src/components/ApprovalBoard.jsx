@@ -371,7 +371,7 @@ export default function ApprovalBoard({ onPublishPost }) {
           syncStatus: "error",
           syncError: message,
         },
-      });
+      }, activeAccount.storagePrefix);
 
       setPreviewItem((prev) =>
         prev

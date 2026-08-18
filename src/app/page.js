@@ -272,7 +272,7 @@ function AppContent({ defaultTab = "dashboard" }) {
             </div>
           </div>
           <span className="text-sm font-black tracking-tight text-slate-900 dark:text-white">
-            {activeAccount.shortName}<span className={`text-${activeAccount.accentColor}-600 dark:text-${activeAccount.accentColor}-400`}>.ai</span>
+            {activeAccount.shortName}<span className={activeAccount.ui.brandSuffix}>.ai</span>
           </span>
         </div>
 
@@ -305,7 +305,7 @@ function AppContent({ defaultTab = "dashboard" }) {
                 </div>
                 <div>
                   <p className="text-sm font-black text-slate-900 dark:text-white">
-                    {activeAccount.shortName}<span className={`text-${activeAccount.accentColor}-600 dark:text-${activeAccount.accentColor}-400`}>.ai</span>
+                    {activeAccount.shortName}<span className={activeAccount.ui.brandSuffix}>.ai</span>
                   </p>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{activeAccount.subtitle}</p>
                 </div>
@@ -444,7 +444,7 @@ function AppContent({ defaultTab = "dashboard" }) {
               <button
                 onClick={() => setActiveTab("dashboard")}
                 title="Go to Executive Dashboard"
-                className={`w-10 h-10 rounded-2xl bg-gradient-to-tr ${activeAccount.gradientFrom} ${activeAccount.gradientVia} ${activeAccount.gradientTo} p-[2px] shadow-md shadow-${activeAccount.accentColor}-500/15 flex items-center justify-center transition-transform hover:scale-105 shrink-0 cursor-pointer`}
+                className={`w-10 h-10 rounded-2xl bg-gradient-to-tr ${activeAccount.gradientFrom} ${activeAccount.gradientVia} ${activeAccount.gradientTo} p-[2px] shadow-md ${activeAccount.ui.logoGlow} flex items-center justify-center transition-transform hover:scale-105 shrink-0 cursor-pointer`}
               >
                 <div className="w-full h-full bg-white dark:bg-slate-900 rounded-[0.9rem] flex items-center justify-center">
                   <span className={`bg-gradient-to-tr ${activeAccount.gradientFrom} ${activeAccount.gradientTo} bg-clip-text text-transparent text-sm font-black`}>
@@ -455,7 +455,7 @@ function AppContent({ defaultTab = "dashboard" }) {
               {!isSidebarCollapsed && (
                 <div className="flex flex-col">
                   <span className="text-sm font-black text-slate-900 dark:text-white tracking-tight leading-none">
-                    {activeAccount.shortName}<span className={`text-${activeAccount.accentColor}-600 dark:text-${activeAccount.accentColor}-400`}>.ai</span>
+                    {activeAccount.shortName}<span className={activeAccount.ui.brandSuffix}>.ai</span>
                   </span>
                   <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">
                     {activeAccount.subtitle}
@@ -482,7 +482,7 @@ function AppContent({ defaultTab = "dashboard" }) {
             <div className="relative">
               <button
                 onClick={() => setIsAccountSwitcherOpen(!isAccountSwitcherOpen)}
-                className={`w-full px-3 py-2 rounded-xl bg-${activeAccount.accentColor}-50/80 dark:bg-${activeAccount.accentColor}-950/30 border border-${activeAccount.accentColor}-200/50 dark:border-${activeAccount.accentColor}-800/50 flex items-center justify-between text-${activeAccount.accentColor}-700 dark:text-${activeAccount.accentColor}-300 hover:bg-${activeAccount.accentColor}-100 dark:hover:bg-${activeAccount.accentColor}-950/50 transition-all cursor-pointer`}
+                className={`w-full px-3 py-2 rounded-xl border flex items-center justify-between ${activeAccount.ui.switcher} transition-all cursor-pointer`}
               >
                 <span className="flex items-center gap-2 text-xs font-bold">
                   <Repeat className="w-3.5 h-3.5" />
@@ -504,7 +504,7 @@ function AppContent({ defaultTab = "dashboard" }) {
                         }}
                         className={`w-full px-3 py-2.5 flex items-center gap-3 text-xs font-bold transition-all cursor-pointer ${
                           isActive
-                            ? `bg-${acc.accentColor}-50 dark:bg-${acc.accentColor}-950/40 text-${acc.accentColor}-700 dark:text-${acc.accentColor}-300`
+                            ? acc.ui.switcherItemActive
                             : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                         }`}
                       >
@@ -515,7 +515,7 @@ function AppContent({ defaultTab = "dashboard" }) {
                           <p className="leading-tight">{acc.name}</p>
                           <p className="text-[9px] text-slate-400 font-medium uppercase">{acc.subtitle}</p>
                         </div>
-                        {isActive && <CheckCircle2 className={`w-4 h-4 text-${acc.accentColor}-500`} />}
+                        {isActive && <CheckCircle2 className={`w-4 h-4 ${acc.ui.switcherCheck}`} />}
                       </button>
                     );
                   })}
@@ -532,7 +532,7 @@ function AppContent({ defaultTab = "dashboard" }) {
                   switchAccount(ACCOUNT_IDS[nextIdx]);
                 }}
                 title={`Switch account (current: ${activeAccount.name})`}
-                className={`w-10 h-10 rounded-xl bg-${activeAccount.accentColor}-50 dark:bg-${activeAccount.accentColor}-950/40 hover:bg-${activeAccount.accentColor}-100 text-${activeAccount.accentColor}-600 dark:text-${activeAccount.accentColor}-400 flex items-center justify-center transition-all cursor-pointer shadow-sm`}
+                className={`w-10 h-10 rounded-xl ${activeAccount.ui.collapsedButton} flex items-center justify-center transition-all cursor-pointer shadow-sm`}
               >
                 <Repeat className="w-4 h-4" />
               </button>

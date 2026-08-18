@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Link2,
   Unlink,
@@ -16,10 +16,12 @@ import {
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { useAccount } from "@/lib/AccountContext";
+import { getAccountById } from "@/lib/accounts";
 
 export default function MetaConnect({ onStatusChange }) {
   const toast = useToast();
-  const { activeAccount } = useAccount();
+  const { activeAccount, switchAccount } = useAccount();
+  const oauthHandled = useRef(false);
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
@@ -42,18 +44,40 @@ export default function MetaConnect({ onStatusChange }) {
 
   useEffect(() => {
     fetchStatus();
+  }, [fetchStatus]);
 
-    // Check for OAuth callback result in URL
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const authResult = params.get("meta_auth");
-      if (authResult === "success") {
-        fetchStatus();
-        toast.success("Meta Connected", "Instagram and Facebook channels linked successfully.");
-        window.history.replaceState({}, "", window.location.pathname);
-      }
+  // Handle the OAuth callback result exactly once, for whichever account the
+  // callback reports — the user may have connected an account other than the
+  // one currently active.
+  useEffect(() => {
+    if (typeof window === "undefined" || oauthHandled.current) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const authResult = params.get("meta_auth");
+    if (!authResult) return;
+
+    oauthHandled.current = true;
+    const connectedId = params.get("account");
+    const connected = connectedId ? getAccountById(connectedId) : activeAccount;
+
+    if (connectedId && connectedId !== activeAccount.id) {
+      switchAccount(connectedId);
     }
-  }, [fetchStatus, toast]);
+
+    if (authResult === "success") {
+      toast.success(
+        `${connected.name} Connected`,
+        "Instagram and Facebook channels linked successfully."
+      );
+    } else {
+      toast.error(
+        `${connected.name} Connection Failed`,
+        params.get("message") || "Meta authorization did not complete."
+      );
+    }
+
+    window.history.replaceState({}, "", window.location.pathname);
+  }, [activeAccount, switchAccount, toast]);
 
   const handleConnect = async () => {
     setConnecting(true);
@@ -123,7 +147,9 @@ export default function MetaConnect({ onStatusChange }) {
           </div>
           <div>
             <h3 className="text-base font-black text-slate-800">Meta Platform Connection</h3>
-            <p className="text-xs text-slate-400 font-semibold mt-0.5">Instagram &amp; Facebook</p>
+            <p className="text-xs text-slate-400 font-semibold mt-0.5">
+              {activeAccount.name} &middot; Instagram &amp; Facebook
+            </p>
           </div>
         </div>
 
@@ -148,9 +174,17 @@ export default function MetaConnect({ onStatusChange }) {
                 <div>
                   <p className="text-sm font-bold text-amber-800">Setup Required</p>
                   <p className="text-xs text-amber-600 mt-1">
-                    Add <code className="bg-amber-100 px-1 rounded">META_APP_ID</code> and{" "}
-                    <code className="bg-amber-100 px-1 rounded">META_APP_SECRET</code> to your{" "}
-                    <code className="bg-amber-100 px-1 rounded">.env.local</code> file.
+                    Add{" "}
+                    {(status?.missing?.length
+                      ? status.missing
+                      : [`${activeAccount.metaEnvPrefix}_APP_ID`, `${activeAccount.metaEnvPrefix}_APP_SECRET`]
+                    ).map((v, i, arr) => (
+                      <span key={v}>
+                        <code className="bg-amber-100 px-1 rounded">{v}</code>
+                        {i < arr.length - 1 ? " and " : ""}
+                      </span>
+                    ))}{" "}
+                    to your <code className="bg-amber-100 px-1 rounded">.env.local</code> file.
                   </p>
                 </div>
               </div>

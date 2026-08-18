@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { fetchInstagramProfileFromMeta, getInstagramSyncStatus } from "@/lib/meta/instagram";
 import fs from "fs";
 import path from "path";
+import { resolveAccountId } from "@/lib/accounts";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -37,7 +38,8 @@ export async function POST(req) {
     const body = await req.json().catch(() => ({}));
     writeDebugLog("Received POST request", body);
 
-    const { username } = body;
+    const { username, accountId: rawAccountId } = body;
+    const accountId = resolveAccountId(rawAccountId);
     writeDebugLog(`Dashboard requested username: "${username}"`);
     
     if (!username || typeof username !== "string" || !username.trim()) {
@@ -49,10 +51,10 @@ export async function POST(req) {
 
     // Try fetching from official Meta API if credentials are ready
     try {
-      const syncStatus = await getInstagramSyncStatus();
+      const syncStatus = await getInstagramSyncStatus(accountId);
       if (syncStatus.ready) {
         writeDebugLog(`Meta credentials are ready. Fetching profile for @${cleanUsername} from Meta API...`);
-        const metaData = await fetchInstagramProfileFromMeta(cleanUsername);
+        const metaData = await fetchInstagramProfileFromMeta(cleanUsername, accountId);
         writeDebugLog(`Successfully retrieved @${cleanUsername} from Meta Graph API`);
         return NextResponse.json(
           { ok: true, ...metaData }, 

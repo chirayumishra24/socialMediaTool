@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { getInstagramSyncStatus, syncInstagramPost } from "@/lib/meta/instagram";
+import { resolveAccountId } from "@/lib/accounts";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req) {
   try {
-    const { publishedUrl = "", postId = "", accountId = "skillizee" } = await req.json().catch(() => ({}));
+    const { publishedUrl = "", postId = "", accountId: rawAccountId } = await req.json().catch(() => ({}));
+    const accountId = resolveAccountId(rawAccountId);
 
     if (!String(publishedUrl).trim() && !String(postId).trim()) {
       const config = await getInstagramSyncStatus(accountId);

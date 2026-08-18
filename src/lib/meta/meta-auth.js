@@ -16,6 +16,10 @@ import { getMetaConfig, buildGraphUrl, GRAPH_API_BASE } from "./meta-config";
 let firestoreDb = null;
 const TOKENS_COLLECTION = "meta_tokens";
 
+// Pre-multi-account token document, and the account that inherits it.
+const LEGACY_TOKEN_DOC_ID = "primary";
+const LEGACY_OWNER_ACCOUNT_ID = "skillizee";
+
 // In-memory fallback when Firestore is unavailable (keyed by accountId)
 const memoryTokenStore = {};
 
@@ -89,6 +93,19 @@ export async function getTokenData(accountId = "skillizee") {
     try {
       const doc = await db.collection(TOKENS_COLLECTION).doc(accountId).get();
       if (doc.exists) return doc.data();
+
+      // Migration: before multi-account support every token lived at
+      // meta_tokens/primary. Adopt it for the default account once, so the
+      // existing Skillizee connection is not silently lost.
+      if (accountId === LEGACY_OWNER_ACCOUNT_ID) {
+        const legacy = await db.collection(TOKENS_COLLECTION).doc(LEGACY_TOKEN_DOC_ID).get();
+        if (legacy.exists) {
+          const data = { ...legacy.data(), accountId, migratedFrom: LEGACY_TOKEN_DOC_ID };
+          await db.collection(TOKENS_COLLECTION).doc(accountId).set(data, { merge: true });
+          console.log(`[Meta Auth] Migrated legacy token '${LEGACY_TOKEN_DOC_ID}' → '${accountId}'`);
+          return data;
+        }
+      }
     } catch (err) {
       console.error(`[Meta Auth] Firestore read failed for ${accountId}:`, err.message);
     }
@@ -418,14 +435,16 @@ export async function completeOAuthFlow(code, accountId = "skillizee") {
  */
 export async function getConnectionStatus(accountId = "skillizee") {
   const stored = await getTokenData(accountId);
-  const { config, ready } = getMetaConfig(accountId);
+  const { config, ready, missing } = getMetaConfig(accountId);
 
   if (!stored && !config.accessToken) {
     return {
       connected: false,
       configured: ready,
       accountId,
-      missing: ready ? [] : [`${accountId.toUpperCase()}_APP_ID`, `${accountId.toUpperCase()}_APP_SECRET`],
+      // getMetaConfig already reports the real env var names for this account
+      // (META_APP_ID vs CCIS_META_APP_ID) — don't re-derive them from the id.
+      missing,
       message: ready
         ? `Meta app configured for ${accountId} but no account connected. Click 'Connect' to begin.`
         : `Meta app credentials not configured for ${accountId}. Add credentials to .env.local.`,

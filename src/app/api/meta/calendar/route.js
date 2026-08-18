@@ -9,6 +9,7 @@
 import { NextResponse } from "next/server";
 import { generateContentCalendar } from "@/lib/ai/calendar-agent";
 import { setActiveCalendar } from "@/lib/ai/strategy-context";
+import { resolveAccountId } from "@/lib/accounts";
 
 // In-memory cache of the last generated calendar per account
 let lastCalendars = {};
@@ -17,7 +18,7 @@ export async function POST(request) {
   try {
     const body = await request.json().catch(() => ({}));
 
-    const accountId = body.accountId || "skillizee";
+    const accountId = resolveAccountId(body.accountId);
     const options = {
       niche: body.niche || "General",
       goals: Array.isArray(body.goals)
@@ -56,7 +57,7 @@ export async function POST(request) {
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
-  const accountId = searchParams.get("accountId") || "skillizee";
+  const accountId = resolveAccountId(searchParams.get("accountId"));
   const cached = lastCalendars[accountId];
 
   if (!cached) {

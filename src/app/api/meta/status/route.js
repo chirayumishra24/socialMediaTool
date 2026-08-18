@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getConnectionStatus } from "@/lib/meta/meta-auth";
 import { getMetaConfig } from "@/lib/meta/meta-config";
+import { resolveAccountId } from "@/lib/accounts";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +11,7 @@ export const dynamic = "force-dynamic";
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
-    const accountId = searchParams.get("accountId") || "skillizee";
+    const accountId = resolveAccountId(searchParams.get("accountId"));
     const status = await getConnectionStatus(accountId);
     const { ready } = getMetaConfig(accountId);
 

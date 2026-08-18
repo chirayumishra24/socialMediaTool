@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUnifiedMetrics } from "@/lib/meta/unified-metrics";
+import { resolveAccountId } from "@/lib/accounts";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -12,7 +13,7 @@ export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
     const period = searchParams.get("period") || "week";
-    const accountId = searchParams.get("accountId") || "skillizee";
+    const accountId = resolveAccountId(searchParams.get("accountId"));
 
     const validPeriods = ["day", "week", "days_28"];
     if (!validPeriods.includes(period)) {

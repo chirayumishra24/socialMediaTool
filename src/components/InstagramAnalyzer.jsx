@@ -136,7 +136,7 @@ export default function InstagramAnalyzer() {
   useEffect(() => {
     const handleCacheUpdate = () => {
       console.log("[IG Analyzer] Received skilizee_cache_updated event");
-      const cacheStr = localStorage.getItem("skilizee_ig_sync_cache");
+      const cacheStr = localStorage.getItem(`${activeAccount.storagePrefix}_ig_sync_cache`);
       const cleanUser = username.toLowerCase().trim();
       if (cacheStr && cleanUser) {
         try {
@@ -150,11 +150,11 @@ export default function InstagramAnalyzer() {
 
             // Clear matching username history entries from persistent storage
             try {
-              const historyStr = localStorage.getItem("skilizee_ig_analysis");
+              const historyStr = localStorage.getItem(`${activeAccount.storagePrefix}_ig_analysis`);
               if (historyStr) {
                 const history = JSON.parse(historyStr);
                 const filtered = history.filter(h => h.profile?.username?.toLowerCase() !== cleanUser);
-                localStorage.setItem("skilizee_ig_analysis", JSON.stringify(filtered));
+                localStorage.setItem(`${activeAccount.storagePrefix}_ig_analysis`, JSON.stringify(filtered));
               }
             } catch (histErr) {
               console.error("[IG Analyzer] Error purging matching history cache:", histErr);
@@ -170,7 +170,7 @@ export default function InstagramAnalyzer() {
     return () => {
       window.removeEventListener("skilizee_cache_updated", handleCacheUpdate);
     };
-  }, [username]);
+  }, [username, activeAccount.storagePrefix]);
 
   // Auto-load account data on mount or when active account switches
   useEffect(() => {
@@ -209,7 +209,7 @@ export default function InstagramAnalyzer() {
         console.log("[IG Analyzer] Loaded live profile data from Meta Graph API successfully!");
       } else {
         // 2. Fallback to extension cache if Meta API is unavailable
-        const cacheStr = localStorage.getItem("skilizee_ig_sync_cache");
+        const cacheStr = localStorage.getItem(`${activeAccount.storagePrefix}_ig_sync_cache`);
         let data = null;
         if (cacheStr) {
           try {
@@ -239,7 +239,7 @@ export default function InstagramAnalyzer() {
       setScraping(false);
       console.log("[IG Analyzer] Scrape process finished");
     }
-  }, [username]);
+  }, [username, activeAccount.id, activeAccount.storagePrefix]);
 
   // ─── Manual Submit Handler ──────────────────────────────
   const handleManualSubmit = useCallback(async () => {
@@ -275,7 +275,7 @@ export default function InstagramAnalyzer() {
       const res = await fetch("/api/meta/instagram/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profileData, profileContext: context }),
+        body: JSON.stringify({ profileData, profileContext: context, accountId: activeAccount.id }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Analysis failed");
@@ -296,7 +296,7 @@ export default function InstagramAnalyzer() {
     } finally {
       setAnalyzing(false);
     }
-  }, [profileData, context]);
+  }, [profileData, context, activeAccount.id, activeAccount.storagePrefix]);
 
   // ─── Manual Post Helpers ────────────────────────────────
   const addManualPost = () => {

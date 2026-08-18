@@ -7,7 +7,7 @@
  * Supports multiple accounts by reading account-specific env vars.
  */
 
-import { getAccountById } from "../accounts";
+import { getAccountById, resolveAccountId, DEFAULT_ACCOUNT_ID } from "../accounts";
 
 const GRAPH_API_BASE = "https://graph.facebook.com";
 const DEFAULT_GRAPH_VERSION = "v22.0";
@@ -99,22 +99,49 @@ export function buildGraphUrl(path, params = {}, version, accountId = "skillizee
   return url;
 }
 
+// ─── OAuth state (carries the account id across the Meta round-trip) ───
+
+const STATE_DELIMITER = "~";
+
+/**
+ * Encode the account id into the OAuth `state` parameter.
+ * Both accounts share one callback URL, so `state` is the only thing that
+ * tells the callback which account the user is connecting.
+ */
+export function buildOAuthState(accountId, nonce = "") {
+  const acct = resolveAccountId(accountId);
+  return `${acct}${STATE_DELIMITER}${nonce || Date.now()}`;
+}
+
+/**
+ * Decode the account id from an OAuth `state` value.
+ * Unknown or malformed state falls back to the default account.
+ */
+export function parseOAuthState(state) {
+  if (!state || typeof state !== "string") return DEFAULT_ACCOUNT_ID;
+  return resolveAccountId(state.split(STATE_DELIMITER)[0]);
+}
+
 /**
  * Get the OAuth login URL for Meta.
  */
-export function getOAuthLoginUrl(state = "", accountId = "skillizee") {
-  const { config } = getMetaConfig(accountId);
+export function getOAuthLoginUrl(nonce = "", accountId = DEFAULT_ACCOUNT_ID) {
+  const acct = resolveAccountId(accountId);
+  const { config } = getMetaConfig(acct);
+  const prefix = getAccountById(acct).metaEnvPrefix;
 
   if (!config.appId || !config.redirectUri) {
-    throw new Error(`${accountId}: META_APP_ID and META_REDIRECT_URI are required for OAuth`);
+    throw new Error(
+      `${acct}: ${prefix}_APP_ID and ${prefix}_REDIRECT_URI are required for OAuth`
+    );
   }
 
-  const url = new URL("https://www.facebook.com/v22.0/dialog/oauth");
+  const url = new URL(`https://www.facebook.com/${config.graphVersion}/dialog/oauth`);
   url.searchParams.set("client_id", config.appId);
   url.searchParams.set("redirect_uri", config.redirectUri);
   url.searchParams.set("scope", REQUIRED_SCOPES.join(","));
   url.searchParams.set("response_type", "code");
-  url.searchParams.set("state", state || `${accountId}_${Date.now()}`);
+  url.searchParams.set("state", buildOAuthState(acct, nonce));
 
   return url.toString();
 }

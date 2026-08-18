@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getOAuthLoginUrl } from "@/lib/meta/meta-config";
 import { completeOAuthFlow, deleteTokenData, getConnectionStatus } from "@/lib/meta/meta-auth";
+import { resolveAccountId } from "@/lib/accounts";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +11,7 @@ export const dynamic = "force-dynamic";
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
-    const accountId = searchParams.get("accountId") || "skillizee";
+    const accountId = resolveAccountId(searchParams.get("accountId"));
     const loginUrl = getOAuthLoginUrl("", accountId);
     return NextResponse.json({ ok: true, loginUrl });
   } catch (error) {
@@ -28,7 +29,7 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     const { code, accountId } = await req.json().catch(() => ({}));
-    const acctId = accountId || "skillizee";
+    const acctId = resolveAccountId(accountId);
 
     if (!code || typeof code !== "string") {
       return NextResponse.json(
@@ -63,7 +64,7 @@ export async function POST(req) {
 export async function DELETE(req) {
   try {
     const { searchParams } = new URL(req.url);
-    const accountId = searchParams.get("accountId") || "skillizee";
+    const accountId = resolveAccountId(searchParams.get("accountId"));
     await deleteTokenData(accountId);
     return NextResponse.json({ ok: true, message: "Meta account disconnected" });
   } catch (error) {

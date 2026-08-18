@@ -84,43 +84,67 @@ export async function schedulePost({ caption, platforms, mediaUrl, scheduledAt, 
 }
 
 /**
- * Retrieve all scheduled posts.
+ * Retrieve scheduled posts for one account.
+ * Posts written before multi-account support have no `accountId` and are
+ * treated as belonging to the default account.
+ * Pass accountId = null to retrieve every account's queue (cron sweeps only).
  */
-export async function getScheduledPosts() {
+export async function getScheduledPosts(accountId = "skillizee") {
+  const belongsToAccount = (p) =>
+    accountId === null || (p.accountId || "skillizee") === accountId;
+
   const db = await getFirestore();
   if (db) {
     try {
       const snapshot = await db.collection(SCHEDULED_COLLECTION).orderBy("scheduledAt", "asc").get();
       const posts = [];
-      snapshot.forEach((doc) => posts.push(doc.data()));
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        if (belongsToAccount(data)) posts.push(data);
+      });
       return posts;
     } catch (err) {
       console.error("[Scheduler] Firestore read failed:", err.message);
     }
   }
 
-  return [...memoryScheduledPosts].sort((a, b) => new Date(a.scheduledAt) - new Date(b.scheduledAt));
+  return memoryScheduledPosts
+    .filter(belongsToAccount)
+    .sort((a, b) => new Date(a.scheduledAt) - new Date(b.scheduledAt));
 }
 
 /**
  * Delete a scheduled post by ID (cancel schedule).
+ * When accountId is given, the post must belong to that account — this stops
+ * one account from cancelling another account's queued posts.
  */
-export async function deleteScheduledPost(id) {
+export async function deleteScheduledPost(id, accountId = null) {
   const db = await getFirestore();
   if (db) {
     try {
-      await db.collection(SCHEDULED_COLLECTION).doc(id).delete();
+      const ref = db.collection(SCHEDULED_COLLECTION).doc(id);
+      if (accountId) {
+        const doc = await ref.get();
+        if (!doc.exists) throw new Error(`Scheduled post with ID ${id} not found.`);
+        if ((doc.data().accountId || "skillizee") !== accountId) {
+          throw new Error(`Scheduled post ${id} does not belong to account ${accountId}.`);
+        }
+      }
+      await ref.delete();
       return { success: true };
     } catch (err) {
+      // Ownership/not-found errors are real answers — surface them, don't fall through.
+      if (!/Firestore|network|deadline/i.test(err.message)) throw err;
       console.error("[Scheduler] Firestore delete failed:", err.message);
     }
   }
 
-  const initialLength = memoryScheduledPosts.length;
-  memoryScheduledPosts = memoryScheduledPosts.filter((p) => p.id !== id);
-  if (memoryScheduledPosts.length === initialLength) {
-    throw new Error(`Scheduled post with ID ${id} not found.`);
+  const target = memoryScheduledPosts.find((p) => p.id === id);
+  if (!target) throw new Error(`Scheduled post with ID ${id} not found.`);
+  if (accountId && (target.accountId || "skillizee") !== accountId) {
+    throw new Error(`Scheduled post ${id} does not belong to account ${accountId}.`);
   }
+  memoryScheduledPosts = memoryScheduledPosts.filter((p) => p.id !== id);
 
   return { success: true };
 }
@@ -224,7 +248,8 @@ export async function executeScheduledPost(id) {
  * This should be triggered by a system cron job or webhook.
  */
 export async function checkAndPublishPending() {
-  const allPosts = await getScheduledPosts();
+  // null = every account: the cron sweep publishes the whole queue.
+  const allPosts = await getScheduledPosts(null);
   const now = new Date();
   const pending = allPosts.filter(
     (post) => post.status === "scheduled" && new Date(post.scheduledAt) <= now

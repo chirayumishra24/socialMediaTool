@@ -798,8 +798,9 @@ export default function Dashboard({ onNavigate, onStartResearch, onGoToStudio })
 
 /* ─── SAVED STRATEGIES & CALENDARS COMPONENT ───────────────────────────── */
 function SavedStrategiesSection({ onNavigate, onStartResearch, onGoToStudio }) {
-  const savedStrategies = useSavedStrategies();
-  const contentHistory = useContentHistory();
+  const { activeAccount } = useAccount();
+  const savedStrategies = useSavedStrategies(activeAccount.storagePrefix);
+  const contentHistory = useContentHistory(activeAccount.storagePrefix);
   const [activeTab, setActiveTab] = useState("strategies");
   const [expandedId, setExpandedId] = useState(null);
 
@@ -887,7 +888,7 @@ function SavedStrategiesSection({ onNavigate, onStartResearch, onGoToStudio }) {
                       <div className="flex items-center gap-1.5">
                         <span className="text-[10px] font-bold text-slate-400">{formattedDate}</span>
                         <button
-                          onClick={() => deleteStrategy(strat.id)}
+                          onClick={() => deleteStrategy(strat.id, activeAccount.storagePrefix)}
                           className="p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
                           title="Delete strategy"
                         >

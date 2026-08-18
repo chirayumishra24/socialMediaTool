@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { fetchFacebookPagePosts } from "@/lib/meta/facebook";
+import { resolveAccountId } from "@/lib/accounts";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,7 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const pageId = searchParams.get("pageId") || "";
     const limit = parseInt(searchParams.get("limit") || "12", 10);
-    const accountId = searchParams.get("accountId") || "skillizee";
+    const accountId = resolveAccountId(searchParams.get("accountId"));
 
     const posts = await fetchFacebookPagePosts(pageId || undefined, limit, accountId);
 
