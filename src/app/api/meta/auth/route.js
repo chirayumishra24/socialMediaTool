@@ -7,9 +7,11 @@ export const dynamic = "force-dynamic";
 /**
  * GET /api/meta/auth — Returns the OAuth login URL for Meta.
  */
-export async function GET() {
+export async function GET(req) {
   try {
-    const loginUrl = getOAuthLoginUrl();
+    const { searchParams } = new URL(req.url);
+    const accountId = searchParams.get("accountId") || "skillizee";
+    const loginUrl = getOAuthLoginUrl("", accountId);
     return NextResponse.json({ ok: true, loginUrl });
   } catch (error) {
     return NextResponse.json(
@@ -25,7 +27,8 @@ export async function GET() {
  */
 export async function POST(req) {
   try {
-    const { code } = await req.json().catch(() => ({}));
+    const { code, accountId } = await req.json().catch(() => ({}));
+    const acctId = accountId || "skillizee";
 
     if (!code || typeof code !== "string") {
       return NextResponse.json(
@@ -34,7 +37,7 @@ export async function POST(req) {
       );
     }
 
-    const tokenData = await completeOAuthFlow(code);
+    const tokenData = await completeOAuthFlow(code, acctId);
 
     return NextResponse.json({
       ok: true,
@@ -57,9 +60,11 @@ export async function POST(req) {
 /**
  * DELETE /api/meta/auth — Disconnects Meta account (removes stored tokens).
  */
-export async function DELETE() {
+export async function DELETE(req) {
   try {
-    await deleteTokenData();
+    const { searchParams } = new URL(req.url);
+    const accountId = searchParams.get("accountId") || "skillizee";
+    await deleteTokenData(accountId);
     return NextResponse.json({ ok: true, message: "Meta account disconnected" });
   } catch (error) {
     return NextResponse.json(

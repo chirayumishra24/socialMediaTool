@@ -43,6 +43,7 @@ import {
   Cell,
 } from "recharts";
 import { useAuth } from "@/lib/AuthContext";
+import { useAccount } from "@/lib/AccountContext";
 import {
   useContentHistory,
   usePerformanceInsights,
@@ -134,19 +135,20 @@ const SAMPLE_LIVE_POSTS = [
 
 export default function Dashboard({ onNavigate, onStartResearch, onGoToStudio }) {
   const { user } = useAuth();
-  const stats = useStats();
+  const { activeAccount } = useAccount();
+  const stats = useStats(activeAccount.storagePrefix);
   const settings = useSettingsSnapshot();
-  const researchHistory = useResearchHistory();
-  const contentHistory = useContentHistory();
-  const performance = usePerformanceInsights();
-  const savedStrategies = useSavedStrategies();
+  const researchHistory = useResearchHistory(activeAccount.storagePrefix);
+  const contentHistory = useContentHistory(activeAccount.storagePrefix);
+  const performance = usePerformanceInsights(activeAccount.storagePrefix);
+  const savedStrategies = useSavedStrategies(activeAccount.storagePrefix);
 
   const [metaStatus, setMetaStatus] = useState(null);
   const [liveData, setLiveData] = useState(null);
   const [timeRange, setTimeRange] = useState("7d"); // "7d" | "30d"
 
   useEffect(() => {
-    fetch("/api/meta/status")
+    fetch(`/api/meta/status?accountId=${activeAccount.id}`)
       .then((res) => (res.ok ? res.json().catch(() => null) : null))
       .then((data) => {
         if (data) setMetaStatus(data);
@@ -156,14 +158,14 @@ export default function Dashboard({ onNavigate, onStartResearch, onGoToStudio })
     fetch("/api/meta/instagram/scrape", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: "skillizee.io" }),
+      body: JSON.stringify({ username: activeAccount.defaultUsername, accountId: activeAccount.id }),
     })
       .then((res) => (res.ok ? res.json().catch(() => null) : null))
       .then((data) => {
         if (data) setLiveData(data);
       })
       .catch(() => {});
-  }, []);
+  }, [activeAccount.id, activeAccount.defaultUsername]);
 
   // Compute live posts or fall back to high-fidelity seed posts
   const postsList = useMemo(() => {

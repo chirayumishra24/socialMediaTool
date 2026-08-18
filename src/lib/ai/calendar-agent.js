@@ -41,22 +41,23 @@ export async function generateContentCalendar(options = {}) {
     startDate,
     endDate,
     postsPerWeek = 5,
+    accountId = "skillizee",
   } = options;
 
-  console.log("[Calendar Agent] Starting content calendar pipeline...");
+  console.log(`[Calendar Agent] [${accountId}] Starting content calendar pipeline...`);
 
   // Step 1: Fetch all deep insights in parallel
-  console.log("[Calendar Agent] Step 1: Fetching deep insights...");
+  console.log(`[Calendar Agent] [${accountId}] Step 1: Fetching deep insights...`);
   const [accountInsights, demographics, postsWithInsights] = await Promise.all([
-    fetchAccountInsights(period).catch((err) => {
+    fetchAccountInsights(period, accountId).catch((err) => {
       console.warn("[Calendar Agent] Account insights failed:", err.message);
       return {};
     }),
-    fetchAudienceDemographics().catch((err) => {
+    fetchAudienceDemographics(accountId).catch((err) => {
       console.warn("[Calendar Agent] Demographics failed:", err.message);
       return { available: false };
     }),
-    fetchAllPostsWithDeepInsights(postsLimit).catch((err) => {
+    fetchAllPostsWithDeepInsights(postsLimit, accountId).catch((err) => {
       console.warn("[Calendar Agent] Posts insights failed:", err.message);
       return [];
     }),
@@ -65,14 +66,15 @@ export async function generateContentCalendar(options = {}) {
   // Step 2: Build and save analytics snapshot
   console.log("[Calendar Agent] Step 2: Building analytics snapshot...");
   const snapshot = buildSnapshotFromInsights(accountInsights, postsWithInsights, demographics);
-  await saveAnalyticsSnapshot(snapshot).catch((err) =>
-    console.warn("[Calendar Agent] Snapshot save failed:", err.message)
-  );
 
-  // Step 3: Compute trends from historical snapshots
-  console.log("[Calendar Agent] Step 3: Computing trends...");
-  const recentSnapshots = await getRecentSnapshots(4);
+  // Step 3: Save snapshot & fetch trends
+  console.log(`[Calendar Agent] [${accountId}] Step 3: Computing trends...`);
+  await saveAnalyticsSnapshot(snapshot, accountId).catch(() => {});
+  const recentSnapshots = await getRecentSnapshots(4, accountId).catch(() => []);
   const trendData = computeTrends(recentSnapshots);
+
+  // Step 3.5: Check for active marketing strategy to align with
+  const activeStrategy = getActiveStrategy(accountId);
 
   // Step 4: Build optimal posting heatmap
   console.log("[Calendar Agent] Step 4: Building posting heatmap...");

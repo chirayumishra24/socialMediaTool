@@ -37,6 +37,7 @@ import {
   Moon,
   ArrowRight,
   CheckCircle2,
+  Repeat,
 } from "lucide-react";
 
 function Instagram(props) {
@@ -119,6 +120,8 @@ import AccessDenied from "@/components/AccessDenied";
 import LandingPage from "@/components/LandingPage";
 import CommandPalette from "@/components/CommandPalette";
 import { AuthProvider, useAuth } from "@/lib/AuthContext";
+import { AccountProvider, useAccount } from "@/lib/AccountContext";
+import { ACCOUNT_IDS, ACCOUNTS } from "@/lib/accounts";
 import { ToastProvider, useToast } from "@/components/ui/Toast";
 
 const TAB_BREADCRUMBS = {
@@ -138,6 +141,7 @@ const TAB_BREADCRUMBS = {
 
 function AppContent({ defaultTab = "dashboard" }) {
   const { user, loading, hasAccess, logout } = useAuth();
+  const { activeAccount, switchAccount } = useAccount();
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [researchContext, setResearchContext] = useState(null);
   const [showLogin, setShowLogin] = useState(false);
@@ -149,6 +153,7 @@ function AppContent({ defaultTab = "dashboard" }) {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isAccountSwitcherOpen, setIsAccountSwitcherOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -259,15 +264,15 @@ function AppContent({ defaultTab = "dashboard" }) {
       {/* Mobile Top Navbar with Hamburger Toggle (< lg) */}
       <aside className="w-full lg:hidden bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 p-3.5 flex items-center justify-between z-30 shrink-0 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 p-[1.5px] shadow-md flex items-center justify-center shrink-0">
+          <div className={`w-9 h-9 rounded-xl bg-gradient-to-tr ${activeAccount.gradientFrom} ${activeAccount.gradientVia} ${activeAccount.gradientTo} p-[1.5px] shadow-md flex items-center justify-center shrink-0`}>
             <div className="w-full h-full bg-white dark:bg-slate-900 rounded-[0.55rem] flex items-center justify-center">
-              <span className="bg-gradient-to-tr from-indigo-600 to-purple-600 bg-clip-text text-transparent text-xs font-black">
-                S
+              <span className={`bg-gradient-to-tr ${activeAccount.gradientFrom} to-purple-600 bg-clip-text text-transparent text-xs font-black`}>
+                {activeAccount.logo}
               </span>
             </div>
           </div>
           <span className="text-sm font-black tracking-tight text-slate-900 dark:text-white">
-            Skilizee<span className="text-indigo-600 dark:text-indigo-400">.ai</span>
+            {activeAccount.shortName}<span className={`text-${activeAccount.accentColor}-600 dark:text-${activeAccount.accentColor}-400`}>.ai</span>
           </span>
         </div>
 
@@ -295,14 +300,14 @@ function AppContent({ defaultTab = "dashboard" }) {
           <div className="w-full max-h-[90vh] bg-white dark:bg-slate-900 rounded-3xl p-5 overflow-y-auto flex flex-col gap-6 shadow-2xl border border-slate-100 dark:border-slate-800">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white text-xs font-black shadow-md">
-                  S
+                <div className={`w-10 h-10 rounded-xl bg-gradient-to-tr ${activeAccount.gradientFrom} ${activeAccount.gradientTo} flex items-center justify-center text-white text-xs font-black shadow-md`}>
+                  {activeAccount.logo}
                 </div>
                 <div>
                   <p className="text-sm font-black text-slate-900 dark:text-white">
-                    Skilizee<span className="text-indigo-600 dark:text-indigo-400">.ai</span>
+                    {activeAccount.shortName}<span className={`text-${activeAccount.accentColor}-600 dark:text-${activeAccount.accentColor}-400`}>.ai</span>
                   </p>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Social AI Suite</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{activeAccount.subtitle}</p>
                 </div>
               </div>
               <button
@@ -439,21 +444,21 @@ function AppContent({ defaultTab = "dashboard" }) {
               <button
                 onClick={() => setActiveTab("dashboard")}
                 title="Go to Executive Dashboard"
-                className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 p-[2px] shadow-md shadow-indigo-500/15 flex items-center justify-center transition-transform hover:scale-105 shrink-0 cursor-pointer"
+                className={`w-10 h-10 rounded-2xl bg-gradient-to-tr ${activeAccount.gradientFrom} ${activeAccount.gradientVia} ${activeAccount.gradientTo} p-[2px] shadow-md shadow-${activeAccount.accentColor}-500/15 flex items-center justify-center transition-transform hover:scale-105 shrink-0 cursor-pointer`}
               >
                 <div className="w-full h-full bg-white dark:bg-slate-900 rounded-[0.9rem] flex items-center justify-center">
-                  <span className="bg-gradient-to-tr from-indigo-600 to-purple-600 bg-clip-text text-transparent text-sm font-black">
-                    S
+                  <span className={`bg-gradient-to-tr ${activeAccount.gradientFrom} ${activeAccount.gradientTo} bg-clip-text text-transparent text-sm font-black`}>
+                    {activeAccount.logo}
                   </span>
                 </div>
               </button>
               {!isSidebarCollapsed && (
                 <div className="flex flex-col">
                   <span className="text-sm font-black text-slate-900 dark:text-white tracking-tight leading-none">
-                    Skilizee<span className="text-indigo-600 dark:text-indigo-400">.ai</span>
+                    {activeAccount.shortName}<span className={`text-${activeAccount.accentColor}-600 dark:text-${activeAccount.accentColor}-400`}>.ai</span>
                   </span>
                   <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">
-                    Social Suite
+                    {activeAccount.subtitle}
                   </span>
                 </div>
               )}
@@ -471,6 +476,71 @@ function AppContent({ defaultTab = "dashboard" }) {
               {isSidebarCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
             </button>
           </div>
+
+          {/* Account Switcher */}
+          {!isSidebarCollapsed ? (
+            <div className="relative">
+              <button
+                onClick={() => setIsAccountSwitcherOpen(!isAccountSwitcherOpen)}
+                className={`w-full px-3 py-2 rounded-xl bg-${activeAccount.accentColor}-50/80 dark:bg-${activeAccount.accentColor}-950/30 border border-${activeAccount.accentColor}-200/50 dark:border-${activeAccount.accentColor}-800/50 flex items-center justify-between text-${activeAccount.accentColor}-700 dark:text-${activeAccount.accentColor}-300 hover:bg-${activeAccount.accentColor}-100 dark:hover:bg-${activeAccount.accentColor}-950/50 transition-all cursor-pointer`}
+              >
+                <span className="flex items-center gap-2 text-xs font-bold">
+                  <Repeat className="w-3.5 h-3.5" />
+                  {activeAccount.name}
+                </span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isAccountSwitcherOpen ? "rotate-180" : ""}`} />
+              </button>
+              {isAccountSwitcherOpen && (
+                <div className="absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden animate-fade-in">
+                  {ACCOUNT_IDS.map((accId) => {
+                    const acc = ACCOUNTS[accId];
+                    const isActive = accId === activeAccount.id;
+                    return (
+                      <button
+                        key={accId}
+                        onClick={() => {
+                          switchAccount(accId);
+                          setIsAccountSwitcherOpen(false);
+                        }}
+                        className={`w-full px-3 py-2.5 flex items-center gap-3 text-xs font-bold transition-all cursor-pointer ${
+                          isActive
+                            ? `bg-${acc.accentColor}-50 dark:bg-${acc.accentColor}-950/40 text-${acc.accentColor}-700 dark:text-${acc.accentColor}-300`
+                            : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                        }`}
+                      >
+                        <div className={`w-7 h-7 rounded-lg bg-gradient-to-tr ${acc.gradientFrom} ${acc.gradientTo} flex items-center justify-center text-white text-[10px] font-black shadow-sm`}>
+                          {acc.logo}
+                        </div>
+                        <div className="flex-1 text-left">
+                          <p className="leading-tight">{acc.name}</p>
+                          <p className="text-[9px] text-slate-400 font-medium uppercase">{acc.subtitle}</p>
+                        </div>
+                        {isActive && <CheckCircle2 className={`w-4 h-4 text-${acc.accentColor}-500`} />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="relative group flex justify-center w-full">
+              <button
+                onClick={() => {
+                  // Cycle through accounts
+                  const currentIdx = ACCOUNT_IDS.indexOf(activeAccount.id);
+                  const nextIdx = (currentIdx + 1) % ACCOUNT_IDS.length;
+                  switchAccount(ACCOUNT_IDS[nextIdx]);
+                }}
+                title={`Switch account (current: ${activeAccount.name})`}
+                className={`w-10 h-10 rounded-xl bg-${activeAccount.accentColor}-50 dark:bg-${activeAccount.accentColor}-950/40 hover:bg-${activeAccount.accentColor}-100 text-${activeAccount.accentColor}-600 dark:text-${activeAccount.accentColor}-400 flex items-center justify-center transition-all cursor-pointer shadow-sm`}
+              >
+                <Repeat className="w-4 h-4" />
+              </button>
+              <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-1.5 bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-xs font-bold px-2.5 py-1 rounded-xl shadow-xl whitespace-nowrap z-50 pointer-events-none animate-fade-in">
+                {activeAccount.name}
+              </div>
+            </div>
+          )}
 
           {/* Quick Shortcut / Search Bar in Sidebar */}
           {!isSidebarCollapsed ? (
@@ -1056,10 +1126,12 @@ function SocialIcon({ color, icon: Icon, label, onClick, size = "md" }) {
 
 export default function App({ defaultTab = "dashboard" }) {
   return (
-    <AuthProvider>
-      <ToastProvider>
-        <AppContent defaultTab={defaultTab} />
-      </ToastProvider>
-    </AuthProvider>
+    <AccountProvider>
+      <AuthProvider>
+        <ToastProvider>
+          <AppContent defaultTab={defaultTab} />
+        </ToastProvider>
+      </AuthProvider>
+    </AccountProvider>
   );
 }

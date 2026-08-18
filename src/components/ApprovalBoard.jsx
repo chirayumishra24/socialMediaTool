@@ -58,6 +58,7 @@ import {
   useContentHistory,
   useResearchHistory,
 } from "@/lib/storage";
+import { useAccount } from "@/lib/AccountContext";
 import { useToast } from "@/components/ui/Toast";
 
 const STAGES = [
@@ -88,8 +89,9 @@ function getBoardStage(status) {
 
 export default function ApprovalBoard({ onPublishPost }) {
   const toast = useToast();
-  const items = useResearchHistory();
-  const scripts = useContentHistory();
+  const { activeAccount } = useAccount();
+  const items = useResearchHistory(activeAccount.storagePrefix);
+  const scripts = useContentHistory(activeAccount.storagePrefix);
 
   const [previewItem, setPreviewItem] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -104,13 +106,13 @@ export default function ApprovalBoard({ onPublishPost }) {
   const [syncFeedback, setSyncFeedback] = useState("");
 
   const updateStatus = (id, status) => {
-    updateResearchStatus(id, status);
+    updateResearchStatus(id, status, activeAccount.storagePrefix);
     toast.info("Status Updated", `Moved item to "${status}" queue.`);
   };
 
   const handleApproveAll = () => {
     const pendingItems = items.filter((item) => (item.status || "pending") === "pending");
-    pendingItems.forEach((item) => updateResearchStatus(item.id, "approved"));
+    pendingItems.forEach((item) => updateResearchStatus(item.id, "approved", activeAccount.storagePrefix));
     if (pendingItems.length > 0) {
       toast.success("Bulk Approved", `Approved ${pendingItems.length} items.`);
     }
@@ -203,7 +205,7 @@ export default function ApprovalBoard({ onPublishPost }) {
 
   const handleSaveEdit = (id) => {
     try {
-      updateContentBody(id, editBody);
+      updateContentBody(id, editBody, activeAccount.storagePrefix);
       setIsEditing(false);
       setPreviewItem((prev) => (prev ? { ...prev, script: editBody } : prev));
     } catch (error) {
@@ -278,7 +280,7 @@ export default function ApprovalBoard({ onPublishPost }) {
         saves: Number(publishForm.saves || 0),
         impressions: Number(publishForm.impressions || 0),
       },
-    });
+    }, activeAccount.storagePrefix);
 
     setIsPublishing(false);
     setPreviewItem((prev) =>
@@ -309,6 +311,7 @@ export default function ApprovalBoard({ onPublishPost }) {
         body: JSON.stringify({
           publishedUrl: publishForm.publishedUrl.trim(),
           postId: publishForm.postId.trim(),
+          accountId: activeAccount.id,
         }),
       });
 
@@ -330,7 +333,7 @@ export default function ApprovalBoard({ onPublishPost }) {
       const trackedEntry = updateContentTracking(previewItem.contentId, {
         publication: mergedPublication,
         performance: mergedPerformance,
-      });
+      }, activeAccount.storagePrefix);
 
       setPublishForm((prev) => ({
         ...prev,

@@ -7,10 +7,12 @@ export const dynamic = "force-dynamic";
 /**
  * GET /api/meta/status — Returns Meta connection status, token health, and connected accounts.
  */
-export async function GET() {
+export async function GET(req) {
   try {
-    const status = await getConnectionStatus();
-    const { ready } = getMetaConfig();
+    const { searchParams } = new URL(req.url);
+    const accountId = searchParams.get("accountId") || "skillizee";
+    const status = await getConnectionStatus(accountId);
+    const { ready } = getMetaConfig(accountId);
 
     return NextResponse.json({
       ok: true,

@@ -32,12 +32,15 @@ import {
   Line,
 } from "recharts";
 
+import { useAccount } from "@/lib/AccountContext";
+
 const PLATFORM_COLORS = {
   instagram: { primary: "#E1306C", gradient: "from-pink-500 to-purple-600", bg: "bg-pink-50", text: "text-pink-700" },
   facebook: { primary: "#1877F2", gradient: "from-blue-500 to-indigo-600", bg: "bg-blue-50", text: "text-blue-700" },
 };
 
 export default function MetaDashboard() {
+  const { activeAccount } = useAccount();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -50,7 +53,7 @@ export default function MetaDashboard() {
     setError("");
 
     try {
-      const res = await fetch(`/api/meta/insights?period=${period}`);
+      const res = await fetch(`/api/meta/insights?period=${period}&accountId=${activeAccount.id}`);
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Failed to fetch");
       setData(json);
@@ -60,7 +63,7 @@ export default function MetaDashboard() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [period]);
+  }, [period, activeAccount.id]);
 
   useEffect(() => {
     fetchData();

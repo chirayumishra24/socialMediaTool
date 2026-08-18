@@ -3,6 +3,8 @@
 import { useState, useCallback, useEffect } from "react";
 import { MonitorPlay, Camera, Hash, MessageSquare, Newspaper, Zap, BarChart2, Search, Globe, Heart, ArrowRight, Flame, Lightbulb, Target, Loader2, Sparkles, Compass, Repeat2, Play, User, ExternalLink, MessageCircle } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
+import { useAccount } from "@/lib/AccountContext";
+import { saveResearch } from "@/lib/storage";
 
 const PLATFORMS_LIST = [
   { id: "youtube", label: "YouTube", icon: MonitorPlay },
@@ -37,6 +39,7 @@ const LOCATIONS = [
 
 export default function ResearchLab({ onResearchComplete, onGoToStudio, initialKeyword }) {
   const toast = useToast();
+  const { activeAccount } = useAccount();
   const [keyword, setKeyword] = useState(initialKeyword || "");
   useEffect(() => { if (initialKeyword) setKeyword(initialKeyword); }, [initialKeyword]);
 
@@ -84,7 +87,6 @@ export default function ResearchLab({ onResearchComplete, onGoToStudio, initialK
 
       let savedResearch = null;
       try {
-        const { saveResearch } = require("@/lib/storage");
         savedResearch = saveResearch({
           keyword,
           research: data.research,
@@ -94,7 +96,7 @@ export default function ResearchLab({ onResearchComplete, onGoToStudio, initialK
           depth,
           sourceMode,
           platformTargets,
-        });
+        }, activeAccount.storagePrefix);
       } catch {}
 
       onResearchComplete?.({

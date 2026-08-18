@@ -28,18 +28,19 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const period = searchParams.get("period") || "days_28";
     const postsLimit = Math.min(Number(searchParams.get("postsLimit")) || 50, 50);
+    const accountId = searchParams.get("accountId") || "skillizee";
 
     // Fetch everything in parallel
     const [accountInsights, demographics, postsWithInsights] = await Promise.all([
-      fetchAccountInsights(period).catch((err) => {
+      fetchAccountInsights(period, accountId).catch((err) => {
         console.warn("[Deep Insights API] Account insights:", err.message);
         return {};
       }),
-      fetchAudienceDemographics().catch((err) => {
+      fetchAudienceDemographics(accountId).catch((err) => {
         console.warn("[Deep Insights API] Demographics:", err.message);
         return { available: false };
       }),
-      fetchAllPostsWithDeepInsights(postsLimit).catch((err) => {
+      fetchAllPostsWithDeepInsights(postsLimit, accountId).catch((err) => {
         console.warn("[Deep Insights API] Posts insights:", err.message);
         return [];
       }),

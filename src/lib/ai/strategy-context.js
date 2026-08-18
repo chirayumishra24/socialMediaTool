@@ -8,25 +8,33 @@
 
 // ─── In-memory store (survives across API calls within the same process) ────
 
-let _activeStrategy = null;
-let _activeCalendar = null;
+let _activeStrategies = {};
+let _activeCalendars = {};
 
 // ─── Getters / Setters ─────────────────────────────────────────
 
-export function setActiveStrategy(strategy) {
-  _activeStrategy = strategy ? { ...strategy, _persistedAt: new Date().toISOString() } : null;
+export function setActiveStrategy(strategy, accountId = "skillizee") {
+  if (!strategy) {
+    delete _activeStrategies[accountId];
+  } else {
+    _activeStrategies[accountId] = { ...strategy, _persistedAt: new Date().toISOString(), accountId };
+  }
 }
 
-export function getActiveStrategy() {
-  return _activeStrategy;
+export function getActiveStrategy(accountId = "skillizee") {
+  return _activeStrategies[accountId] || null;
 }
 
-export function setActiveCalendar(calendar) {
-  _activeCalendar = calendar ? { ...calendar, _persistedAt: new Date().toISOString() } : null;
+export function setActiveCalendar(calendar, accountId = "skillizee") {
+  if (!calendar) {
+    delete _activeCalendars[accountId];
+  } else {
+    _activeCalendars[accountId] = { ...calendar, _persistedAt: new Date().toISOString(), accountId };
+  }
 }
 
-export function getActiveCalendar() {
-  return _activeCalendar;
+export function getActiveCalendar(accountId = "skillizee") {
+  return _activeCalendars[accountId] || null;
 }
 
 // ─── Strategy Digest (compact summary for calendar prompt) ─────

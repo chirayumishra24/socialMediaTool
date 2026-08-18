@@ -17,8 +17,8 @@ import { fetchAccountInsights, fetchAudienceDemographics, buildOptimalPostingHea
  * @param {"day"|"week"|"days_28"} period
  * @returns {Promise<{ platforms: object[], aggregate: object, comparison: object }>}
  */
-export async function getUnifiedMetrics(period = "week") {
-  const status = await getConnectionStatus();
+export async function getUnifiedMetrics(period = "week", accountId = "skillizee") {
+  const status = await getConnectionStatus(accountId);
   const platforms = [];
 
   // Instagram

@@ -31,6 +31,7 @@ import {
   Share2,
 } from "lucide-react";
 import { saveContent } from "@/lib/storage";
+import { useAccount } from "@/lib/AccountContext";
 import { useToast } from "@/components/ui/Toast";
 import SocialPreview from "./SocialPreview";
 
@@ -48,6 +49,7 @@ const STYLES = ["professional", "casual", "hinglish", "story", "data", "provocat
 
 export default function ContentStudio({ researchContext, onSchedulePost, onSendToApproval }) {
   const toast = useToast();
+  const { activeAccount } = useAccount();
   const [keyword, setKeyword] = useState("");
   const [audience, setAudience] = useState("");
   const [format, setFormat] = useState("instagram_reel");
@@ -203,7 +205,7 @@ export default function ContentStudio({ researchContext, onSchedulePost, onSendT
         editing: result?.editing || {},
         research: researchContext?.research || null,
         metadata: { keyword, format, style, audience, location, researchId: researchContext?.id },
-      });
+      }, activeAccount.storagePrefix);
       setIsSaved(true);
       toast.success("Saved to Library", "Script is now recorded in your pipeline history.");
       setTimeout(() => setIsSaved(false), 3000);

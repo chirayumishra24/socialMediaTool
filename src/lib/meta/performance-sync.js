@@ -14,7 +14,7 @@ import { getValidAccessToken } from "./meta-auth";
  * @param {Array} contentItems - List of content items from storage
  * @param {Function} updateContentTrackingFn - Function to update tracking details
  */
-export async function syncPublishedContentMetrics(contentItems, updateContentTrackingFn) {
+export async function syncPublishedContentMetrics(contentItems, updateContentTrackingFn, accountId = "skillizee") {
   if (!contentItems || contentItems.length === 0) return { syncedCount: 0, errors: [] };
 
   // Filter items that are published and have a platform + published URL/post ID
@@ -25,7 +25,7 @@ export async function syncPublishedContentMetrics(contentItems, updateContentTra
       (item.publication?.postId || item.publication?.publishedUrl)
   );
 
-  console.log(`[Performance Sync] Syncing metrics for ${publishedItems.length} published items...`);
+  console.log(`[Performance Sync] [${accountId}] Syncing metrics for ${publishedItems.length} published items...`);
 
   let syncedCount = 0;
   const errors = [];
@@ -37,7 +37,7 @@ export async function syncPublishedContentMetrics(contentItems, updateContentTra
 
     try {
       if (platform === "instagram") {
-        const syncStatus = await getInstagramSyncStatus();
+        const syncStatus = await getInstagramSyncStatus(accountId);
         if (syncStatus.ready) {
           console.log(`[Performance Sync] Syncing Instagram post: ${postId || publishedUrl}`);
           const res = await syncInstagramPost({ publishedUrl, postId });

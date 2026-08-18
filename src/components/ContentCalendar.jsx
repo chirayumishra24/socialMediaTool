@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { useContentHistory, saveStrategy, setClientActiveCalendar, getClientActiveStrategy, checkStrategyCalendarAlignment } from "@/lib/storage";
+import { useAccount } from "@/lib/AccountContext";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -72,6 +73,7 @@ function toDateStr(date) {
 
 export default function ContentCalendar({ onSelectPost, onStartResearch }) {
   const toast = useToast();
+  const { activeAccount } = useAccount();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [filterFormat, setFilterFormat] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -91,9 +93,9 @@ export default function ContentCalendar({ onSelectPost, onStartResearch }) {
   const [viewMode, setViewMode] = useState("monthly"); // "weekly" | "monthly"
   const [niche, setNiche] = useState("Education / EdTech");
   const [postsPerWeek, setPostsPerWeek] = useState(5);
-  const items = useContentHistory();
+  const items = useContentHistory(activeAccount.storagePrefix);
 
-  const activeStrategy = useMemo(() => getClientActiveStrategy(), [aiCalendar]);
+  const activeStrategy = useMemo(() => getClientActiveStrategy(activeAccount.storagePrefix), [aiCalendar, activeAccount.storagePrefix]);
   const alignment = useMemo(() => checkStrategyCalendarAlignment(activeStrategy, aiCalendar), [activeStrategy, aiCalendar]);
 
   // ─── Save Strategy ─────────────────────────────────────────────
@@ -111,7 +113,7 @@ export default function ContentCalendar({ onSelectPost, onStartResearch }) {
         formatDistribution: aiCalendar.formatDistribution || {},
         rangeStart: aiCalendar.rangeStart || "",
         rangeEnd: aiCalendar.rangeEnd || "",
-      });
+      }, activeAccount.storagePrefix);
       setSavedToast(true);
       setTimeout(() => setSavedToast(false), 3000);
     } catch (e) {
@@ -123,7 +125,7 @@ export default function ContentCalendar({ onSelectPost, onStartResearch }) {
   const fetchMetaScheduled = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/meta/schedule");
+      const res = await fetch(`/api/meta/schedule?accountId=${activeAccount.id}`);
       const data = await res.json();
       if (data.posts) setMetaScheduled(data.posts);
     } catch (err) {
@@ -131,29 +133,29 @@ export default function ContentCalendar({ onSelectPost, onStartResearch }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [activeAccount.id]);
 
   // Load cached AI calendar on mount
   useEffect(() => {
     fetchMetaScheduled();
-    fetch("/api/meta/calendar")
+    fetch(`/api/meta/calendar?accountId=${activeAccount.id}`)
       .then((r) => r.json())
       .then((data) => {
         if (data.calendar) {
           setAiCalendar(data.calendar);
-          setClientActiveCalendar(data.calendar);
+          setClientActiveCalendar(data.calendar, activeAccount.storagePrefix);
         }
       })
       .catch(() => {});
 
     // Load edits from localStorage
     try {
-      const saved = JSON.parse(localStorage.getItem("skilizee_calendar_edits") || "{}");
+      const saved = JSON.parse(localStorage.getItem(`${activeAccount.storagePrefix}_calendar_edits`) || "{}");
       if (saved && Object.keys(saved).length > 0) {
         setCalendarEdits(saved);
       }
     } catch {}
-  }, [fetchMetaScheduled]);
+  }, [fetchMetaScheduled, activeAccount.id, activeAccount.storagePrefix]);
 
   const [calendarEdits, setCalendarEdits] = useState({});
 
@@ -191,15 +193,16 @@ export default function ContentCalendar({ onSelectPost, onStartResearch }) {
           startDate: range.startDate,
           endDate: range.endDate,
           postsPerWeek,
+          accountId: activeAccount.id,
         }),
       });
       const data = await res.json();
       if (data.success && data.calendar) {
         setAiCalendar(data.calendar);
-        setClientActiveCalendar(data.calendar);
+        setClientActiveCalendar(data.calendar, activeAccount.storagePrefix);
         setShowInsights(true);
         setCalendarEdits({});
-        localStorage.removeItem("skilizee_calendar_edits");
+        localStorage.removeItem(`${activeAccount.storagePrefix}_calendar_edits`);
       }
     } catch (err) {
       console.error("Calendar generation failed:", err);
@@ -221,6 +224,7 @@ export default function ContentCalendar({ onSelectPost, onStartResearch }) {
           caption: entry.caption || `${entry.topic}\n\n${(entry.hashtags || []).join(" ")}`,
           platforms: ["instagram"],
           scheduledAt: scheduledAt.toISOString(),
+          accountId: activeAccount.id,
         }),
       });
       await fetchMetaScheduled();

@@ -10,27 +10,27 @@ import { buildGraphUrl, checkRateLimit, trackApiCall } from "./meta-config";
 
 // ─── Helper: Facebook Graph Request ────────────────────────────
 
-async function fbGraphRequest(path, params = {}, usePageToken = true) {
-  const rateCheck = checkRateLimit("facebook");
+async function fbGraphRequest(path, params = {}, usePageToken = true, accountId = "skillizee") {
+  const rateCheck = checkRateLimit("facebook", accountId);
   if (!rateCheck.allowed) {
     throw new Error(
       `Facebook API rate limit exceeded. Resets in ${Math.ceil(rateCheck.resetsIn / 60000)} minutes.`
     );
   }
-  trackApiCall("facebook");
+  trackApiCall("facebook", accountId);
 
   let accessToken;
   if (usePageToken) {
-    const creds = await getFacebookPageCredentials();
+    const creds = await getFacebookPageCredentials(accountId);
     accessToken = creds.pageAccessToken;
   } else {
-    accessToken = await getValidAccessToken();
+    accessToken = await getValidAccessToken(accountId);
   }
 
   const url = buildGraphUrl(path, {
     ...params,
     access_token: accessToken,
-  });
+  }, undefined, accountId);
 
   const response = await fetch(url, {
     method: "GET",
@@ -58,8 +58,8 @@ async function fbGraphRequest(path, params = {}, usePageToken = true) {
 /**
  * Fetch Facebook Page profile information.
  */
-export async function fetchFacebookPageProfile(pageId) {
-  const id = pageId || (await getFacebookPageCredentials()).pageId;
+export async function fetchFacebookPageProfile(pageId, accountId = "skillizee") {
+  const id = pageId || (await getFacebookPageCredentials(accountId)).pageId;
 
   const data = await fbGraphRequest(`/${id}`, {
     fields: [
@@ -102,8 +102,8 @@ export async function fetchFacebookPageProfile(pageId) {
 /**
  * Fetch recent Facebook Page posts with engagement metrics.
  */
-export async function fetchFacebookPagePosts(pageId, limit = 12) {
-  const id = pageId || (await getFacebookPageCredentials()).pageId;
+export async function fetchFacebookPagePosts(pageId, limit = 12, accountId = "skillizee") {
+  const id = pageId || (await getFacebookPageCredentials(accountId)).pageId;
 
   const data = await fbGraphRequest(`/${id}/posts`, {
     fields: [
@@ -168,8 +168,8 @@ export async function fetchFacebookPagePosts(pageId, limit = 12) {
  * @param {"day"|"week"|"days_28"} period
  * @param {string[]} metrics - Optional override; defaults to common engagement metrics.
  */
-export async function getPageInsights(pageId, period = "week", metrics) {
-  const id = pageId || (await getFacebookPageCredentials()).pageId;
+export async function getPageInsights(pageId, period = "week", metrics, accountId = "skillizee") {
+  const id = pageId || (await getFacebookPageCredentials(accountId)).pageId;
 
   const defaultMetrics = [
     "page_impressions",
@@ -211,7 +211,7 @@ export async function getPageInsights(pageId, period = "week", metrics) {
 /**
  * Fetch insights for a specific Facebook post.
  */
-export async function getPostInsights(postId) {
+export async function getPostInsights(postId, accountId = "skillizee") {
   const metrics = [
     "post_impressions",
     "post_impressions_unique",

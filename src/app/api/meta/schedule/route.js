@@ -38,7 +38,8 @@ export async function GET(req) {
  */
 export async function POST(req) {
   try {
-    const { caption, platforms, mediaUrl, scheduledAt } = await req.json().catch(() => ({}));
+    const { caption, platforms, mediaUrl, scheduledAt, accountId } = await req.json().catch(() => ({}));
+    const acctId = accountId || "skillizee";
 
     if (!caption || typeof caption !== "string") {
       return NextResponse.json({ error: "Caption is required" }, { status: 400 });
@@ -71,6 +72,7 @@ export async function POST(req) {
       platforms,
       mediaUrl,
       scheduledAt,
+      accountId: acctId,
     });
 
     return NextResponse.json({ ok: true, message: "Post scheduled successfully", post });

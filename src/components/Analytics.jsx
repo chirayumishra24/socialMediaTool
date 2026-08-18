@@ -4,16 +4,18 @@ import { useState, useEffect } from "react";
 import { BarChart as BarChartIcon, Search, MousePointerClick, Clapperboard, Rocket, TrendingUp, Users, Clock, Globe, Hash, Eye, ShieldAlert, Loader2, Film, Images, Image as ImageIcon, MapPin, Activity } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from "recharts";
 import { useContentHistory, usePerformanceInsights, useResearchHistory, useStats } from "@/lib/storage";
+import { useAccount } from "@/lib/AccountContext";
 import MetaDashboard from "./MetaDashboard";
 
 export default function Analytics() {
+  const { activeAccount } = useAccount();
   const [activeTab, setActiveTab] = useState("pipeline"); // pipeline, meta, deep
   const [deepData, setDeepData] = useState(null);
   const [deepLoading, setDeepLoading] = useState(false);
-  const stats = useStats();
-  const content = useContentHistory();
-  const research = useResearchHistory();
-  const performance = usePerformanceInsights();
+  const stats = useStats(activeAccount?.storagePrefix);
+  const content = useContentHistory(activeAccount?.storagePrefix);
+  const research = useResearchHistory(activeAccount?.storagePrefix);
+  const performance = usePerformanceInsights(activeAccount?.storagePrefix);
 
   if (!stats) return <div className="p-20 text-center text-txt-muted animate-pulse">Initializing Executive Dashboard...</div>;
 

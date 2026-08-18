@@ -30,12 +30,14 @@ import {
   Check
 } from "lucide-react";
 import { saveAnalysis, useAnalysisHistory, setClientActiveStrategy, getClientActiveCalendar, checkStrategyCalendarAlignment } from "@/lib/storage";
+import { useAccount } from "@/lib/AccountContext";
 import { useToast } from "@/components/ui/Toast";
 
 export default function InstagramAnalyzer() {
   const toast = useToast();
+  const { activeAccount } = useAccount();
   // ─── State ──────────────────────────────────────────────
-  const [username, setUsername] = useState("skillizee.io");
+  const [username, setUsername] = useState(activeAccount.defaultUsername || "skillizee.io");
   const [scraping, setScraping] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [profileData, setProfileData] = useState(null);
@@ -45,9 +47,9 @@ export default function InstagramAnalyzer() {
   const [manualMode, setManualMode] = useState(false);
   
   const [savedToast, setSavedToast] = useState(false);
-  const history = useAnalysisHistory();
+  const history = useAnalysisHistory(activeAccount.storagePrefix);
 
-  const activeCalendar = useMemo(() => getClientActiveCalendar(), [strategy]);
+  const activeCalendar = useMemo(() => getClientActiveCalendar(activeAccount.storagePrefix), [strategy, activeAccount.storagePrefix]);
   const alignment = useMemo(() => checkStrategyCalendarAlignment(strategy, activeCalendar), [strategy, activeCalendar]);
 
   const handleSaveStrategy = () => {
@@ -57,7 +59,7 @@ export default function InstagramAnalyzer() {
       posts: profileData.posts,
       analysis: profileData.analysis,
       strategy,
-    });
+    }, activeAccount.storagePrefix);
     setSavedToast(true);
     toast.success("Strategy Saved", `Saved profile audit for @${profileData.profile?.username}`);
     setTimeout(() => setSavedToast(false), 3000);
@@ -170,12 +172,12 @@ export default function InstagramAnalyzer() {
     };
   }, [username]);
 
-  // Auto-load @skillizee.io account data on mount
+  // Auto-load account data on mount or when active account switches
   useEffect(() => {
-    if (!profileData && !scraping) {
-      handleScrape();
-    }
-  }, []);
+    setUsername(activeAccount.defaultUsername);
+    setProfileData(null);
+    setStrategy(null);
+  }, [activeAccount.defaultUsername]);
 
   // ─── Scrape Handler (Client-side extension cache lookup + Meta API fallback) ───
   const handleScrape = useCallback(async () => {
@@ -197,7 +199,7 @@ export default function InstagramAnalyzer() {
       const res = await fetch("/api/meta/instagram/scrape", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: cleanUser }),
+        body: JSON.stringify({ username: cleanUser, accountId: activeAccount.id }),
       });
 
       const serverData = await res.json();
@@ -280,7 +282,7 @@ export default function InstagramAnalyzer() {
       setStrategy(data.strategy);
 
       // Persist to client-side shared context for calendar alignment
-      setClientActiveStrategy(data.strategy);
+      setClientActiveStrategy(data.strategy, activeAccount.storagePrefix);
       
       // Save to localStorage history
       saveAnalysis({
@@ -288,7 +290,7 @@ export default function InstagramAnalyzer() {
         posts: profileData.posts,
         analysis: profileData.analysis,
         strategy: data.strategy,
-      });
+      }, activeAccount.storagePrefix);
     } catch (err) {
       setError(err.message);
     } finally {

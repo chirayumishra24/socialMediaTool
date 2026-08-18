@@ -50,10 +50,11 @@ let memoryPostLogs = {};
  * @param {object} data — The snapshot data
  * @returns {Promise<object>} — The saved snapshot
  */
-export async function saveAnalyticsSnapshot(data) {
+export async function saveAnalyticsSnapshot(data, accountId = "skillizee") {
   const dateKey = new Date().toISOString().slice(0, 10);
   const snapshot = {
-    id: `snap_${dateKey}`,
+    id: `snap_${accountId}_${dateKey}`,
+    accountId,
     timestamp: new Date().toISOString(),
     ...data,
   };
@@ -62,14 +63,14 @@ export async function saveAnalyticsSnapshot(data) {
   if (db) {
     try {
       await db.collection(SNAPSHOTS_COLLECTION).doc(snapshot.id).set(snapshot, { merge: true });
-      console.log(`[Analytics Store] Snapshot saved: ${snapshot.id}`);
+      console.log(`[Analytics Store] [${accountId}] Snapshot saved: ${snapshot.id}`);
       return snapshot;
     } catch (err) {
-      console.error("[Analytics Store] Firestore save failed:", err.message);
+      console.error(`[Analytics Store] [${accountId}] Firestore save failed:`, err.message);
     }
   }
 
-  // Memory fallback — replace if same date, else append
+  // Memory fallback — replace if same id, else append
   const existingIdx = memorySnapshots.findIndex((s) => s.id === snapshot.id);
   if (existingIdx >= 0) {
     memorySnapshots[existingIdx] = snapshot;
@@ -83,14 +84,16 @@ export async function saveAnalyticsSnapshot(data) {
 /**
  * Retrieve the most recent N snapshots.
  * @param {number} count — Number of snapshots (default 8)
+ * @param {string} accountId — Account identifier
  * @returns {Promise<object[]>}
  */
-export async function getRecentSnapshots(count = 8) {
+export async function getRecentSnapshots(count = 8, accountId = "skillizee") {
   const db = await getFirestore();
   if (db) {
     try {
       const snap = await db
         .collection(SNAPSHOTS_COLLECTION)
+        .where("accountId", "==", accountId)
         .orderBy("timestamp", "desc")
         .limit(count)
         .get();
@@ -98,11 +101,12 @@ export async function getRecentSnapshots(count = 8) {
       snap.forEach((doc) => results.push(doc.data()));
       return results;
     } catch (err) {
-      console.error("[Analytics Store] Firestore read failed:", err.message);
+      console.error(`[Analytics Store] [${accountId}] Firestore read failed:`, err.message);
     }
   }
 
-  return [...memorySnapshots]
+  return memorySnapshots
+    .filter((s) => (s.accountId || "skillizee") === accountId)
     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
     .slice(0, count);
 }
@@ -114,9 +118,10 @@ export async function getRecentSnapshots(count = 8) {
  * @param {string} mediaId
  * @param {object} metrics — { reach, impressions, saves, shares, ... }
  */
-export async function logPostPerformance(mediaId, metrics) {
+export async function logPostPerformance(mediaId, metrics, accountId = "skillizee") {
   const logEntry = {
     mediaId,
+    accountId,
     timestamp: new Date().toISOString(),
     ...metrics,
   };
@@ -124,7 +129,7 @@ export async function logPostPerformance(mediaId, metrics) {
   const db = await getFirestore();
   if (db) {
     try {
-      const docId = `${mediaId}_${new Date().toISOString().slice(0, 10)}`;
+      const docId = `${accountId}_${mediaId}_${new Date().toISOString().slice(0, 10)}`;
       await db.collection(POST_PERFORMANCE_COLLECTION).doc(docId).set(logEntry);
       return logEntry;
     } catch (err) {
@@ -133,23 +138,26 @@ export async function logPostPerformance(mediaId, metrics) {
   }
 
   // Memory fallback
-  if (!memoryPostLogs[mediaId]) memoryPostLogs[mediaId] = [];
-  memoryPostLogs[mediaId].push(logEntry);
+  const memKey = `${accountId}_${mediaId}`;
+  if (!memoryPostLogs[memKey]) memoryPostLogs[memKey] = [];
+  memoryPostLogs[memKey].push(logEntry);
   return logEntry;
 }
 
 /**
  * Get performance history for a specific post.
  * @param {string} mediaId
+ * @param {string} accountId
  * @returns {Promise<object[]>}
  */
-export async function getPostPerformanceHistory(mediaId) {
+export async function getPostPerformanceHistory(mediaId, accountId = "skillizee") {
   const db = await getFirestore();
   if (db) {
     try {
       const snap = await db
         .collection(POST_PERFORMANCE_COLLECTION)
         .where("mediaId", "==", mediaId)
+        .where("accountId", "==", accountId)
         .orderBy("timestamp", "desc")
         .limit(30)
         .get();
@@ -161,7 +169,8 @@ export async function getPostPerformanceHistory(mediaId) {
     }
   }
 
-  return (memoryPostLogs[mediaId] || []).slice(-30).reverse();
+  const memKey = `${accountId}_${mediaId}`;
+  return (memoryPostLogs[memKey] || []).slice(-30).reverse();
 }
 
 // ─── Trend Computation ────────────────────────────────────────

@@ -1,11 +1,11 @@
 /**
- * Skilizee — Meta OAuth 2.0 & Token Management
+ * Skilizee — Meta OAuth 2.0 & Token Management (Multi-Account)
  *
- * Handles the full OAuth lifecycle:
+ * Handles the full OAuth lifecycle per account:
  * 1. Exchange authorization code for short-lived token
  * 2. Exchange short-lived → long-lived token (60 days)
  * 3. Refresh long-lived tokens before expiry
- * 4. Store/retrieve tokens from Firestore
+ * 4. Store/retrieve tokens from Firestore (keyed by accountId)
  * 5. Auto-discover connected IG accounts and FB Pages
  */
 
@@ -15,10 +15,9 @@ import { getMetaConfig, buildGraphUrl, GRAPH_API_BASE } from "./meta-config";
 
 let firestoreDb = null;
 const TOKENS_COLLECTION = "meta_tokens";
-const TOKEN_DOC_ID = "primary"; // single-account MVP
 
-// In-memory fallback when Firestore is unavailable
-let memoryTokenStore = null;
+// In-memory fallback when Firestore is unavailable (keyed by accountId)
+const memoryTokenStore = {};
 
 async function getFirestore() {
   if (firestoreDb) return firestoreDb;
@@ -53,72 +52,79 @@ async function getFirestore() {
 
 /**
  * Save token data to Firestore (or memory fallback).
+ * @param {object} tokenData
+ * @param {string} accountId - Account ID for scoping
  */
-export async function saveTokenData(tokenData) {
+export async function saveTokenData(tokenData, accountId = "skillizee") {
   const data = {
     ...tokenData,
+    accountId,
     updatedAt: new Date().toISOString(),
   };
 
   const db = await getFirestore();
   if (db) {
     try {
-      await db.collection(TOKENS_COLLECTION).doc(TOKEN_DOC_ID).set(data, { merge: true });
-      console.log("[Meta Auth] Token saved to Firestore");
+      await db.collection(TOKENS_COLLECTION).doc(accountId).set(data, { merge: true });
+      console.log(`[Meta Auth] Token saved to Firestore for account: ${accountId}`);
       return data;
     } catch (err) {
-      console.error("[Meta Auth] Firestore save failed:", err.message);
+      console.error(`[Meta Auth] Firestore save failed for ${accountId}:`, err.message);
     }
   }
 
   // Memory fallback
-  memoryTokenStore = data;
-  console.log("[Meta Auth] Token saved to memory (Firestore unavailable)");
+  memoryTokenStore[accountId] = data;
+  console.log(`[Meta Auth] Token saved to memory for ${accountId} (Firestore unavailable)`);
   return data;
 }
 
 /**
  * Retrieve stored token data.
+ * @param {string} accountId
  */
-export async function getTokenData() {
+export async function getTokenData(accountId = "skillizee") {
   const db = await getFirestore();
   if (db) {
     try {
-      const doc = await db.collection(TOKENS_COLLECTION).doc(TOKEN_DOC_ID).get();
+      const doc = await db.collection(TOKENS_COLLECTION).doc(accountId).get();
       if (doc.exists) return doc.data();
     } catch (err) {
-      console.error("[Meta Auth] Firestore read failed:", err.message);
+      console.error(`[Meta Auth] Firestore read failed for ${accountId}:`, err.message);
     }
   }
 
-  return memoryTokenStore;
+  return memoryTokenStore[accountId] || null;
 }
 
 /**
  * Delete stored token data (disconnect).
+ * @param {string} accountId
  */
-export async function deleteTokenData() {
+export async function deleteTokenData(accountId = "skillizee") {
   const db = await getFirestore();
   if (db) {
     try {
-      await db.collection(TOKENS_COLLECTION).doc(TOKEN_DOC_ID).delete();
+      await db.collection(TOKENS_COLLECTION).doc(accountId).delete();
     } catch (err) {
-      console.error("[Meta Auth] Firestore delete failed:", err.message);
+      console.error(`[Meta Auth] Firestore delete failed for ${accountId}:`, err.message);
     }
   }
-  memoryTokenStore = null;
+  delete memoryTokenStore[accountId];
 }
 
 // ─── OAuth Token Exchange ──────────────────────────────────────
 
 /**
  * Exchange an authorization code for a short-lived access token.
+ * @param {string} code
+ * @param {string} accountId
  */
-export async function exchangeCodeForToken(code) {
-  const { config } = getMetaConfig();
+export async function exchangeCodeForToken(code, accountId = "skillizee") {
+  const { config } = getMetaConfig(accountId);
 
   if (!config.appId || !config.appSecret || !config.redirectUri) {
-    throw new Error("META_APP_ID, META_APP_SECRET, and META_REDIRECT_URI are required");
+    throw new Error(`${accountId}: APP_ID, APP_SECRET, and REDIRECT_URI are required`);
   }
 
   const url = buildGraphUrl("/oauth/access_token", {
@@ -126,7 +132,7 @@ export async function exchangeCodeForToken(code) {
     client_secret: config.appSecret,
     redirect_uri: config.redirectUri,
     code,
-  });
+  }, undefined, accountId);
 
   const res = await fetch(url, { method: "GET", cache: "no-store" });
   const data = await res.json();
@@ -146,15 +152,15 @@ export async function exchangeCodeForToken(code) {
 /**
  * Exchange a short-lived token for a long-lived token (60 days).
  */
-export async function exchangeForLongLivedToken(shortLivedToken) {
-  const { config } = getMetaConfig();
+export async function exchangeForLongLivedToken(shortLivedToken, accountId = "skillizee") {
+  const { config } = getMetaConfig(accountId);
 
   const url = buildGraphUrl("/oauth/access_token", {
     grant_type: "fb_exchange_token",
     client_id: config.appId,
     client_secret: config.appSecret,
     fb_exchange_token: shortLivedToken,
-  });
+  }, undefined, accountId);
 
   const res = await fetch(url, { method: "GET", cache: "no-store" });
   const data = await res.json();
@@ -173,17 +179,16 @@ export async function exchangeForLongLivedToken(shortLivedToken) {
 
 /**
  * Refresh a long-lived token (generates a new one valid for 60 more days).
- * Note: This only works if the current token is still valid.
  */
-export async function refreshLongLivedToken(currentToken) {
-  const { config } = getMetaConfig();
+export async function refreshLongLivedToken(currentToken, accountId = "skillizee") {
+  const { config } = getMetaConfig(accountId);
 
   const url = buildGraphUrl("/oauth/access_token", {
     grant_type: "fb_exchange_token",
     client_id: config.appId,
     client_secret: config.appSecret,
     fb_exchange_token: currentToken,
-  });
+  }, undefined, accountId);
 
   const res = await fetch(url, { method: "GET", cache: "no-store" });
   const data = await res.json();
@@ -205,12 +210,12 @@ export async function refreshLongLivedToken(currentToken) {
 /**
  * Discover connected Facebook Pages and Instagram Business accounts.
  */
-export async function discoverConnectedAccounts(accessToken) {
+export async function discoverConnectedAccounts(accessToken, accountId = "skillizee") {
   // 1. Get user's Facebook Pages
   const pagesUrl = buildGraphUrl("/me/accounts", {
     fields: "id,name,access_token,category,instagram_business_account{id,username,name,profile_picture_url,followers_count}",
     access_token: accessToken,
-  });
+  }, undefined, accountId);
 
   const pagesRes = await fetch(pagesUrl, { cache: "no-store" });
   const pagesData = await pagesRes.json();
@@ -239,7 +244,7 @@ export async function discoverConnectedAccounts(accessToken) {
   const meUrl = buildGraphUrl("/me", {
     fields: "id,name,email",
     access_token: accessToken,
-  });
+  }, undefined, accountId);
 
   const meRes = await fetch(meUrl, { cache: "no-store" });
   const meData = await meRes.json();
@@ -260,10 +265,11 @@ export async function discoverConnectedAccounts(accessToken) {
 /**
  * Returns a valid access token, auto-refreshing if needed.
  * Priority: Firestore stored token → env variable → error
+ * @param {string} accountId
  */
-export async function getValidAccessToken() {
+export async function getValidAccessToken(accountId = "skillizee") {
   // 1. Check stored token
-  const stored = await getTokenData();
+  const stored = await getTokenData(accountId);
 
   if (stored?.accessToken) {
     const expiresAt = stored.expiresAt ? new Date(stored.expiresAt) : null;
@@ -274,18 +280,18 @@ export async function getValidAccessToken() {
       // Auto-refresh if expiring within 7 days
       if (expiresAt && (expiresAt - now) < 7 * 24 * 60 * 60 * 1000) {
         try {
-          console.log("[Meta Auth] Token expiring soon, auto-refreshing...");
-          const refreshed = await refreshLongLivedToken(stored.accessToken);
+          console.log(`[Meta Auth] [${accountId}] Token expiring soon, auto-refreshing...`);
+          const refreshed = await refreshLongLivedToken(stored.accessToken, accountId);
           const newData = {
             ...stored,
             accessToken: refreshed.accessToken,
             expiresAt: new Date(Date.now() + refreshed.expiresIn * 1000).toISOString(),
             lastRefreshedAt: new Date().toISOString(),
           };
-          await saveTokenData(newData);
+          await saveTokenData(newData, accountId);
           return newData.accessToken;
         } catch (err) {
-          console.warn("[Meta Auth] Auto-refresh failed, using current token:", err.message);
+          console.warn(`[Meta Auth] [${accountId}] Auto-refresh failed, using current token:`, err.message);
           return stored.accessToken;
         }
       }
@@ -295,15 +301,15 @@ export async function getValidAccessToken() {
 
     // Token expired — try to refresh
     try {
-      console.log("[Meta Auth] Token expired, attempting refresh...");
-      const refreshed = await refreshLongLivedToken(stored.accessToken);
+      console.log(`[Meta Auth] [${accountId}] Token expired, attempting refresh...`);
+      const refreshed = await refreshLongLivedToken(stored.accessToken, accountId);
       const newData = {
         ...stored,
         accessToken: refreshed.accessToken,
         expiresAt: new Date(Date.now() + refreshed.expiresIn * 1000).toISOString(),
         lastRefreshedAt: new Date().toISOString(),
       };
-      await saveTokenData(newData);
+      await saveTokenData(newData, accountId);
       return newData.accessToken;
     } catch {
       // Refresh failed — token is truly dead
@@ -311,65 +317,68 @@ export async function getValidAccessToken() {
   }
 
   // 2. Fallback to env variable
-  const { config } = getMetaConfig();
+  const { config } = getMetaConfig(accountId);
   if (config.accessToken) {
     return config.accessToken;
   }
 
   throw new Error(
-    "No valid Meta access token. Please connect your Meta account via Settings → Meta Connect."
+    `No valid Meta access token for ${accountId}. Please connect your Meta account via Settings → Meta Connect.`
   );
 }
 
 /**
  * Get the connected Instagram account ID.
+ * @param {string} accountId
  */
-export async function getInstagramAccountId() {
-  const stored = await getTokenData();
+export async function getInstagramAccountId(accountId = "skillizee") {
+  const stored = await getTokenData(accountId);
   if (stored?.igAccountId) return stored.igAccountId;
 
-  const { config } = getMetaConfig();
+  const { config } = getMetaConfig(accountId);
   if (config.igAccountId) return config.igAccountId;
 
-  throw new Error("No Instagram account connected. Please connect via Settings → Meta Connect.");
+  throw new Error(`No Instagram account connected for ${accountId}. Please connect via Settings → Meta Connect.`);
 }
 
 /**
  * Get the connected Facebook Page ID and its page access token.
+ * @param {string} accountId
  */
-export async function getFacebookPageCredentials() {
-  const stored = await getTokenData();
+export async function getFacebookPageCredentials(accountId = "skillizee") {
+  const stored = await getTokenData(accountId);
   if (stored?.fbPageId && stored?.pageAccessToken) {
     return { pageId: stored.fbPageId, pageAccessToken: stored.pageAccessToken };
   }
 
-  const { config } = getMetaConfig();
+  const { config } = getMetaConfig(accountId);
   if (config.fbPageId) {
-    // Page access token might be the user token if no stored page token
-    const accessToken = await getValidAccessToken();
+    const accessToken = await getValidAccessToken(accountId);
     return { pageId: config.fbPageId, pageAccessToken: accessToken };
   }
 
-  throw new Error("No Facebook Page connected. Please connect via Settings → Meta Connect.");
+  throw new Error(`No Facebook Page connected for ${accountId}. Please connect via Settings → Meta Connect.`);
 }
 
 // ─── Full OAuth Flow (Code → Long-Lived Token → Store) ────────
 
 /**
  * Complete OAuth flow: exchange code, upgrade to long-lived, discover accounts, store everything.
+ * @param {string} code
+ * @param {string} accountId
  */
-export async function completeOAuthFlow(code) {
+export async function completeOAuthFlow(code, accountId = "skillizee") {
   // Step 1: Exchange code for short-lived token
-  console.log("[Meta Auth] Step 1: Exchanging authorization code...");
-  const shortLived = await exchangeCodeForToken(code);
+  console.log(`[Meta Auth] [${accountId}] Step 1: Exchanging authorization code...`);
+  const shortLived = await exchangeCodeForToken(code, accountId);
 
   // Step 2: Exchange for long-lived token
-  console.log("[Meta Auth] Step 2: Upgrading to long-lived token...");
-  const longLived = await exchangeForLongLivedToken(shortLived.accessToken);
+  console.log(`[Meta Auth] [${accountId}] Step 2: Upgrading to long-lived token...`);
+  const longLived = await exchangeForLongLivedToken(shortLived.accessToken, accountId);
 
   // Step 3: Discover connected accounts
-  console.log("[Meta Auth] Step 3: Discovering connected accounts...");
-  const accounts = await discoverConnectedAccounts(longLived.accessToken);
+  console.log(`[Meta Auth] [${accountId}] Step 3: Discovering connected accounts...`);
+  const accounts = await discoverConnectedAccounts(longLived.accessToken, accountId);
 
   // Step 4: Auto-select primary page and IG account
   const primaryPage = accounts.pages[0] || null;
@@ -394,8 +403,8 @@ export async function completeOAuthFlow(code) {
     allPages: accounts.pages,
   };
 
-  await saveTokenData(tokenData);
-  console.log("[Meta Auth] OAuth flow complete. Connected:", {
+  await saveTokenData(tokenData, accountId);
+  console.log(`[Meta Auth] [${accountId}] OAuth flow complete. Connected:`, {
     fbPage: tokenData.fbPageName,
     igAccount: tokenData.igUsername,
   });
@@ -405,19 +414,21 @@ export async function completeOAuthFlow(code) {
 
 /**
  * Get full connection status for the UI.
+ * @param {string} accountId
  */
-export async function getConnectionStatus() {
-  const stored = await getTokenData();
-  const { config, ready } = getMetaConfig();
+export async function getConnectionStatus(accountId = "skillizee") {
+  const stored = await getTokenData(accountId);
+  const { config, ready } = getMetaConfig(accountId);
 
   if (!stored && !config.accessToken) {
     return {
       connected: false,
       configured: ready,
-      missing: ready ? [] : ["META_APP_ID", "META_APP_SECRET"],
+      accountId,
+      missing: ready ? [] : [`${accountId.toUpperCase()}_APP_ID`, `${accountId.toUpperCase()}_APP_SECRET`],
       message: ready
-        ? "Meta app configured but no account connected. Click 'Connect' to begin."
-        : "Meta app credentials not configured. Add META_APP_ID and META_APP_SECRET to .env.local.",
+        ? `Meta app configured for ${accountId} but no account connected. Click 'Connect' to begin.`
+        : `Meta app credentials not configured for ${accountId}. Add credentials to .env.local.`,
     };
   }
 
@@ -432,6 +443,7 @@ export async function getConnectionStatus() {
   return {
     connected: true,
     configured: true,
+    accountId,
     tokenHealth,
     daysUntilExpiry,
     expiresAt: expiresAt?.toISOString() || null,

@@ -15,9 +15,11 @@ import {
   Facebook,
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
+import { useAccount } from "@/lib/AccountContext";
 
 export default function MetaConnect({ onStatusChange }) {
   const toast = useToast();
+  const { activeAccount } = useAccount();
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
@@ -26,7 +28,7 @@ export default function MetaConnect({ onStatusChange }) {
 
   const fetchStatus = useCallback(async () => {
     try {
-      const res = await fetch("/api/meta/status");
+      const res = await fetch(`/api/meta/status?accountId=${activeAccount.id}`);
       const data = await res.json();
       setStatus(data);
       onStatusChange?.(data);
@@ -36,7 +38,7 @@ export default function MetaConnect({ onStatusChange }) {
     } finally {
       setLoading(false);
     }
-  }, [onStatusChange]);
+  }, [activeAccount.id, onStatusChange]);
 
   useEffect(() => {
     fetchStatus();
@@ -56,7 +58,7 @@ export default function MetaConnect({ onStatusChange }) {
   const handleConnect = async () => {
     setConnecting(true);
     try {
-      const res = await fetch("/api/meta/auth");
+      const res = await fetch(`/api/meta/auth?accountId=${activeAccount.id}`);
       const data = await res.json();
       if (data.loginUrl) {
         window.location.href = data.loginUrl;
@@ -71,7 +73,7 @@ export default function MetaConnect({ onStatusChange }) {
   const handleDisconnect = async () => {
     setDisconnecting(true);
     try {
-      await fetch("/api/meta/auth", { method: "DELETE" });
+      await fetch(`/api/meta/auth?accountId=${activeAccount.id}`, { method: "DELETE" });
       await fetchStatus();
       setShowDisconnectConfirm(false);
       toast.success("Disconnected", "Meta credentials removed successfully.");

@@ -10,7 +10,8 @@ export const maxDuration = 60; // IG publishing status polling can take some tim
  */
 export async function POST(req) {
   try {
-    const { caption, platforms, mediaUrl } = await req.json().catch(() => ({}));
+    const { caption, platforms, mediaUrl, accountId } = await req.json().catch(() => ({}));
+    const acctId = accountId || "skillizee";
 
     if (!caption || typeof caption !== "string") {
       return NextResponse.json({ error: "Caption is required" }, { status: 400 });
@@ -28,6 +29,7 @@ export async function POST(req) {
       caption,
       platforms,
       mediaUrl,
+      accountId: acctId,
     });
 
     if (response.errors?.length === platforms.length) {

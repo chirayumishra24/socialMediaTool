@@ -1,17 +1,29 @@
 /**
- * SkilizeeAI — Simplified localStorage persistence (with workflow statuses & analytics)
+ * SkilizeeAI — Multi-Account localStorage persistence (with workflow statuses & analytics)
+ * 
+ * All storage keys are dynamically scoped by the active account's prefix.
+ * This ensures complete data isolation between accounts (e.g. Skillizee vs CCIS).
  */
 
 import { useMemo, useSyncExternalStore } from "react";
 
-const KEYS = {
-  research: "skilizee_research",
-  content: "skilizee_content",
-  ig_analysis: "skilizee_ig_analysis",
-  strategies: "skilizee_saved_strategies",
-  active_strategy: "skilizee_active_strategy",
-  active_calendar: "skilizee_active_calendar",
-};
+/**
+ * Build account-scoped storage keys.
+ * @param {string} prefix - Account storage prefix (e.g. "skilizee", "ccis")
+ */
+function getKeys(prefix = "skilizee") {
+  return {
+    research: `${prefix}_research`,
+    content: `${prefix}_content`,
+    ig_analysis: `${prefix}_ig_analysis`,
+    strategies: `${prefix}_saved_strategies`,
+    active_strategy: `${prefix}_active_strategy`,
+    active_calendar: `${prefix}_active_calendar`,
+  };
+}
+
+// Default keys for backward compatibility
+const KEYS = getKeys("skilizee");
 
 const STORAGE_EVENT = "skilizee-storage-updated";
 
@@ -65,8 +77,9 @@ function useStorageString(key, fallback) {
 }
 
 // ═══ RESEARCH ═══
-export function saveResearch(data) {
-  const all = getResearchHistory();
+export function saveResearch(data, prefix = "skilizee") {
+  const keys = getKeys(prefix);
+  const all = getResearchHistory(prefix);
   const entry = {
     ...data,
     id: data.id || genId(),
@@ -84,32 +97,36 @@ export function saveResearch(data) {
   }
   
   if (all.length > 50) all.length = 50;
-  writeJSON(KEYS.research, all);
+  writeJSON(keys.research, all);
   return entry;
 }
 
-export function getResearchHistory() {
-  return readJSON(KEYS.research);
+export function getResearchHistory(prefix = "skilizee") {
+  const keys = getKeys(prefix);
+  return readJSON(keys.research);
 }
 
-export function useResearchHistory() {
-  const rawValue = useStorageString(KEYS.research, "[]");
+export function useResearchHistory(prefix = "skilizee") {
+  const keys = getKeys(prefix);
+  const rawValue = useStorageString(keys.research, "[]");
   return useMemo(() => parseArraySnapshot(rawValue), [rawValue]);
 }
 
-export function updateResearchStatus(id, status) {
-  const all = getResearchHistory();
+export function updateResearchStatus(id, status, prefix = "skilizee") {
+  const keys = getKeys(prefix);
+  const all = getResearchHistory(prefix);
   const index = all.findIndex(r => r.id === id);
   if (index >= 0) {
     all[index].status = status;
     all[index].updatedAt = new Date().toISOString();
-    writeJSON(KEYS.research, all);
+    writeJSON(keys.research, all);
   }
 }
 
 // ═══ CONTENT ═══
-export function saveContent(data) {
-  const all = getContentHistory();
+export function saveContent(data, prefix = "skilizee") {
+  const keys = getKeys(prefix);
+  const all = getContentHistory(prefix);
   const entry = {
     ...data,
     id: data.id || genId(),
@@ -127,49 +144,53 @@ export function saveContent(data) {
   }
   
   if (all.length > 100) all.length = 100;
-  writeJSON(KEYS.content, all);
+  writeJSON(keys.content, all);
   
   // Link to research if possible
   if (entry.metadata?.researchId) {
-    const research = getResearchHistory();
+    const research = getResearchHistory(prefix);
     const rIndex = research.findIndex(r => r.id === entry.metadata.researchId);
     if (rIndex >= 0) {
       const r = research[rIndex];
       r.relatedContentIds = [...new Set([...(r.relatedContentIds || []), entry.id])];
-      writeJSON(KEYS.research, research);
+      writeJSON(keys.research, research);
     }
   }
   
   return entry;
 }
 
-export function getContentHistory() {
-  return readJSON(KEYS.content);
+export function getContentHistory(prefix = "skilizee") {
+  const keys = getKeys(prefix);
+  return readJSON(keys.content);
 }
 
-export function useContentHistory() {
-  const rawValue = useStorageString(KEYS.content, "[]");
+export function useContentHistory(prefix = "skilizee") {
+  const keys = getKeys(prefix);
+  const rawValue = useStorageString(keys.content, "[]");
   return useMemo(() => parseArraySnapshot(rawValue), [rawValue]);
 }
 
-export function updateContentBody(id, script) {
-  const all = getContentHistory();
+export function updateContentBody(id, script, prefix = "skilizee") {
+  const keys = getKeys(prefix);
+  const all = getContentHistory(prefix);
   const index = all.findIndex(c => c.id === id);
   if (index >= 0) {
     all[index].script = script;
     all[index].updatedAt = new Date().toISOString();
-    writeJSON(KEYS.content, all);
+    writeJSON(keys.content, all);
   }
 }
 
-export function updateContentTracking(id, trackingData) {
-  const all = getContentHistory();
+export function updateContentTracking(id, trackingData, prefix = "skilizee") {
+  const keys = getKeys(prefix);
+  const all = getContentHistory(prefix);
   const index = all.findIndex(c => c.id === id);
   if (index >= 0) {
     all[index].publication = { ...(all[index].publication || {}), ...(trackingData.publication || {}) };
     all[index].performance = { ...(all[index].performance || {}), ...(trackingData.performance || {}) };
     all[index].updatedAt = new Date().toISOString();
-    writeJSON(KEYS.content, all);
+    writeJSON(keys.content, all);
     return all[index];
   }
   return null;
@@ -180,9 +201,9 @@ export function getWorkflowStage(entry) {
 }
 
 // ═══ ANALYTICS & STATS ═══
-export function getStats() {
-  const research = getResearchHistory();
-  const content = getContentHistory();
+export function getStats(prefix = "skilizee") {
+  const research = getResearchHistory(prefix);
+  const content = getContentHistory(prefix);
   return {
     totalResearch: Array.isArray(research) ? research.length : 0,
     totalScripts: Array.isArray(content) ? content.length : 0,
@@ -195,9 +216,9 @@ export function getStats() {
   };
 }
 
-export function useStats() {
-  const research = useResearchHistory();
-  const content = useContentHistory();
+export function useStats(prefix = "skilizee") {
+  const research = useResearchHistory(prefix);
+  const content = useContentHistory(prefix);
 
   return useMemo(() => {
     const researchArr = Array.isArray(research) ? research : [];
@@ -216,8 +237,8 @@ export function useStats() {
   }, [research, content]);
 }
 
-export function usePerformanceInsights() {
-  const content = useContentHistory();
+export function usePerformanceInsights(prefix = "skilizee") {
+  const content = useContentHistory(prefix);
 
   return useMemo(() => {
     const contentArr = Array.isArray(content) ? content : [];
@@ -285,8 +306,9 @@ export function useSettingsSnapshot() {
 }
 
 // ═══ INSTAGRAM ANALYSES ═══
-export function saveAnalysis(data) {
-  const all = getAnalysisHistory();
+export function saveAnalysis(data, prefix = "skilizee") {
+  const keys = getKeys(prefix);
+  const all = getAnalysisHistory(prefix);
   const entry = {
     ...data,
     id: data.id || genId(),
@@ -302,21 +324,24 @@ export function saveAnalysis(data) {
   }
   
   if (all.length > 20) all.length = 20; // Cap at 20 historical audits
-  writeJSON(KEYS.ig_analysis, all);
+  writeJSON(keys.ig_analysis, all);
   return entry;
 }
 
-export function getAnalysisHistory() {
-  return readJSON(KEYS.ig_analysis);
+export function getAnalysisHistory(prefix = "skilizee") {
+  const keys = getKeys(prefix);
+  return readJSON(keys.ig_analysis);
 }
 
-export function useAnalysisHistory() {
-  const rawValue = useStorageString(KEYS.ig_analysis, "[]");
+export function useAnalysisHistory(prefix = "skilizee") {
+  const keys = getKeys(prefix);
+  const rawValue = useStorageString(keys.ig_analysis, "[]");
   return useMemo(() => parseArraySnapshot(rawValue), [rawValue]);
 }
 
-export function saveStrategy(data) {
-  const all = getSavedStrategies();
+export function saveStrategy(data, prefix = "skilizee") {
+  const keys = getKeys(prefix);
+  const all = getSavedStrategies(prefix);
   const entry = {
     ...data,
     id: data.id || `strategy_${Date.now()}`,
@@ -325,22 +350,25 @@ export function saveStrategy(data) {
   };
   all.unshift(entry);
   if (all.length > 30) all.length = 30;
-  writeJSON(KEYS.strategies, all);
+  writeJSON(keys.strategies, all);
   return entry;
 }
 
-export function getSavedStrategies() {
-  return readJSON(KEYS.strategies);
+export function getSavedStrategies(prefix = "skilizee") {
+  const keys = getKeys(prefix);
+  return readJSON(keys.strategies);
 }
 
-export function useSavedStrategies() {
-  const rawValue = useStorageString(KEYS.strategies, "[]");
+export function useSavedStrategies(prefix = "skilizee") {
+  const keys = getKeys(prefix);
+  const rawValue = useStorageString(keys.strategies, "[]");
   return useMemo(() => parseArraySnapshot(rawValue), [rawValue]);
 }
 
-export function deleteStrategy(id) {
-  const all = getSavedStrategies().filter(s => s.id !== id);
-  writeJSON(KEYS.strategies, all);
+export function deleteStrategy(id, prefix = "skilizee") {
+  const keys = getKeys(prefix);
+  const all = getSavedStrategies(prefix).filter(s => s.id !== id);
+  writeJSON(keys.strategies, all);
 }
 
 // ═══ ACTIVE STRATEGY & CALENDAR CONTEXT (Client-side) ═══
@@ -364,20 +392,24 @@ function writeJSONObject(key, value) {
   window.dispatchEvent(new CustomEvent(STORAGE_EVENT, { detail: { key } }));
 }
 
-export function setClientActiveStrategy(strategy) {
-  writeJSONObject(KEYS.active_strategy, strategy ? { ...strategy, _clientPersistedAt: new Date().toISOString() } : null);
+export function setClientActiveStrategy(strategy, prefix = "skilizee") {
+  const keys = getKeys(prefix);
+  writeJSONObject(keys.active_strategy, strategy ? { ...strategy, _clientPersistedAt: new Date().toISOString() } : null);
 }
 
-export function getClientActiveStrategy() {
-  return readJSONObject(KEYS.active_strategy);
+export function getClientActiveStrategy(prefix = "skilizee") {
+  const keys = getKeys(prefix);
+  return readJSONObject(keys.active_strategy);
 }
 
-export function setClientActiveCalendar(calendar) {
-  writeJSONObject(KEYS.active_calendar, calendar ? { ...calendar, _clientPersistedAt: new Date().toISOString() } : null);
+export function setClientActiveCalendar(calendar, prefix = "skilizee") {
+  const keys = getKeys(prefix);
+  writeJSONObject(keys.active_calendar, calendar ? { ...calendar, _clientPersistedAt: new Date().toISOString() } : null);
 }
 
-export function getClientActiveCalendar() {
-  return readJSONObject(KEYS.active_calendar);
+export function getClientActiveCalendar(prefix = "skilizee") {
+  const keys = getKeys(prefix);
+  return readJSONObject(keys.active_calendar);
 }
 
 /**

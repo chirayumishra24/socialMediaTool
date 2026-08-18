@@ -10,13 +10,14 @@ import { NextResponse } from "next/server";
 import { generateContentCalendar } from "@/lib/ai/calendar-agent";
 import { setActiveCalendar } from "@/lib/ai/strategy-context";
 
-// In-memory cache of the last generated calendar
-let lastCalendar = null;
+// In-memory cache of the last generated calendar per account
+let lastCalendars = {};
 
 export async function POST(request) {
   try {
     const body = await request.json().catch(() => ({}));
 
+    const accountId = body.accountId || "skillizee";
     const options = {
       niche: body.niche || "General",
       goals: Array.isArray(body.goals)
@@ -27,16 +28,17 @@ export async function POST(request) {
       startDate: body.startDate || undefined,
       endDate: body.endDate || undefined,
       postsPerWeek: Math.min(Number(body.postsPerWeek) || 5, 7),
+      accountId,
     };
 
     console.log("[Calendar API] Generating calendar with options:", options);
     const calendar = await generateContentCalendar(options);
 
     // Persist to shared context so the strategy agent can reference it
-    setActiveCalendar(calendar);
+    setActiveCalendar(calendar, accountId);
 
     // Cache it
-    lastCalendar = {
+    lastCalendars[accountId] = {
       ...calendar,
       cachedAt: new Date().toISOString(),
       requestOptions: options,
@@ -52,8 +54,12 @@ export async function POST(request) {
   }
 }
 
-export async function GET() {
-  if (!lastCalendar) {
+export async function GET(request) {
+  const { searchParams } = new URL(request.url);
+  const accountId = searchParams.get("accountId") || "skillizee";
+  const cached = lastCalendars[accountId];
+
+  if (!cached) {
     return NextResponse.json({
       success: true,
       calendar: null,
@@ -63,6 +69,6 @@ export async function GET() {
 
   return NextResponse.json({
     success: true,
-    calendar: lastCalendar,
+    calendar: cached,
   });
 }

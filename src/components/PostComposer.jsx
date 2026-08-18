@@ -28,6 +28,7 @@ import {
   Upload,
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
+import { useAccount } from "@/lib/AccountContext";
 
 const PLATFORM_OPTIONS = [
   { id: "instagram", label: "Instagram", icon: "IG", color: "from-pink-500 via-rose-500 to-purple-600", maxCaption: 2200 },
@@ -41,6 +42,7 @@ const SUGGESTED_TAGS = [
 
 export default function PostComposer({ onPublished, initialContent = "", prefillDate = "", postToEdit = null }) {
   const toast = useToast();
+  const { activeAccount } = useAccount();
   const [caption, setCaption] = useState(initialContent);
   const [selectedPlatforms, setSelectedPlatforms] = useState(["instagram"]);
   const [mediaUrl, setMediaUrl] = useState("");
@@ -133,6 +135,7 @@ export default function PostComposer({ onPublished, initialContent = "", prefill
         caption: caption.trim(),
         platforms: selectedPlatforms,
         mediaUrl: mediaUrl || undefined,
+        accountId: activeAccount.id,
       };
 
       if (scheduling && scheduledDate && scheduledTime) {

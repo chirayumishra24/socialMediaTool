@@ -55,8 +55,8 @@ const ONLINE_FOLLOWERS_METRIC = "online_followers";
  * @param {"day"|"week"|"days_28"} period
  * @returns {Promise<object>}
  */
-export async function fetchAccountInsights(period = "days_28") {
-  const config = await getInstagramSyncConfig();
+export async function fetchAccountInsights(period = "days_28", accountId = "skillizee") {
+  const config = await getInstagramSyncConfig(accountId);
   if (!config.ready) {
     throw new Error(`Missing Meta configuration: ${config.missing.join(", ")}`);
   }
@@ -144,8 +144,8 @@ export async function fetchAccountInsights(period = "days_28") {
  * Requires IG Business account with 100+ followers.
  * @returns {Promise<{ city: object, country: object, genderAge: object, onlineFollowers: object }>}
  */
-export async function fetchAudienceDemographics() {
-  const config = await getInstagramSyncConfig();
+export async function fetchAudienceDemographics(accountId = "skillizee") {
+  const config = await getInstagramSyncConfig(accountId);
   if (!config.ready) {
     throw new Error(`Missing Meta configuration: ${config.missing.join(", ")}`);
   }
@@ -285,8 +285,8 @@ export async function fetchDeepPostInsights(mediaId, mediaType, mediaProductType
  * @param {number} limit — max posts to fetch (default 50)
  * @returns {Promise<Array<{ post: object, insights: object }>>}
  */
-export async function fetchAllPostsWithDeepInsights(limit = 50) {
-  const config = await getInstagramSyncConfig();
+export async function fetchAllPostsWithDeepInsights(limit = 50, accountId = "skillizee") {
+  const config = await getInstagramSyncConfig(accountId);
   if (!config.ready) {
     throw new Error(`Missing Meta configuration: ${config.missing.join(", ")}`);
   }
@@ -402,23 +402,23 @@ const FB_DEEP_METRICS = [
  * @param {"day"|"week"|"days_28"} period
  * @returns {Promise<object>}
  */
-export async function fetchFacebookDeepInsights(period = "week") {
-  const rateCheck = checkRateLimit("facebook");
+export async function fetchFacebookDeepInsights(period = "week", accountId = "skillizee") {
+  const rateCheck = checkRateLimit("facebook", accountId);
   if (!rateCheck.allowed) {
     throw new Error("Facebook API rate limit exceeded.");
   }
 
-  const { pageId, pageAccessToken } = await getFacebookPageCredentials();
+  const { pageId, pageAccessToken } = await getFacebookPageCredentials(accountId);
 
   const results = {};
 
   try {
-    trackApiCall("facebook");
+    trackApiCall("facebook", accountId);
     const url = buildGraphUrl(`/${pageId}/insights`, {
       metric: FB_DEEP_METRICS.join(","),
       period,
       access_token: pageAccessToken,
-    });
+    }, undefined, accountId);
 
     const res = await fetch(url, {
       method: "GET",

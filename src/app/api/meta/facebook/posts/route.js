@@ -11,8 +11,9 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const pageId = searchParams.get("pageId") || "";
     const limit = parseInt(searchParams.get("limit") || "12", 10);
+    const accountId = searchParams.get("accountId") || "skillizee";
 
-    const posts = await fetchFacebookPagePosts(pageId || undefined, limit);
+    const posts = await fetchFacebookPagePosts(pageId || undefined, limit, accountId);
 
     return NextResponse.json({ ok: true, posts, count: posts.length });
   } catch (error) {

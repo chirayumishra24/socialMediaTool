@@ -23,16 +23,17 @@ function normalizePermalink(value) {
   }
 }
 
-export async function getInstagramSyncConfig() {
+export async function getInstagramSyncConfig(accountId = "skillizee") {
   try {
-    const accessToken = await getValidAccessToken();
-    const instagramAccountId = await getInstagramAccountId();
+    const accessToken = await getValidAccessToken(accountId);
+    const instagramAccountId = await getInstagramAccountId(accountId);
 
     return {
       ready: true,
       missing: [],
       accessToken,
       instagramAccountId,
+      accountId,
     };
   } catch (err) {
     const missing = [];
@@ -45,27 +46,28 @@ export async function getInstagramSyncConfig() {
       accessToken: "",
       instagramAccountId: "",
       error: err.message,
+      accountId,
     };
   }
 }
 
-export async function graphRequest(path, params = {}) {
-  const config = await getInstagramSyncConfig();
+export async function graphRequest(path, params = {}, accountId = "skillizee") {
+  const config = await getInstagramSyncConfig(accountId);
   if (!config.ready) {
     throw new Error(`Missing Meta configuration: ${config.missing.join(", ")}`);
   }
 
   // Rate limit check
-  const rateCheck = checkRateLimit("instagram");
+  const rateCheck = checkRateLimit("instagram", accountId);
   if (!rateCheck.allowed) {
     throw new Error(`Instagram API rate limit exceeded. Resets in ${Math.ceil(rateCheck.resetsIn / 60000)} minutes.`);
   }
-  trackApiCall("instagram");
+  trackApiCall("instagram", accountId);
 
   const url = buildGraphUrl(path, {
     ...params,
     access_token: config.accessToken,
-  });
+  }, undefined, accountId);
 
   const response = await fetch(url, {
     method: "GET",
@@ -146,8 +148,8 @@ async function getMediaInsights(mediaId) {
   return [];
 }
 
-export async function getInstagramSyncStatus() {
-  const config = await getInstagramSyncConfig();
+export async function getInstagramSyncStatus(accountId = "skillizee") {
+  const config = await getInstagramSyncConfig(accountId);
   return {
     ready: config.ready,
     missing: config.missing,
@@ -209,8 +211,8 @@ export async function syncInstagramPost({ publishedUrl = "", postId = "" } = {})
   };
 }
 
-export async function fetchInstagramProfileFromMeta(username) {
-  const config = await getInstagramSyncConfig();
+export async function fetchInstagramProfileFromMeta(username, accountId = "skillizee") {
+  const config = await getInstagramSyncConfig(accountId);
   if (!config.ready) {
     throw new Error(`Missing Meta configuration: ${config.missing.join(", ")}`);
   }

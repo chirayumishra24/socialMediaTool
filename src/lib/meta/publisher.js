@@ -20,50 +20,50 @@ import { buildGraphUrl, checkRateLimit, trackApiCall } from "./meta-config";
  *
  * @param {{ imageUrl: string, caption: string, mediaType?: "IMAGE"|"VIDEO"|"CAROUSEL_ALBUM" }} options
  */
-export async function publishToInstagram({ imageUrl, caption, mediaType = "IMAGE" }) {
+export async function publishToInstagram({ imageUrl, caption, mediaType = "IMAGE", accountId = "skillizee" }) {
   if (!imageUrl) throw new Error("imageUrl is required for Instagram publishing.");
   if (!caption) throw new Error("Caption is required for Instagram publishing.");
 
-  const rateCheck = checkRateLimit("instagram");
+  const rateCheck = checkRateLimit("instagram", accountId);
   if (!rateCheck.allowed) {
     throw new Error("Instagram API rate limit exceeded. Try again later.");
   }
 
-  const accessToken = await getValidAccessToken();
-  const igAccountId = await getInstagramAccountId();
+  const accessToken = await getValidAccessToken(accountId);
+  const igAccountId = await getInstagramAccountId(accountId);
 
   // Step 1: Create media container
-  console.log("[IG Publisher] Creating media container...");
+  console.log(`[IG Publisher] [${accountId}] Creating media container...`);
   const containerUrl = buildGraphUrl(`/${igAccountId}/media`, {
     image_url: imageUrl,
     caption,
     access_token: accessToken,
-  });
+  }, undefined, accountId);
 
   const containerRes = await fetch(containerUrl, { method: "POST", cache: "no-store" });
   const containerData = await containerRes.json();
-  trackApiCall("instagram");
+  trackApiCall("instagram", accountId);
 
   if (containerData.error) {
     throw new Error(containerData.error.message || "Failed to create media container");
   }
 
   const containerId = containerData.id;
-  console.log("[IG Publisher] Container created:", containerId);
+  console.log(`[IG Publisher] [${accountId}] Container created:`, containerId);
 
   // Step 2: Wait for container to finish processing
-  await waitForContainerReady(containerId, accessToken);
+  await waitForContainerReady(containerId, accessToken, 10, 3000, accountId);
 
   // Step 3: Publish
-  console.log("[IG Publisher] Publishing container...");
+  console.log(`[IG Publisher] [${accountId}] Publishing container...`);
   const publishUrl = buildGraphUrl(`/${igAccountId}/media_publish`, {
     creation_id: containerId,
     access_token: accessToken,
-  });
+  }, undefined, accountId);
 
   const publishRes = await fetch(publishUrl, { method: "POST", cache: "no-store" });
   const publishData = await publishRes.json();
-  trackApiCall("instagram");
+  trackApiCall("instagram", accountId);
 
   if (publishData.error) {
     throw new Error(publishData.error.message || "Failed to publish media");
@@ -75,10 +75,10 @@ export async function publishToInstagram({ imageUrl, caption, mediaType = "IMAGE
   const permalinkUrl = buildGraphUrl(`/${mediaId}`, {
     fields: "permalink",
     access_token: accessToken,
-  });
+  }, undefined, accountId);
   const permalinkRes = await fetch(permalinkUrl, { cache: "no-store" });
   const permalinkData = await permalinkRes.json();
-  trackApiCall("instagram");
+  trackApiCall("instagram", accountId);
 
   return {
     platform: "instagram",
@@ -92,18 +92,18 @@ export async function publishToInstagram({ imageUrl, caption, mediaType = "IMAGE
 /**
  * Poll container status until ready or timeout.
  */
-async function waitForContainerReady(containerId, accessToken, maxAttempts = 10, intervalMs = 3000) {
+async function waitForContainerReady(containerId, accessToken, maxAttempts = 10, intervalMs = 3000, accountId = "skillizee") {
   for (let i = 0; i < maxAttempts; i++) {
     await new Promise((resolve) => setTimeout(resolve, intervalMs));
 
     const statusUrl = buildGraphUrl(`/${containerId}`, {
       fields: "status_code,status",
       access_token: accessToken,
-    });
+    }, undefined, accountId);
 
     const res = await fetch(statusUrl, { cache: "no-store" });
     const data = await res.json();
-    trackApiCall("instagram");
+    trackApiCall("instagram", accountId);
 
     const status = data.status_code || data.status;
     console.log(`[IG Publisher] Container status (attempt ${i + 1}): ${status}`);
@@ -124,42 +124,40 @@ async function waitForContainerReady(containerId, accessToken, maxAttempts = 10,
  *
  * @param {{ message: string, link?: string, imageUrl?: string }} options
  */
-export async function publishToFacebook({ message, link, imageUrl }) {
+export async function publishToFacebook({ message, link, imageUrl, accountId = "skillizee" }) {
   if (!message && !link && !imageUrl) {
     throw new Error("At least one of message, link, or imageUrl is required.");
   }
 
-  const rateCheck = checkRateLimit("facebook");
+  const rateCheck = checkRateLimit("facebook", accountId);
   if (!rateCheck.allowed) {
     throw new Error("Facebook API rate limit exceeded. Try again later.");
   }
 
-  const { pageId, pageAccessToken } = await getFacebookPageCredentials();
+  const { pageId, pageAccessToken } = await getFacebookPageCredentials(accountId);
 
   let result;
 
   if (imageUrl) {
-    // Photo post
     const url = buildGraphUrl(`/${pageId}/photos`, {
       url: imageUrl,
       caption: message || "",
       access_token: pageAccessToken,
-    });
+    }, undefined, accountId);
 
     const res = await fetch(url, { method: "POST", cache: "no-store" });
     result = await res.json();
-    trackApiCall("facebook");
+    trackApiCall("facebook", accountId);
   } else {
-    // Text/link post
     const url = buildGraphUrl(`/${pageId}/feed`, {
       message: message || "",
       link: link || undefined,
       access_token: pageAccessToken,
-    });
+    }, undefined, accountId);
 
     const res = await fetch(url, { method: "POST", cache: "no-store" });
     result = await res.json();
-    trackApiCall("facebook");
+    trackApiCall("facebook", accountId);
   }
 
   if (result.error) {
@@ -184,11 +182,10 @@ export async function publishToFacebook({ message, link, imageUrl }) {
  * @param {{ caption: string, platforms: string[], mediaUrl?: string, scheduledAt?: string }} options
  * @returns {Promise<{ results: object[], errors: object[] }>}
  */
-export async function publishToMultiplePlatforms({ caption, platforms, mediaUrl, scheduledAt }) {
+export async function publishToMultiplePlatforms({ caption, platforms, mediaUrl, scheduledAt, accountId = "skillizee" }) {
   if (!caption) throw new Error("Caption is required.");
   if (!platforms?.length) throw new Error("At least one platform must be selected.");
 
-  // If scheduling, delegate to scheduler instead
   if (scheduledAt) {
     return { scheduled: true, scheduledAt, platforms };
   }
@@ -202,11 +199,12 @@ export async function publishToMultiplePlatforms({ caption, platforms, mediaUrl,
 
       if (platform === "instagram") {
         if (!mediaUrl) throw new Error("Instagram requires an image URL to publish.");
-        result = await publishToInstagram({ imageUrl: mediaUrl, caption });
+        result = await publishToInstagram({ imageUrl: mediaUrl, caption, accountId });
       } else if (platform === "facebook") {
         result = await publishToFacebook({
           message: caption,
           imageUrl: mediaUrl || undefined,
+          accountId,
         });
       } else {
         throw new Error(`Unsupported platform: ${platform}`);

@@ -5,10 +5,10 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req) {
   try {
-    const { publishedUrl = "", postId = "" } = await req.json().catch(() => ({}));
+    const { publishedUrl = "", postId = "", accountId = "skillizee" } = await req.json().catch(() => ({}));
 
     if (!String(publishedUrl).trim() && !String(postId).trim()) {
-      const config = await getInstagramSyncStatus();
+      const config = await getInstagramSyncStatus(accountId);
       return NextResponse.json(
         { error: "Missing publishedUrl or postId", config },
         { status: 400 }
@@ -20,7 +20,7 @@ export async function POST(req) {
       postId: String(postId).trim(),
     });
 
-    const config = await getInstagramSyncStatus();
+    const config = await getInstagramSyncStatus(accountId);
     return NextResponse.json({
       ok: true,
       ...result,

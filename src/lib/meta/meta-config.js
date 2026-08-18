@@ -1,9 +1,13 @@
 /**
- * Skilizee — Centralized Meta Platform Configuration
+ * Skilizee — Centralized Meta Platform Configuration (Multi-Account)
  * 
  * Single source of truth for Meta Graph API settings,
  * environment validation, and rate limit tracking.
+ * 
+ * Supports multiple accounts by reading account-specific env vars.
  */
+
+import { getAccountById } from "../accounts";
 
 const GRAPH_API_BASE = "https://graph.facebook.com";
 const DEFAULT_GRAPH_VERSION = "v22.0";
@@ -26,33 +30,45 @@ const REQUIRED_SCOPES = [
   "public_profile",
 ];
 
-// In-memory rate limit counters (reset on server restart)
-const rateLimitCounters = {
-  instagram: { count: 0, windowStart: Date.now() },
-  facebook: { count: 0, windowStart: Date.now() },
-};
+// In-memory rate limit counters per account (reset on server restart)
+const rateLimitCounters = {};
+
+function getAccountRateLimitCounters(accountId) {
+  if (!rateLimitCounters[accountId]) {
+    rateLimitCounters[accountId] = {
+      instagram: { count: 0, windowStart: Date.now() },
+      facebook: { count: 0, windowStart: Date.now() },
+    };
+  }
+  return rateLimitCounters[accountId];
+}
 
 /**
- * Validate and return all Meta environment variables.
+ * Validate and return all Meta environment variables for a given account.
+ * @param {string} accountId - Account ID (e.g. "skillizee", "ccis")
  * @returns {{ ready, missing, config }}
  */
-export function getMetaConfig() {
-  const appId = process.env.META_APP_ID || "";
-  const appSecret = process.env.META_APP_SECRET || "";
-  const redirectUri = process.env.META_REDIRECT_URI || "";
-  const accessToken = process.env.META_ACCESS_TOKEN || "";
-  const igAccountId = process.env.META_IG_ACCOUNT_ID || "";
-  const fbPageId = process.env.META_FB_PAGE_ID || "";
-  const graphVersion = process.env.META_GRAPH_VERSION || DEFAULT_GRAPH_VERSION;
+export function getMetaConfig(accountId = "skillizee") {
+  const account = getAccountById(accountId);
+  const prefix = account.metaEnvPrefix;
+
+  const appId = process.env[`${prefix}_APP_ID`] || "";
+  const appSecret = process.env[`${prefix}_APP_SECRET`] || "";
+  const redirectUri = process.env[`${prefix}_REDIRECT_URI`] || "";
+  const accessToken = process.env[`${prefix}_ACCESS_TOKEN`] || "";
+  const igAccountId = process.env[`${prefix}_IG_ACCOUNT_ID`] || "";
+  const fbPageId = process.env[`${prefix}_FB_PAGE_ID`] || "";
+  const graphVersion = process.env[`${prefix}_GRAPH_VERSION`] || DEFAULT_GRAPH_VERSION;
 
   const missing = [];
-  if (!appId) missing.push("META_APP_ID");
-  if (!appSecret) missing.push("META_APP_SECRET");
+  if (!appId) missing.push(`${prefix}_APP_ID`);
+  if (!appSecret) missing.push(`${prefix}_APP_SECRET`);
 
   return {
     ready: missing.length === 0,
     hasToken: !!accessToken,
     missing,
+    accountId,
     config: {
       appId,
       appSecret,
@@ -69,8 +85,8 @@ export function getMetaConfig() {
 /**
  * Build a full Meta Graph API URL.
  */
-export function buildGraphUrl(path, params = {}, version) {
-  const { config } = getMetaConfig();
+export function buildGraphUrl(path, params = {}, version, accountId = "skillizee") {
+  const { config } = getMetaConfig(accountId);
   const v = version || config.graphVersion;
   const url = new URL(`${GRAPH_API_BASE}/${v}${path}`);
 
@@ -86,11 +102,11 @@ export function buildGraphUrl(path, params = {}, version) {
 /**
  * Get the OAuth login URL for Meta.
  */
-export function getOAuthLoginUrl(state = "") {
-  const { config } = getMetaConfig();
+export function getOAuthLoginUrl(state = "", accountId = "skillizee") {
+  const { config } = getMetaConfig(accountId);
 
   if (!config.appId || !config.redirectUri) {
-    throw new Error("META_APP_ID and META_REDIRECT_URI are required for OAuth");
+    throw new Error(`${accountId}: META_APP_ID and META_REDIRECT_URI are required for OAuth`);
   }
 
   const url = new URL("https://www.facebook.com/v22.0/dialog/oauth");
@@ -98,21 +114,23 @@ export function getOAuthLoginUrl(state = "") {
   url.searchParams.set("redirect_uri", config.redirectUri);
   url.searchParams.set("scope", REQUIRED_SCOPES.join(","));
   url.searchParams.set("response_type", "code");
-  url.searchParams.set("state", state || `skilizee_${Date.now()}`);
+  url.searchParams.set("state", state || `${accountId}_${Date.now()}`);
 
   return url.toString();
 }
 
 /**
- * Check and track rate limits for a given platform.
+ * Check and track rate limits for a given platform and account.
  * @param {"instagram"|"facebook"} platform
+ * @param {string} accountId
  * @returns {{ allowed: boolean, remaining: number, resetsIn: number }}
  */
-export function checkRateLimit(platform) {
+export function checkRateLimit(platform, accountId = "skillizee") {
   const limit = RATE_LIMITS[platform];
   if (!limit) return { allowed: true, remaining: Infinity, resetsIn: 0 };
 
-  const counter = rateLimitCounters[platform];
+  const counters = getAccountRateLimitCounters(accountId);
+  const counter = counters[platform];
   const now = Date.now();
   const elapsed = now - counter.windowStart;
 
@@ -134,10 +152,11 @@ export function checkRateLimit(platform) {
 }
 
 /**
- * Increment the rate limit counter for a platform.
+ * Increment the rate limit counter for a platform and account.
  */
-export function trackApiCall(platform) {
-  const counter = rateLimitCounters[platform];
+export function trackApiCall(platform, accountId = "skillizee") {
+  const counters = getAccountRateLimitCounters(accountId);
+  const counter = counters[platform];
   if (counter) counter.count += 1;
 }
 

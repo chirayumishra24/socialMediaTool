@@ -47,7 +47,7 @@ async function getFirestore() {
  * Schedule a new post.
  * @param {{ caption: string, platforms: string[], mediaUrl?: string, scheduledAt: string }} post
  */
-export async function schedulePost({ caption, platforms, mediaUrl, scheduledAt }) {
+export async function schedulePost({ caption, platforms, mediaUrl, scheduledAt, accountId = "skillizee" }) {
   if (!caption) throw new Error("Caption is required");
   if (!platforms || platforms.length === 0) throw new Error("At least one platform is required");
   if (!scheduledAt) throw new Error("Scheduled time (scheduledAt) is required");
@@ -58,11 +58,12 @@ export async function schedulePost({ caption, platforms, mediaUrl, scheduledAt }
     platforms,
     mediaUrl: mediaUrl || "",
     scheduledAt: new Date(scheduledAt).toISOString(),
-    status: "scheduled", // scheduled, publishing, published, failed
+    status: "scheduled",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     error: null,
     results: null,
+    accountId,
   };
 
   const db = await getFirestore();
@@ -178,11 +179,12 @@ export async function executeScheduledPost(id) {
       let result;
       if (platform === "instagram") {
         if (!post.mediaUrl) throw new Error("Instagram requires a media URL to publish");
-        result = await publishToInstagram({ imageUrl: post.mediaUrl, caption: post.caption });
+        result = await publishToInstagram({ imageUrl: post.mediaUrl, caption: post.caption, accountId: post.accountId });
       } else if (platform === "facebook") {
         result = await publishToFacebook({
           message: post.caption,
           imageUrl: post.mediaUrl || undefined,
+          accountId: post.accountId,
         });
       } else {
         throw new Error(`Unsupported platform: ${platform}`);

@@ -12,6 +12,7 @@ export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
     const period = searchParams.get("period") || "week";
+    const accountId = searchParams.get("accountId") || "skillizee";
 
     const validPeriods = ["day", "week", "days_28"];
     if (!validPeriods.includes(period)) {
@@ -21,7 +22,7 @@ export async function GET(req) {
       );
     }
 
-    const metrics = await getUnifiedMetrics(period);
+    const metrics = await getUnifiedMetrics(period, accountId);
 
     return NextResponse.json({
       ok: true,

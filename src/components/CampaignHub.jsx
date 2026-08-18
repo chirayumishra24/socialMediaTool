@@ -16,10 +16,12 @@ import {
   Loader2
 } from "lucide-react";
 import { exportToCSV } from "@/lib/export/excel-exporter";
+import { useAccount } from "@/lib/AccountContext";
 import { useToast } from "@/components/ui/Toast";
 
 export default function CampaignHub() {
   const toast = useToast();
+  const { activeAccount } = useAccount();
   const [loading, setLoading] = useState(true);
   const [campaignData, setCampaignData] = useState(null);
 
@@ -29,7 +31,7 @@ export default function CampaignHub() {
         const res = await fetch("/api/meta/instagram/scrape", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: "skillizee.io" }),
+          body: JSON.stringify({ username: activeAccount.defaultUsername, accountId: activeAccount.id }),
         });
         const data = await res.json();
         setCampaignData(data);
@@ -40,7 +42,7 @@ export default function CampaignHub() {
       }
     }
     loadCampaigns();
-  }, []);
+  }, [activeAccount.id, activeAccount.defaultUsername]);
 
   const campaigns = [
     {
