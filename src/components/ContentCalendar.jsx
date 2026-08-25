@@ -197,15 +197,32 @@ export default function ContentCalendar({ onSelectPost, onStartResearch }) {
         }),
       });
       const data = await res.json();
-      if (data.success && data.calendar) {
-        setAiCalendar(data.calendar);
-        setClientActiveCalendar(data.calendar, activeAccount.storagePrefix);
-        setShowInsights(true);
-        setCalendarEdits({});
-        localStorage.removeItem(`${activeAccount.storagePrefix}_calendar_edits`);
+
+      if (!res.ok || !data.calendar) {
+        toast.error("Generation Failed", data.error || "Could not generate a calendar.");
+        return;
+      }
+
+      setAiCalendar(data.calendar);
+      setClientActiveCalendar(data.calendar, activeAccount.storagePrefix);
+      setShowInsights(true);
+      setCalendarEdits({});
+      localStorage.removeItem(`${activeAccount.storagePrefix}_calendar_edits`);
+
+      // A calendar built on missing inputs reads as generic. Say so, rather
+      // than presenting it as fully data-driven.
+      const degraded = data.calendar?._meta?.degraded || [];
+      if (degraded.length > 0) {
+        toast.warning(
+          "Generated on partial data",
+          `${degraded.length} data source${degraded.length > 1 ? "s were" : " was"} unavailable, so this calendar is less account-specific than usual. ${degraded[0]}`
+        );
+      } else {
+        toast.success("Calendar Ready", `${(data.calendar.calendar || []).length} posts planned from ${data.calendar._meta?.postsAnalyzed ?? 0} analysed posts.`);
       }
     } catch (err) {
       console.error("Calendar generation failed:", err);
+      toast.error("Network Error", err.message || "Calendar generation failed.");
     } finally {
       setGenerating(false);
     }

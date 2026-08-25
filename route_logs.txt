@@ -4145,3 +4145,120 @@
 [2026-08-25T10:13:07.292Z] Successfully retrieved @skillizee.io from Meta Graph API
 
 
+[2026-08-25T10:33:17.473Z] Received POST request
+{
+  "manual": {
+    "username": "skillizee.io",
+    "followers": "12000",
+    "following": "300",
+    "postCount": "450",
+    "bio": "EdTech for schools",
+    "recentPosts": [
+      {
+        "caption": "test #edtech",
+        "likes": "500",
+        "comments": "20"
+      }
+    ]
+  }
+}
+
+[2026-08-25T10:33:17.473Z] Dashboard requested username: "undefined"
+
+
+[2026-08-25T10:42:01.280Z] Received POST request
+{
+  "manual": {
+    "username": "skillizee.io",
+    "followers": "12000",
+    "following": "300",
+    "postCount": "450",
+    "bio": "EdTech for schools",
+    "recentPosts": [
+      {
+        "caption": "hello #edtech",
+        "likes": "500",
+        "comments": "20",
+        "contentType": "Reel"
+      },
+      {
+        "caption": "again #school",
+        "likes": "900",
+        "comments": "40",
+        "contentType": "Carousel"
+      }
+    ]
+  }
+}
+
+[2026-08-25T10:42:01.282Z] Building profile from manually supplied stats
+{
+  "username": "skillizee.io",
+  "followers": "12000",
+  "following": "300",
+  "postCount": "450",
+  "bio": "EdTech for schools",
+  "recentPosts": [
+    {
+      "caption": "hello #edtech",
+      "likes": "500",
+      "comments": "20",
+      "contentType": "Reel"
+    },
+    {
+      "caption": "again #school",
+      "likes": "900",
+      "comments": "40",
+      "contentType": "Carousel"
+    }
+  ]
+}
+
+[2026-08-25T10:44:25.026Z] Received POST request
+{
+  "manual": {
+    "username": "skillizee.io",
+    "followers": "12000",
+    "following": "300",
+    "postCount": "450",
+    "bio": "EdTech for schools",
+    "recentPosts": [
+      {
+        "caption": "hello #edtech",
+        "likes": "500",
+        "comments": "20",
+        "contentType": "Reel"
+      },
+      {
+        "caption": "again #school",
+        "likes": "900",
+        "comments": "40",
+        "contentType": "Carousel"
+      }
+    ]
+  }
+}
+
+[2026-08-25T10:44:25.026Z] Building profile from manually supplied stats
+{
+  "username": "skillizee.io",
+  "followers": "12000",
+  "following": "300",
+  "postCount": "450",
+  "bio": "EdTech for schools",
+  "recentPosts": [
+    {
+      "caption": "hello #edtech",
+      "likes": "500",
+      "comments": "20",
+      "contentType": "Reel"
+    },
+    {
+      "caption": "again #school",
+      "likes": "900",
+      "comments": "40",
+      "contentType": "Carousel"
+    }
+  ]
+}
+

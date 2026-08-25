@@ -46,22 +46,41 @@ export async function generateContentCalendar(options = {}) {
 
   console.log(`[Calendar Agent] [${accountId}] Starting content calendar pipeline...`);
 
-  // Step 1: Fetch all deep insights in parallel
+  // Step 1: Fetch all deep insights in parallel.
+  // Each source degrades independently, and a degraded source is the usual
+  // reason a calendar comes back generic — so record WHY, don't just swallow it.
+  const dataQuality = { accountInsights: "ok", demographics: "ok", posts: "ok" };
+
   console.log(`[Calendar Agent] [${accountId}] Step 1: Fetching deep insights...`);
   const [accountInsights, demographics, postsWithInsights] = await Promise.all([
     fetchAccountInsights(period, accountId).catch((err) => {
       console.warn("[Calendar Agent] Account insights failed:", err.message);
+      dataQuality.accountInsights = err.message;
       return {};
     }),
     fetchAudienceDemographics(accountId).catch((err) => {
       console.warn("[Calendar Agent] Demographics failed:", err.message);
+      dataQuality.demographics = err.message;
       return { available: false };
     }),
     fetchAllPostsWithDeepInsights(postsLimit, accountId).catch((err) => {
       console.warn("[Calendar Agent] Posts insights failed:", err.message);
+      dataQuality.posts = err.message;
       return [];
     }),
   ]);
+
+  if (postsWithInsights.length === 0 && dataQuality.posts === "ok") {
+    dataQuality.posts = "No posts returned for this account.";
+  }
+
+  const degraded = Object.entries(dataQuality)
+    .filter(([, status]) => status !== "ok")
+    .map(([source, status]) => `${source}: ${status}`);
+
+  if (degraded.length > 0) {
+    console.warn(`[Calendar Agent] [${accountId}] Generating on DEGRADED data — ${degraded.join(" | ")}`);
+  }
 
   // Step 2: Build and save analytics snapshot
   console.log("[Calendar Agent] Step 2: Building analytics snapshot...");
@@ -128,6 +147,11 @@ export async function generateContentCalendar(options = {}) {
       rangeStart,
       rangeEnd,
       totalPostsRequested: totalPosts,
+      // Which inputs were actually available. When `degraded` is non-empty the
+      // calendar was written with less than the full picture — surface it in
+      // the UI rather than presenting the output as fully data-driven.
+      dataQuality,
+      degraded,
     },
   };
 }

@@ -14,6 +14,44 @@ import { graphRequest, getInstagramSyncConfig } from "./instagram";
 import { buildGraphUrl, checkRateLimit, trackApiCall } from "./meta-config";
 import { getFacebookPageCredentials } from "./meta-auth";
 
+// ─── Concurrency ───────────────────────────────────────────────
+
+/**
+ * Map over items with a bounded number of in-flight requests.
+ *
+ * The Graph API calls here used to run in a plain sequential loop — 50 posts
+ * meant 50 round-trips end to end. Bounded parallelism keeps the wall time
+ * down without stampeding Meta's rate limiter (IG allows 200 calls/hour).
+ *
+ * @param {T[]} items
+ * @param {number} limit — max in-flight
+ * @param {(item: T, index: number) => Promise<R>} fn
+ * @returns {Promise<R[]>} — results in input order
+ */
+async function mapWithConcurrency(items, limit, fn) {
+  const results = new Array(items.length);
+  let cursor = 0;
+
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (cursor < items.length) {
+      const index = cursor++;
+      results[index] = await fn(items[index], index);
+    }
+  });
+
+  await Promise.all(workers);
+  return results;
+}
+
+// How many post-insight requests to keep in flight at once.
+const POST_INSIGHT_CONCURRENCY = 6;
+
+// Metric availability depends on the post's format, not the individual post —
+// so once a metric set works for a Reel it works for every Reel. Remember the
+// winner per format and try it first, instead of re-walking the fallback
+// ladder (and burning 2 extra API calls) for all 50 posts.
+const workingMetricSet = new Map();
+
 // ─── Account-Level Instagram Insights ──────────────────────────
 
 // v22.0: Metrics compatible with period (time-series)
@@ -115,8 +153,9 @@ export async function fetchAccountInsights(period = "days_28", accountId = "skil
     console.warn(`[Deep Insights] Follower count time-series skipped:`, err.message);
   }
 
-  // Group 2: Total value metrics (queried individually with their supported periods)
-  for (const { metric, period: metricPeriod } of TOTAL_VALUE_METRIC_CONFIGS) {
+  // Group 2: Total value metrics. Each is an independent request, so issue them
+  // together rather than one after another.
+  await Promise.all(TOTAL_VALUE_METRIC_CONFIGS.map(async ({ metric, period: metricPeriod }) => {
     try {
       const effectivePeriod = (period === "days_28" && metricPeriod === "day") ? "day" : (period || metricPeriod);
       const payload = await graphRequest(
@@ -137,7 +176,7 @@ export async function fetchAccountInsights(period = "days_28", accountId = "skil
     } catch {
       // Gracefully ignore individual metrics unsupported on specific account types
     }
-  }
+  }));
 
   return results;
 }
@@ -263,12 +302,21 @@ export async function fetchDeepPostInsights(mediaId, mediaType, mediaProductType
     metricSets = [POST_METRICS_IMAGE];
   }
 
-  // Try each metric set (fallback on error — API availability varies)
-  for (const metrics of metricSets) {
+  // A metric set that works for one post of a given format works for the rest,
+  // so try the remembered winner first and only fall down the ladder if it fails.
+  const formatKey = isReel ? "reel" : isVideo ? "video" : isCarousel ? "carousel" : "image";
+  const remembered = workingMetricSet.get(formatKey);
+  const ordered = remembered
+    ? [remembered, ...metricSets.filter((set) => set !== remembered)]
+    : metricSets;
+
+  for (const metrics of ordered) {
     try {
       const payload = await graphRequest(`/${mediaId}/insights`, {
         metric: metrics.join(","),
       }, accountId);
+
+      workingMetricSet.set(formatKey, metrics);
 
       const result = {};
       for (const entry of payload?.data || []) {
@@ -304,9 +352,10 @@ export async function fetchAllPostsWithDeepInsights(limit = 50, accountId = "ski
   }, accountId);
 
   const posts = mediaPayload?.data || [];
-  const enriched = [];
 
-  for (const post of posts) {
+  // One request per post, up to POST_INSIGHT_CONCURRENCY at a time. Sequentially
+  // this was 50 round-trips end to end, which dominated calendar generation.
+  const enriched = await mapWithConcurrency(posts, POST_INSIGHT_CONCURRENCY, async (post) => {
     const insights = await fetchDeepPostInsights(
       post.id,
       post.media_type,
@@ -318,7 +367,7 @@ export async function fetchAllPostsWithDeepInsights(limit = 50, accountId = "ski
     const isCarousel = post.media_type === "CAROUSEL_ALBUM";
     const format = isReel ? "Reel" : isCarousel ? "Carousel" : "Static";
 
-    enriched.push({
+    return {
       id: post.id,
       caption: post.caption || "",
       format,
@@ -339,8 +388,8 @@ export async function fetchAllPostsWithDeepInsights(limit = 50, accountId = "ski
         avgWatchTime: insights.ig_reels_avg_watch_time || 0,
         totalWatchTime: insights.ig_reels_video_view_total_time || 0,
       },
-    });
-  }
+    };
+  });
 
   return enriched;
 }

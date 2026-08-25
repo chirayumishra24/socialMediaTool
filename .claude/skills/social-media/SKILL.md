@@ -140,6 +140,65 @@ usable rather than plausible-sounding.
    strategy, calendars, and research; `"flash"` (`gemini-3-flash-preview`) for
    short classification and rewriting. Both retry twice with linear backoff.
 
+## Performance Rules
+
+The Meta read path is latency-dominated, and its cost is measured in *round
+trips*, not CPU. Three rules keep a calendar run in seconds rather than minutes.
+
+**Never read a token inside a loop.** `graphRequest()` calls
+`getInstagramSyncConfig()`, which calls `getValidAccessToken()` **and**
+`getInstagramAccountId()` — both of which read the same `meta_tokens` document.
+Uncached, that was two full Firestore round-trips per Graph call and 136-336 per
+calendar run. `getTokenData()` is now read-through cached for 60s and
+invalidated by `saveTokenData`/`deleteTokenData`; if you add another token
+consumer, go through `getTokenData()` so it benefits, and call
+`invalidateTokenCache(accountId)` after any write to the document.
+
+**Fan out, with a bound.** Independent Graph calls run together —
+`TOTAL_VALUE_METRIC_CONFIGS` via `Promise.all`, per-post insights via
+`mapWithConcurrency(posts, POST_INSIGHT_CONCURRENCY, …)`. Keep the bound small
+(6): Instagram allows 200 calls/hour and an unbounded `Promise.all` over 50
+posts will trip the limiter, which fails *silently* into an empty data set.
+
+**Count your calls against the quota.** One calendar run costs roughly
+`13 + 4 + 1 + postsLimit` Graph calls — about 68 with the default
+`postsLimit: 50`, against a 200/hour ceiling. That is three runs per hour, per
+account. `fetchDeepPostInsights` remembers which metric set worked per format
+(`workingMetricSet`) so the fallback ladder is climbed once rather than once per
+post; without that the worst case was 168 calls and a single run could exhaust
+most of the hour. Before adding a per-post request, ask what it does to that
+budget.
+
+## Why Output Looks Generic
+
+"The strategy feels like a fallback" is almost always the model being handed an
+empty account, not the model underperforming. Every fetcher degrades quietly —
+`{}`, `[]`, `{ available: false }` — so the prompt still renders, with zeros.
+
+Trace it in this order:
+
+1. **Was the account resolvable?** `/api/meta/instagram/scrape` returns a fully
+   zeroed profile with `needsManualInput: true`, `dataSource: "none"` and a
+   `reason`. `fetchInstagramProfileFromMeta` throws when the requested username
+   is not the *connected* one, which is the most common trigger.
+2. **Did the guard fire?** `/api/meta/instagram/analyze` returns **422** when
+   followers, posts and bio are all empty. A strategy built on that is generic
+   by construction, so it refuses rather than producing one.
+3. **Was the calendar degraded?** `_meta.dataQuality` and `_meta.degraded`
+   carry the per-source reason. The UI warns when `degraded` is non-empty.
+4. **Was it the rate limiter?** "rate limit exceeded" in `dataQuality.posts`
+   means the hourly budget is gone and the run silently had no post data.
+   Counters are per-instance and in-memory, so they reset on restart.
+
+Recovery path when Meta cannot resolve the account: post
+`{ manual: { username, followers, postCount, bio, recentPosts: [...] } }` to
+`/api/meta/instagram/scrape`, which builds a real profile via
+`buildManualProfile`. The Chrome extension in `extension/` posts the same shape.
+
+**When you add a data source, make its failure legible.** A `.catch()` that
+returns an empty value without recording why is how a generic strategy gets
+presented as a data-driven one.
+
 ## Format Playbook
 
 What the platform actually supports, and what each format is optimized for.

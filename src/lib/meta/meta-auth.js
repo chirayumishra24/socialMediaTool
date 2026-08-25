@@ -23,6 +23,42 @@ const LEGACY_OWNER_ACCOUNT_ID = "skillizee";
 // In-memory fallback when Firestore is unavailable (keyed by accountId)
 const memoryTokenStore = {};
 
+// ─── Read-through token cache ──────────────────────────────────
+//
+// getTokenData() is on the hot path: graphRequest() calls
+// getInstagramSyncConfig(), which calls getValidAccessToken() AND
+// getInstagramAccountId() — two Firestore document reads per Graph API call.
+// A single content-calendar run makes 68-168 Graph calls, so that is 136-336
+// reads of the same unchanged document, each costing a full network
+// round-trip. Cache it for a short window instead.
+//
+// Writes invalidate the entry, so a refresh or disconnect on this instance is
+// visible immediately. Across instances the entry can be at most TOKEN_CACHE_TTL_MS
+// stale, which is harmless: tokens are long-lived (60 days) and getValidAccessToken
+// re-refreshes anything inside its 7-day expiry window.
+const TOKEN_CACHE_TTL_MS = 60 * 1000;
+const tokenCache = new Map(); // accountId -> { data, expiresAt }
+
+function readTokenCache(accountId) {
+  const hit = tokenCache.get(accountId);
+  if (!hit) return undefined;
+  if (Date.now() > hit.expiresAt) {
+    tokenCache.delete(accountId);
+    return undefined;
+  }
+  return hit.data;
+}
+
+function writeTokenCache(accountId, data) {
+  tokenCache.set(accountId, { data, expiresAt: Date.now() + TOKEN_CACHE_TTL_MS });
+}
+
+/** Drop a cached token — call after any write to the token document. */
+export function invalidateTokenCache(accountId = null) {
+  if (accountId) tokenCache.delete(accountId);
+  else tokenCache.clear();
+}
+
 async function getFirestore() {
   if (firestoreDb) return firestoreDb;
 
@@ -66,11 +102,14 @@ export async function saveTokenData(tokenData, accountId = "skillizee") {
     updatedAt: new Date().toISOString(),
   };
 
+  invalidateTokenCache(accountId);
+
   const db = await getFirestore();
   if (db) {
     try {
       await db.collection(TOKENS_COLLECTION).doc(accountId).set(data, { merge: true });
       console.log(`[Meta Auth] Token saved to Firestore for account: ${accountId}`);
+      writeTokenCache(accountId, data);
       return data;
     } catch (err) {
       console.error(`[Meta Auth] Firestore save failed for ${accountId}:`, err.message);
@@ -88,11 +127,18 @@ export async function saveTokenData(tokenData, accountId = "skillizee") {
  * @param {string} accountId
  */
 export async function getTokenData(accountId = "skillizee") {
+  const cached = readTokenCache(accountId);
+  if (cached !== undefined) return cached;
+
   const db = await getFirestore();
   if (db) {
     try {
       const doc = await db.collection(TOKENS_COLLECTION).doc(accountId).get();
-      if (doc.exists) return doc.data();
+      if (doc.exists) {
+        const data = doc.data();
+        writeTokenCache(accountId, data);
+        return data;
+      }
 
       // Migration: before multi-account support every token lived at
       // meta_tokens/primary. Adopt it for the default account once, so the
@@ -103,6 +149,7 @@ export async function getTokenData(accountId = "skillizee") {
           const data = { ...legacy.data(), accountId, migratedFrom: LEGACY_TOKEN_DOC_ID };
           await db.collection(TOKENS_COLLECTION).doc(accountId).set(data, { merge: true });
           console.log(`[Meta Auth] Migrated legacy token '${LEGACY_TOKEN_DOC_ID}' → '${accountId}'`);
+          writeTokenCache(accountId, data);
           return data;
         }
       }
@@ -111,7 +158,9 @@ export async function getTokenData(accountId = "skillizee") {
     }
   }
 
-  return memoryTokenStore[accountId] || null;
+  const fallback = memoryTokenStore[accountId] || null;
+  writeTokenCache(accountId, fallback);
+  return fallback;
 }
 
 /**
@@ -128,6 +177,7 @@ export async function deleteTokenData(accountId = "skillizee") {
     }
   }
   delete memoryTokenStore[accountId];
+  invalidateTokenCache(accountId);
 }
 
 // ─── OAuth Token Exchange ──────────────────────────────────────
