@@ -776,7 +776,7 @@ function AppContent({ defaultTab = "dashboard" }) {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 z-10 overflow-hidden">
         {/* Top Global Header Bar */}
-        <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shrink-0 shadow-sm">
+        <header className="relative z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shrink-0 shadow-sm">
           {/* Breadcrumbs & Active Title */}
           <div>
             <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
@@ -803,44 +803,50 @@ function AppContent({ defaultTab = "dashboard" }) {
               </button>
 
               {isCreateMenuOpen && (
-                <div
-                  className="absolute right-0 top-12 z-50 w-52 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2 rounded-2xl shadow-2xl animate-scale-in"
-                  onClick={() => setIsCreateMenuOpen(false)}
-                >
-                  <button
-                    onClick={() => {
-                      setComposerInitialContent("");
-                      setScheduledPrefillDate("");
-                      setSelectedPostToEdit(null);
-                      setActiveTab("composer");
-                    }}
-                    className="w-full p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 transition-all text-left cursor-pointer"
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsCreateMenuOpen(false)}
+                  />
+                  <div
+                    className="absolute right-0 top-12 z-50 w-52 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2 rounded-2xl shadow-2xl animate-scale-in"
+                    onClick={() => setIsCreateMenuOpen(false)}
                   >
-                    <PlusCircle className="w-4 h-4 text-indigo-600" />
-                    <span>Compose Post</span>
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("studio")}
-                    className="w-full p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 transition-all text-left cursor-pointer"
-                  >
-                    <Video className="w-4 h-4 text-purple-600" />
-                    <span>Generate AI Script</span>
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("research")}
-                    className="w-full p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 transition-all text-left cursor-pointer"
-                  >
-                    <FlaskConical className="w-4 h-4 text-amber-600" />
-                    <span>Run R&D Lab Cycle</span>
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("instagram-analyzer")}
-                    className="w-full p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 transition-all text-left cursor-pointer"
-                  >
-                    <Camera className="w-4 h-4 text-pink-600" />
-                    <span>Audit Instagram Profile</span>
-                  </button>
-                </div>
+                    <button
+                      onClick={() => {
+                        setComposerInitialContent("");
+                        setScheduledPrefillDate("");
+                        setSelectedPostToEdit(null);
+                        setActiveTab("composer");
+                      }}
+                      className="w-full p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 transition-all text-left cursor-pointer"
+                    >
+                      <PlusCircle className="w-4 h-4 text-indigo-600" />
+                      <span>Compose Post</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveTab("studio")}
+                      className="w-full p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 transition-all text-left cursor-pointer"
+                    >
+                      <Video className="w-4 h-4 text-purple-600" />
+                      <span>Generate AI Script</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveTab("research")}
+                      className="w-full p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 transition-all text-left cursor-pointer"
+                    >
+                      <FlaskConical className="w-4 h-4 text-amber-600" />
+                      <span>Run R&D Lab Cycle</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveTab("instagram-analyzer")}
+                      className="w-full p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 transition-all text-left cursor-pointer"
+                    >
+                      <Camera className="w-4 h-4 text-pink-600" />
+                      <span>Audit Instagram Profile</span>
+                    </button>
+                  </div>
+                </>
               )}
             </div>
 

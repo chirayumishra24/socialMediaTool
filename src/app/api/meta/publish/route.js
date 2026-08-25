@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { publishToMultiplePlatforms } from "@/lib/meta/publisher";
+import { publishToMultiplePlatforms, validatePublishPayload } from "@/lib/meta/publisher";
 import { resolveAccountId } from "@/lib/accounts";
 
 export const dynamic = "force-dynamic";
@@ -14,16 +14,9 @@ export async function POST(req) {
     const { caption, platforms, mediaUrl, accountId } = await req.json().catch(() => ({}));
     const acctId = resolveAccountId(accountId);
 
-    if (!caption || typeof caption !== "string") {
-      return NextResponse.json({ error: "Caption is required" }, { status: 400 });
-    }
-
-    if (!platforms || !Array.isArray(platforms) || platforms.length === 0) {
-      return NextResponse.json({ error: "At least one platform is required" }, { status: 400 });
-    }
-
-    if (platforms.includes("instagram") && !mediaUrl) {
-      return NextResponse.json({ error: "Media URL is required to publish to Instagram" }, { status: 400 });
+    const invalid = validatePublishPayload({ caption, platforms, mediaUrl });
+    if (invalid) {
+      return NextResponse.json({ ok: false, error: invalid }, { status: 400 });
     }
 
     const response = await publishToMultiplePlatforms({
@@ -36,6 +29,7 @@ export async function POST(req) {
     if (response.errors?.length === platforms.length) {
       return NextResponse.json(
         {
+          ok: false,
           error: "All platform publishing attempts failed",
           errors: response.errors,
         },
@@ -51,6 +45,6 @@ export async function POST(req) {
   } catch (error) {
     const message = error.message || "Failed to publish content";
     console.error("[Meta Publish API]", message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
 }

@@ -174,6 +174,40 @@ export async function publishToFacebook({ message, link, imageUrl, accountId = "
   };
 }
 
+// ─── Payload Validation ────────────────────────────────────────
+
+/** Platforms this publisher can actually post to. */
+export const SUPPORTED_PLATFORMS = ["instagram", "facebook"];
+
+/**
+ * Validate a publish/schedule payload against the rules the publisher enforces
+ * at post time. Shared by /api/meta/publish and /api/meta/schedule so a post
+ * can never be queued in a state that is guaranteed to fail on publication.
+ *
+ * @param {{ caption?: string, platforms?: string[], mediaUrl?: string }} payload
+ * @returns {string|null} — error message, or null when the payload is publishable
+ */
+export function validatePublishPayload({ caption, platforms, mediaUrl }) {
+  if (!caption || typeof caption !== "string" || !caption.trim()) {
+    return "Caption is required";
+  }
+
+  if (!Array.isArray(platforms) || platforms.length === 0) {
+    return "At least one platform is required";
+  }
+
+  const unsupported = platforms.filter((p) => !SUPPORTED_PLATFORMS.includes(p));
+  if (unsupported.length > 0) {
+    return `Unsupported platform${unsupported.length > 1 ? "s" : ""}: ${unsupported.join(", ")}. Supported: ${SUPPORTED_PLATFORMS.join(", ")}`;
+  }
+
+  if (platforms.includes("instagram") && !mediaUrl) {
+    return "Media URL is required to publish to Instagram";
+  }
+
+  return null;
+}
+
 // ─── Multi-Platform Publish ────────────────────────────────────
 
 /**

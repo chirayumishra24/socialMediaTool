@@ -93,14 +93,14 @@ export async function graphRequest(path, params = {}, accountId = "skillizee") {
   return payload;
 }
 
-async function getMediaDetails(mediaId) {
+async function getMediaDetails(mediaId, accountId = "skillizee") {
   return graphRequest(`/${mediaId}`, {
     fields: "id,caption,comments_count,like_count,media_product_type,media_type,permalink,timestamp",
-  });
+  }, accountId);
 }
 
-async function findMediaByPermalink(publishedUrl) {
-  const config = await getInstagramSyncConfig();
+async function findMediaByPermalink(publishedUrl, accountId = "skillizee") {
+  const config = await getInstagramSyncConfig(accountId);
   const targetPermalink = normalizePermalink(publishedUrl);
 
   let after = "";
@@ -109,7 +109,7 @@ async function findMediaByPermalink(publishedUrl) {
       fields: "id,caption,comments_count,like_count,media_product_type,media_type,permalink,timestamp",
       limit: MEDIA_PAGE_LIMIT,
       after,
-    });
+    }, accountId);
 
     const match = payload?.data?.find((item) => normalizePermalink(item.permalink) === targetPermalink);
     if (match) return match;
@@ -133,12 +133,12 @@ function readInsightMetric(insights = [], metricName) {
   return typeof metric.value === "number" ? metric.value : Number(metric.value) || 0;
 }
 
-async function getMediaInsights(mediaId) {
+async function getMediaInsights(mediaId, accountId = "skillizee") {
   for (const metrics of INSIGHT_METRIC_ATTEMPTS) {
     try {
       const payload = await graphRequest(`/${mediaId}/insights`, {
         metric: metrics.join(","),
-      });
+      }, accountId);
       return payload?.data || [];
     } catch {
       // Try the next smaller metric set because metric availability varies by media type.
@@ -156,7 +156,7 @@ export async function getInstagramSyncStatus(accountId = "skillizee") {
   };
 }
 
-export async function syncInstagramPost({ publishedUrl = "", postId = "" } = {}) {
+export async function syncInstagramPost({ publishedUrl = "", postId = "", accountId = "skillizee" } = {}) {
   const normalizedUrl = normalizePermalink(publishedUrl);
   const normalizedPostId = String(postId || "").trim();
 
@@ -169,14 +169,14 @@ export async function syncInstagramPost({ publishedUrl = "", postId = "" } = {})
   }
 
   const media = normalizedPostId
-    ? await getMediaDetails(normalizedPostId)
-    : await findMediaByPermalink(normalizedUrl);
+    ? await getMediaDetails(normalizedPostId, accountId)
+    : await findMediaByPermalink(normalizedUrl, accountId);
 
   if (!media?.id) {
     throw new Error("Instagram media was not found on the connected account.");
   }
 
-  const insights = await getMediaInsights(media.id);
+  const insights = await getMediaInsights(media.id, accountId);
   const timestamp = new Date().toISOString();
   const views = readInsightMetric(insights, "views") || readInsightMetric(insights, "reach");
   const impressions = readInsightMetric(insights, "impressions") || readInsightMetric(insights, "reach");
@@ -224,7 +224,7 @@ export async function fetchInstagramProfileFromMeta(username, accountId = "skill
   console.log(`[Meta API] Fetching account info for ID: ${config.instagramAccountId}`);
   const userPayload = await graphRequest(`/${config.instagramAccountId}`, {
     fields: "biography,followers_count,follows_count,media_count,name,profile_picture_url,username,website",
-  });
+  }, accountId);
 
   const connectedUsername = String(userPayload.username || "").toLowerCase().trim();
   if (connectedUsername !== cleanUser) {
@@ -236,7 +236,7 @@ export async function fetchInstagramProfileFromMeta(username, accountId = "skill
   const mediaPayload = await graphRequest(`/${config.instagramAccountId}/media`, {
     fields: "caption,comments_count,id,like_count,media_product_type,media_type,media_url,permalink,thumbnail_url,timestamp,children{media_url,thumbnail_url}",
     limit: 50,
-  });
+  }, accountId);
 
   const rawPosts = mediaPayload?.data || [];
   console.log(`[Meta API] Received ${rawPosts.length} media items. Sample fields:`, rawPosts[0] ? Object.keys(rawPosts[0]) : "empty");

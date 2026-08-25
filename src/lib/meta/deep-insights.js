@@ -67,7 +67,8 @@ export async function fetchAccountInsights(period = "days_28", accountId = "skil
   try {
     const payload = await graphRequest(
       `/${config.instagramAccountId}/insights`,
-      { metric: "reach", period }
+      { metric: "reach", period },
+      accountId
     );
 
     for (const entry of payload?.data || []) {
@@ -92,7 +93,8 @@ export async function fetchAccountInsights(period = "days_28", accountId = "skil
   try {
     const payload = await graphRequest(
       `/${config.instagramAccountId}/insights`,
-      { metric: "follower_count", period: "day" }
+      { metric: "follower_count", period: "day" },
+      accountId
     );
 
     for (const entry of payload?.data || []) {
@@ -119,7 +121,8 @@ export async function fetchAccountInsights(period = "days_28", accountId = "skil
       const effectivePeriod = (period === "days_28" && metricPeriod === "day") ? "day" : (period || metricPeriod);
       const payload = await graphRequest(
         `/${config.instagramAccountId}/insights`,
-        { metric, period: effectivePeriod, metric_type: "total_value" }
+        { metric, period: effectivePeriod, metric_type: "total_value" },
+        accountId
       );
 
       for (const entry of payload?.data || []) {
@@ -168,7 +171,8 @@ export async function fetchAudienceDemographics(accountId = "skillizee") {
 
       const payload = await graphRequest(
         `/${config.instagramAccountId}/insights`,
-        params
+        params,
+        accountId
       );
 
       const entry = payload?.data?.[0];
@@ -205,7 +209,8 @@ export async function fetchAudienceDemographics(accountId = "skillizee") {
   try {
     const payload = await graphRequest(
       `/${config.instagramAccountId}/insights`,
-      { metric: ONLINE_FOLLOWERS_METRIC, period: "lifetime" }
+      { metric: ONLINE_FOLLOWERS_METRIC, period: "lifetime" },
+      accountId
     );
 
     const entry = payload?.data?.[0];
@@ -238,9 +243,10 @@ const POST_METRICS_CAROUSEL = ["reach", "saves", "shares", "total_interactions",
  * @param {string} mediaId
  * @param {string} mediaType — "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM"
  * @param {string} mediaProductType — "REELS" | "FEED" | etc.
+ * @param {string} accountId — account whose access token to query with
  * @returns {Promise<object>}
  */
-export async function fetchDeepPostInsights(mediaId, mediaType, mediaProductType) {
+export async function fetchDeepPostInsights(mediaId, mediaType, mediaProductType, accountId = "skillizee") {
   const isReel = mediaProductType === "REELS" || mediaProductType === "REEL";
   const isVideo = mediaType === "VIDEO" && !isReel;
   const isCarousel = mediaType === "CAROUSEL_ALBUM";
@@ -262,7 +268,7 @@ export async function fetchDeepPostInsights(mediaId, mediaType, mediaProductType
     try {
       const payload = await graphRequest(`/${mediaId}/insights`, {
         metric: metrics.join(","),
-      });
+      }, accountId);
 
       const result = {};
       for (const entry of payload?.data || []) {
@@ -295,7 +301,7 @@ export async function fetchAllPostsWithDeepInsights(limit = 50, accountId = "ski
   const mediaPayload = await graphRequest(`/${config.instagramAccountId}/media`, {
     fields: "id,caption,comments_count,like_count,media_product_type,media_type,media_url,permalink,thumbnail_url,timestamp",
     limit: Math.min(limit, 50),
-  });
+  }, accountId);
 
   const posts = mediaPayload?.data || [];
   const enriched = [];
@@ -304,7 +310,8 @@ export async function fetchAllPostsWithDeepInsights(limit = 50, accountId = "ski
     const insights = await fetchDeepPostInsights(
       post.id,
       post.media_type,
-      post.media_product_type
+      post.media_product_type,
+      accountId
     );
 
     const isReel = post.media_product_type === "REELS" || post.media_product_type === "REEL";

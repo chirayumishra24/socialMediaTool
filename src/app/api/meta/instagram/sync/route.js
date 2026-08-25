@@ -20,6 +20,7 @@ export async function POST(req) {
     const result = await syncInstagramPost({
       publishedUrl: String(publishedUrl).trim(),
       postId: String(postId).trim(),
+      accountId,
     });
 
     const config = await getInstagramSyncStatus(accountId);

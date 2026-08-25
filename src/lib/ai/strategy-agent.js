@@ -5,27 +5,33 @@
 
 import { generate } from "./ai-client.js";
 import { getActiveCalendar, getCalendarDigest, setActiveStrategy } from "./strategy-context.js";
+import { loadCalendar } from "./calendar-store.js";
 
 /**
  * Generate a comprehensive Instagram marketing strategy.
  * @param {object} profileData — output from scrapeProfile()
  * @param {object} profileContext — user-provided context fields
+ * @param {string} accountId — account whose calendar/strategy context to use
  * @returns {Promise<object>} — parsed strategy with 7 sections
  */
-export async function generateStrategy(profileData, profileContext) {
-  const prompt = buildStrategyPrompt(profileData, profileContext);
+export async function generateStrategy(profileData, profileContext, accountId = "skillizee") {
+  // Prefer the durably stored calendar; fall back to this instance's context.
+  const activeCalendar =
+    (await loadCalendar(accountId).catch(() => null)) || getActiveCalendar(accountId);
+
+  const prompt = buildStrategyPrompt(profileData, profileContext, activeCalendar);
   const raw = await generate(prompt, { tier: "pro", jsonMode: true, maxRetries: 2 });
   const strategy = normalizeStrategy(raw);
 
   // Persist to shared context so the calendar agent can reference it
-  setActiveStrategy(strategy);
+  setActiveStrategy(strategy, accountId);
 
   return strategy;
 }
 
 // ─── Prompt Builder ─────────────────────────────────────────
 
-function buildStrategyPrompt(profileData, ctx) {
+function buildStrategyPrompt(profileData, ctx, activeCalendar = null) {
   const { profile, posts, analysis } = profileData;
 
   // Build post table
@@ -151,7 +157,7 @@ Return your response as a JSON object with EXACTLY this structure:
 CRITICAL: Return ONLY valid JSON. No markdown, no explanation outside the JSON.
 
 ${(() => {
-  const calendarDigest = getCalendarDigest(getActiveCalendar());
+  const calendarDigest = getCalendarDigest(activeCalendar);
   return calendarDigest ? `\n${calendarDigest}` : "";
 })()}`;
 }

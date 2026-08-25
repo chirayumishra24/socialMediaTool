@@ -29,7 +29,7 @@ import { getActiveStrategy, getStrategyDigest, setActiveCalendar } from "./strat
 
 /**
  * Full pipeline: fetch deep insights → build snapshot → compute trends → generate AI calendar.
- * @param {{ niche?: string, goals?: string[], postsLimit?: number, period?: string, startDate?: string, endDate?: string, postsPerWeek?: number }} options
+ * @param {{ niche?: string, goals?: string[], postsLimit?: number, period?: string, startDate?: string, endDate?: string, postsPerWeek?: number, accountId?: string }} options
  * @returns {Promise<object>} — The generated content calendar
  */
 export async function generateContentCalendar(options = {}) {
@@ -73,16 +73,19 @@ export async function generateContentCalendar(options = {}) {
   const recentSnapshots = await getRecentSnapshots(4, accountId).catch(() => []);
   const trendData = computeTrends(recentSnapshots);
 
-  // Step 3.5: Check for active marketing strategy to align with
+  // Step 3.5: Check for this account's active marketing strategy to align with.
+  // It is threaded into the prompt explicitly — reading it from module state
+  // inside the prompt builder silently defaulted every account to `skillizee`.
   const activeStrategy = getActiveStrategy(accountId);
 
   // Step 4: Build optimal posting heatmap
   console.log("[Calendar Agent] Step 4: Building posting heatmap...");
   const heatmap = buildOptimalPostingHeatmap(demographics?.onlineFollowers || {});
 
-  // Step 5: Extract topic clusters from top posts
+  // Step 5: Extract topic clusters and measured weekday performance
   console.log("[Calendar Agent] Step 5: Extracting topic clusters...");
   const topicClusters = extractTopicClusters(postsWithInsights);
+  const dayPerformance = computeDayOfWeekPerformance(postsWithInsights);
 
   // Step 6: Compute date range
   const { rangeStart, rangeEnd, totalDays } = computeDateRange(startDate, endDate);
@@ -91,6 +94,8 @@ export async function generateContentCalendar(options = {}) {
   // Step 7: Generate AI calendar
   console.log(`[Calendar Agent] Step 7: Generating AI calendar (${rangeStart} → ${rangeEnd}, ${totalPosts} posts)...`);
   const prompt = buildCalendarPrompt({
+    activeStrategy,
+    dayPerformance,
     snapshot,
     trends: trendData,
     demographics,
@@ -107,7 +112,7 @@ export async function generateContentCalendar(options = {}) {
   const calendar = parseCalendarResponse(aiOutput);
 
   // Persist to shared context so the strategy agent can reference it
-  setActiveCalendar(calendar);
+  setActiveCalendar(calendar, accountId);
 
   console.log("[Calendar Agent] Pipeline complete.");
 
@@ -238,12 +243,52 @@ export function extractTopicClusters(posts) {
   return clusters;
 }
 
+// ─── Day-of-Week Performance ───────────────────────────────────
+
+/**
+ * Bucket real posts by weekday to get MEASURED day-of-week performance.
+ *
+ * Meta's `online_followers` is hour-indexed only — it has no per-day
+ * dimension. `buildOptimalPostingHeatmap` synthesizes days by repeating the
+ * hourly curve with a weekend multiplier, so its `bestDays` is an estimate,
+ * not data. Day recommendations belong here instead, on real post timestamps.
+ *
+ * @param {object[]} posts — posts with insights
+ * @returns {Array<{day: string, posts: number, avgReach: number, avgEngagement: number}>}
+ */
+export function computeDayOfWeekPerformance(posts) {
+  const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const buckets = DAYS.map((day) => ({ day, count: 0, reach: 0, engagement: 0 }));
+
+  for (const post of posts || []) {
+    if (!post?.timestamp) continue;
+    const posted = new Date(post.timestamp);
+    if (isNaN(posted.getTime())) continue;
+
+    const bucket = buckets[posted.getDay()];
+    bucket.count += 1;
+    bucket.reach += post.insights?.reach || 0;
+    bucket.engagement +=
+      post.insights?.totalInteractions || (post.likes || 0) + (post.comments || 0);
+  }
+
+  return buckets
+    .filter((b) => b.count > 0)
+    .map((b) => ({
+      day: b.day,
+      posts: b.count,
+      avgReach: Math.round(b.reach / b.count),
+      avgEngagement: Math.round(b.engagement / b.count),
+    }))
+    .sort((a, b) => b.avgEngagement - a.avgEngagement);
+}
+
 // ─── AI Prompt Builder ─────────────────────────────────────────
 
 /**
  * Construct the comprehensive AI prompt with all available data.
  */
-export function buildCalendarPrompt({ snapshot, trends, demographics, heatmap, topicClusters, niche, goals, rangeStart, rangeEnd, totalPosts }) {
+export function buildCalendarPrompt({ snapshot, trends, demographics, heatmap, topicClusters, niche, goals, rangeStart, rangeEnd, totalPosts, activeStrategy = null, dayPerformance = [] }) {
   const cb = snapshot?.contentBreakdown || {};
 
   // Format comparison table
@@ -274,10 +319,18 @@ export function buildCalendarPrompt({ snapshot, trends, demographics, heatmap, t
     .map((t) => `"${t.topic}": appears in ${t.frequency} posts, avg engagement ${t.avgEngagement}, avg reach ${t.avgReach}`)
     .join("\n");
 
-  // Posting time data
+  // Posting time data — hours are measured, days are not (see computeDayOfWeekPerformance)
   const bestHoursText = heatmap.available
-    ? `Best hours: ${heatmap.bestHours.map((h) => `${h}:00`).join(", ")} | Best days: ${heatmap.bestDays.join(", ")}`
-    : "Posting time data unavailable — use general best practices (9am, 12pm, 6pm)";
+    ? `Peak follower-online hours: ${heatmap.bestHours.map((h) => `${h}:00`).join(", ")}`
+    : "UNAVAILABLE — no online_followers data. Fall back to 9:00, 12:00, 18:00 and say so in your reasoning.";
+
+  const dayPerfText = dayPerformance.length > 0
+    ? [
+        `| Day | Posts | Avg Reach | Avg Engagement |`,
+        `|-----|-------|-----------|----------------|`,
+        ...dayPerformance.map((d) => `| ${d.day} | ${d.posts} | ${d.avgReach} | ${d.avgEngagement} |`),
+      ].join("\n")
+    : "UNAVAILABLE — no dated posts to measure. Do not cite a best day; say the data is missing.";
 
   // Trends
   const trendsText = trends.available
@@ -321,7 +374,15 @@ ${topicsText || "No topic clusters detected."}
 
 ═══ OPTIMAL POSTING TIMES ═══
 
+MEASURED — hours, from the account's online_followers curve:
 ${bestHoursText}
+
+MEASURED — day of week, from this account's own post timestamps:
+${dayPerfText}
+
+NOT MEASURED: Meta reports follower activity by hour only, never by day. Any
+"best day" implied by the hourly curve is an estimate, not data. Choose days
+from the day-of-week table above.
 
 ═══ WEEK-OVER-WEEK TRENDS ═══
 
@@ -397,10 +458,12 @@ CRITICAL RULES:
 4. All "reasoning" fields must cite specific numbers from the data above.
 5. "estimatedReach" should be based on the avg reach of that format from the table.
 6. The "description" field is MANDATORY and must be detailed (at least 2-3 sentences).
-7. Return ONLY valid JSON. No markdown, no explanation.
+7. Never invent a metric. Where a section above says UNAVAILABLE, say so in the
+   relevant "reasoning" field instead of citing a number you do not have.
+8. Return ONLY valid JSON. No markdown, no explanation.
 
 ${(() => {
-  const strategyDigest = getStrategyDigest(getActiveStrategy());
+  const strategyDigest = getStrategyDigest(activeStrategy);
   return strategyDigest ? `\n${strategyDigest}` : "";
 })()}`;
 }
@@ -444,6 +507,9 @@ export function parseCalendarResponse(aiOutput) {
           description: entry.description || "",
           hook: entry.hook || "",
           caption: entry.caption || "",
+          // Set by the user in the calendar's edit modal; required before an
+          // entry can be queued for Instagram.
+          mediaUrl: entry.mediaUrl || "",
           hashtags: Array.isArray(entry.hashtags) ? entry.hashtags : [],
           pillar: entry.pillar || "",
           estimatedReach: Number(entry.estimatedReach) || 0,

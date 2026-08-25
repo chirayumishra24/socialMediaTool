@@ -16,3 +16,14 @@ Before making ANY code changes to this project, you MUST:
 
 This ensures continuity across sessions and prevents duplicate or conflicting work.
 <!-- END:context-analysis-rule -->
+
+# Social Media Tool Skill
+
+`.claude/skills/social-media/SKILL.md` is the operating manual for this
+codebase: the multi-account rules, where each number in a prompt comes from and
+whether it is measured or synthesized, the API response contract, the
+publish/schedule validation rules, and which endpoints post to live Instagram
+and Facebook accounts.
+
+Read it before changing anything under `src/lib/meta/`, `src/lib/ai/`, or
+`src/app/api/meta/`, and before editing any AI agent prompt.

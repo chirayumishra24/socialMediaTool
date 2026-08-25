@@ -212,25 +212,51 @@ export default function ContentCalendar({ onSelectPost, onStartResearch }) {
   };
 
   // ─── Apply to Scheduler ────────────────────────────────────────
+  // Mirrors PostComposer.handlePublish — same request body, same response
+  // handling, same toasts. /api/meta/schedule now rejects a post Instagram
+  // could never publish, so the problem surfaces here instead of sitting in
+  // the queue until its slot comes up and fails.
   const handleApplyToScheduler = async (entry) => {
     if (!entry) return;
+
+    const caption = (entry.caption || `${entry.topic}\n\n${(entry.hashtags || []).join(" ")}`).trim();
+    const mediaUrl = (entry.mediaUrl || "").trim();
+
+    if (!mediaUrl) {
+      toast.warning(
+        "Media Required",
+        "Instagram needs an image or video URL. Add one under Edit → Media URL, then schedule."
+      );
+      return;
+    }
+
     setScheduleLoading(entry.date);
     try {
       const scheduledAt = new Date(`${entry.date}T${entry.slot || "12:00"}:00`);
-      await fetch("/api/meta/schedule", {
+      const res = await fetch("/api/meta/schedule", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          caption: entry.caption || `${entry.topic}\n\n${(entry.hashtags || []).join(" ")}`,
+          caption,
           platforms: ["instagram"],
+          mediaUrl,
           scheduledAt: scheduledAt.toISOString(),
           accountId: activeAccount.id,
         }),
       });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        toast.error("Scheduling Failed", data.error || "Could not queue this post.");
+        return;
+      }
+
       await fetchMetaScheduled();
+      toast.success("Post Scheduled", `Queued for ${scheduledAt.toLocaleString()}`);
       setSelectedEntry(null);
     } catch (err) {
       console.error("Failed to schedule:", err);
+      toast.error("Network Error", err.message || "Failed to schedule this post.");
     } finally {
       setScheduleLoading(null);
     }
@@ -1101,6 +1127,23 @@ export default function ContentCalendar({ onSelectPost, onStartResearch }) {
                 rows={3}
                 className="w-full px-3 py-2 rounded-xl bg-bg-elevated border border-border text-xs font-medium text-txt leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
               />
+            </div>
+
+            {/* Media URL — required before an entry can be queued for Instagram */}
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-wider text-txt-muted mb-1 block">
+                Media URL <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="url"
+                placeholder="https://… publicly reachable image or video"
+                value={editingEntry.mediaUrl || ""}
+                onChange={(e) => setEditingEntry({ ...editingEntry, mediaUrl: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl bg-bg-elevated border border-border text-xs font-medium text-txt focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              />
+              <p className="text-[10px] text-txt-muted font-semibold mt-1.5 leading-relaxed">
+                Instagram publishes from a public URL — it cannot read a local file or a blob link.
+              </p>
             </div>
 
             {/* Save / Cancel */}

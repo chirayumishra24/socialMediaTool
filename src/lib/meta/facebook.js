@@ -78,7 +78,7 @@ export async function fetchFacebookPageProfile(pageId, accountId = "skillizee") 
       "verification_status",
       "emails",
     ].join(","),
-  });
+  }, true, accountId);
 
   return {
     pageId: data.id,
@@ -120,7 +120,7 @@ export async function fetchFacebookPagePosts(pageId, limit = 12, accountId = "sk
       "reactions.summary(true).limit(0)",
     ].join(","),
     limit: Math.min(limit, 25),
-  });
+  }, true, accountId);
 
   return (data.data || []).map((post) => {
     const likes = post.likes?.summary?.total_count || 0;
@@ -187,7 +187,7 @@ export async function getPageInsights(pageId, period = "week", metrics, accountI
     const data = await fbGraphRequest(`/${id}/insights`, {
       metric: metricList.join(","),
       period,
-    });
+    }, true, accountId);
 
     const result = {};
     (data.data || []).forEach((metric) => {
@@ -223,7 +223,7 @@ export async function getPostInsights(postId, accountId = "skillizee") {
   try {
     const data = await fbGraphRequest(`/${postId}/insights`, {
       metric: metrics.join(","),
-    });
+    }, true, accountId);
 
     const result = {};
     (data.data || []).forEach((metric) => {

@@ -3,16 +3,23 @@
  * GET  /api/meta/calendar — Retrieve the most recently generated calendar
  *
  * POST body:
- *   { niche?: string, goals?: string[], postsLimit?: number, period?: string }
+ *   { accountId?: string, niche?: string, goals?: string[], postsLimit?: number,
+ *     period?: string, startDate?: string, endDate?: string, postsPerWeek?: number }
+ *
+ * Both verbs return the same envelope and the same calendar shape:
+ *   { ok: true, success: true, calendar: object|null }
+ * Errors return { ok: false, success: false, error: string }, matching
+ * /api/meta/schedule and /api/meta/publish.
  */
 
 import { NextResponse } from "next/server";
 import { generateContentCalendar } from "@/lib/ai/calendar-agent";
 import { setActiveCalendar } from "@/lib/ai/strategy-context";
+import { saveCalendar, loadCalendar } from "@/lib/ai/calendar-store";
 import { resolveAccountId } from "@/lib/accounts";
 
-// In-memory cache of the last generated calendar per account
-let lastCalendars = {};
+export const dynamic = "force-dynamic";
+export const maxDuration = 60; // the full insights → AI pipeline is slow
 
 export async function POST(request) {
   try {
@@ -38,38 +45,44 @@ export async function POST(request) {
     // Persist to shared context so the strategy agent can reference it
     setActiveCalendar(calendar, accountId);
 
-    // Cache it
-    lastCalendars[accountId] = {
-      ...calendar,
-      cachedAt: new Date().toISOString(),
-      requestOptions: options,
-    };
+    // Persist durably so GET can serve it after this instance is recycled
+    const stored = await saveCalendar(calendar, accountId, options);
 
-    return NextResponse.json({ success: true, calendar });
+    return NextResponse.json({ ok: true, success: true, calendar: stored });
   } catch (err) {
     console.error("[Calendar API] Generation failed:", err);
     return NextResponse.json(
-      { success: false, error: err.message },
+      { ok: false, success: false, error: err.message },
       { status: 500 }
     );
   }
 }
 
 export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const accountId = resolveAccountId(searchParams.get("accountId"));
-  const cached = lastCalendars[accountId];
+  try {
+    const { searchParams } = new URL(request.url);
+    const accountId = resolveAccountId(searchParams.get("accountId"));
+    const stored = await loadCalendar(accountId);
 
-  if (!cached) {
-    return NextResponse.json({
-      success: true,
-      calendar: null,
-      message: "No calendar generated yet. Use POST to generate one.",
-    });
+    if (!stored) {
+      return NextResponse.json({
+        ok: true,
+        success: true,
+        calendar: null,
+        message: "No calendar generated yet. Use POST to generate one.",
+      });
+    }
+
+    // Re-seed the in-process strategy context so a strategy generated on this
+    // instance still aligns with the calendar the user is looking at.
+    setActiveCalendar(stored, accountId);
+
+    return NextResponse.json({ ok: true, success: true, calendar: stored });
+  } catch (err) {
+    console.error("[Calendar API] Fetch failed:", err);
+    return NextResponse.json(
+      { ok: false, success: false, error: err.message },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json({
-    success: true,
-    calendar: cached,
-  });
 }

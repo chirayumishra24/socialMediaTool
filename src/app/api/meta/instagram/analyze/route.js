@@ -18,7 +18,7 @@ export async function POST(req) {
       );
     }
 
-    const strategy = await generateStrategy(profileData, profileContext || {});
+    const strategy = await generateStrategy(profileData, profileContext || {}, accountId);
 
     // Also persist at the API layer for redundancy
     setActiveStrategy(strategy, accountId);

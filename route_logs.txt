@@ -4022,3 +4022,126 @@
 [2026-08-17T07:02:49.737Z] Successfully retrieved @skillizee.io from Meta Graph API
 
 
+[2026-08-18T09:27:45.283Z] Received POST request
+{
+  "username": "skillizee.io",
+  "accountId": "skillizee"
+}
+
+[2026-08-18T09:27:45.283Z] Dashboard requested username: "skillizee.io"
+
+
+[2026-08-18T09:27:45.284Z] Cleaned username: "skillizee.io"
+
+
+[2026-08-18T09:27:45.284Z] Received POST request
+{
+  "username": "skillizee.io",
+  "accountId": "skillizee"
+}
+
+[2026-08-18T09:27:45.285Z] Dashboard requested username: "skillizee.io"
+
+
+[2026-08-18T09:27:45.285Z] Cleaned username: "skillizee.io"
+
+
+[2026-08-18T09:27:50.400Z] Meta credentials are ready. Fetching profile for @skillizee.io from Meta API...
+
+
+[2026-08-18T09:27:50.559Z] Meta credentials are ready. Fetching profile for @skillizee.io from Meta API...
+
+
+[2026-08-18T09:27:56.860Z] Received POST request
+{
+  "username": "ccis.india",
+  "accountId": "ccis"
+}
+
+[2026-08-18T09:27:56.861Z] Dashboard requested username: "ccis.india"
+
+
+[2026-08-18T09:27:56.861Z] Cleaned username: "ccis.india"
+
+
+[2026-08-18T09:27:58.486Z] Cache miss for "ccis.india" and Meta API unavailable/skipped. Requesting manual input fallback.
+
+
+[2026-08-18T09:28:03.653Z] Received POST request
+{
+  "username": "skillizee.io",
+  "accountId": "skillizee"
+}
+
+[2026-08-18T09:28:03.654Z] Dashboard requested username: "skillizee.io"
+
+
+[2026-08-18T09:28:03.655Z] Cleaned username: "skillizee.io"
+
+
+[2026-08-18T09:28:06.333Z] Successfully retrieved @skillizee.io from Meta Graph API
+
+
+[2026-08-18T09:28:08.623Z] Successfully retrieved @skillizee.io from Meta Graph API
+
+
+[2026-08-18T09:28:09.712Z] Meta credentials are ready. Fetching profile for @skillizee.io from Meta API...
+
+
+[2026-08-18T09:28:21.967Z] Successfully retrieved @skillizee.io from Meta Graph API
+
+
+[2026-08-25T10:11:26.043Z] Received POST request
+{
+  "username": "skillizee.io",
+  "accountId": "skillizee"
+}
+
+[2026-08-25T10:11:26.045Z] Dashboard requested username: "skillizee.io"
+
+
+[2026-08-25T10:11:26.045Z] Cleaned username: "skillizee.io"
+
+
+[2026-08-25T10:11:26.047Z] Received POST request
+{
+  "username": "skillizee.io",
+  "accountId": "skillizee"
+}
+
+[2026-08-25T10:11:26.047Z] Dashboard requested username: "skillizee.io"
+
+
+[2026-08-25T10:11:26.048Z] Cleaned username: "skillizee.io"
+
+
+[2026-08-25T10:11:59.571Z] Received POST request
+{
+  "username": "skillizee.io",
+  "accountId": "skillizee"
+}
+
+[2026-08-25T10:11:59.572Z] Dashboard requested username: "skillizee.io"
+
+
+[2026-08-25T10:11:59.573Z] Cleaned username: "skillizee.io"
+
+
+[2026-08-25T10:12:20.741Z] Meta credentials are ready. Fetching profile for @skillizee.io from Meta API...
+
+
+[2026-08-25T10:12:22.508Z] Meta credentials are ready. Fetching profile for @skillizee.io from Meta API...
+
+
+[2026-08-25T10:12:22.513Z] Meta credentials are ready. Fetching profile for @skillizee.io from Meta API...
+
+
+[2026-08-25T10:13:02.441Z] Successfully retrieved @skillizee.io from Meta Graph API
+
+
+[2026-08-25T10:13:04.054Z] Successfully retrieved @skillizee.io from Meta Graph API
+
+
+[2026-08-25T10:13:07.292Z] Successfully retrieved @skillizee.io from Meta Graph API
+
+
