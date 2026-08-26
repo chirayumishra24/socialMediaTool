@@ -56,6 +56,7 @@ export default function PostComposer({ onPublished, initialContent = "", prefill
   const [scheduledDate, setScheduledDate] = useState(prefillDate || tomorrow);
   const [scheduledTime, setScheduledTime] = useState("10:00");
   const [publishing, setPublishing] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [enhancing, setEnhancing] = useState(false);
   const [previewPlatform, setPreviewPlatform] = useState("instagram");
 
@@ -128,6 +129,17 @@ export default function PostComposer({ onPublished, initialContent = "", prefill
       toast.warning("Incomplete Post", "Add a caption and select at least one platform.");
       return;
     }
+
+    if (uploading) {
+      toast.warning("Still Uploading", "Wait for the media upload to finish before publishing.");
+      return;
+    }
+
+    if (selectedPlatforms.includes("instagram") && !mediaUrl) {
+      toast.warning("Media Required", "Instagram posts need an image or video. Upload one or paste a public URL.");
+      return;
+    }
+
     setPublishing(true);
 
     try {
@@ -152,7 +164,13 @@ export default function PostComposer({ onPublished, initialContent = "", prefill
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        toast.error("Publish Failed", data.error || "Could not publish post.");
+        // /api/meta/publish returns `errors: [{ platform, error }]` — the
+        // per-platform reason is far more useful than the status code.
+        const detail = Array.isArray(data.errors) && data.errors.length > 0
+          ? data.errors.map((e) => `${e.platform}: ${e.error}`).join(" | ")
+          : data.error || "Could not publish post.";
+        toast.error("Publish Failed", detail);
+        console.error("[PostComposer] Publish failed:", data);
       } else {
         const msg = scheduling
           ? `Scheduled for ${new Date(body.scheduledAt).toLocaleString()}`
@@ -167,7 +185,10 @@ export default function PostComposer({ onPublished, initialContent = "", prefill
     }
   };
 
-  const handleMediaUpload = (e) => {
+  // A picked file has to be hosted before it can be published: Instagram's
+  // container endpoint takes an `image_url` that Meta's servers download, so a
+  // `blob:` handle from URL.createObjectURL is only ever a local preview.
+  const handleMediaUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setImageError(false);
@@ -175,19 +196,46 @@ export default function PostComposer({ onPublished, initialContent = "", prefill
     const isVid = file.type.startsWith("video/") || /\.(mp4|mov|webm|mkv)$/i.test(file.name);
     setIsVideo(isVid);
 
+    // Show the local preview immediately; it is never used for publishing.
     const reader = new FileReader();
     reader.onload = (ev) => {
-      if (ev.target?.result) {
-        setMediaPreview(ev.target.result);
-      }
+      if (ev.target?.result) setMediaPreview(ev.target.result);
     };
     reader.readAsDataURL(file);
 
+    setUploading(true);
+    setMediaUrl("");
     try {
-      const blobUrl = URL.createObjectURL(file);
-      setMediaUrl(blobUrl);
-    } catch {
-      // Fallback to data url
+      const form = new FormData();
+      form.append("file", file);
+      form.append("accountId", activeAccount.id);
+
+      const res = await fetch("/api/media/upload", { method: "POST", body: form });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.url) {
+        setMediaPreview("");
+        toast.error("Upload Failed", data.error || "Could not host this file for publishing.");
+        return;
+      }
+
+      setMediaUrl(data.url);
+
+      if (data.aspectWarning) {
+        toast.warning("Media Ready — check framing", data.aspectWarning);
+      } else {
+        toast.success(
+          "Media Ready",
+          data.converted
+            ? "Converted to JPEG and hosted — Instagram can fetch it."
+            : "Uploaded and publicly reachable — Instagram can fetch it."
+        );
+      }
+    } catch (err) {
+      setMediaPreview("");
+      toast.error("Upload Failed", err.message || "Could not upload this file.");
+    } finally {
+      setUploading(false);
     }
   };
 

@@ -8,6 +8,10 @@
 const SNAPSHOTS_COLLECTION = "analytics_snapshots";
 const POST_PERFORMANCE_COLLECTION = "post_performance_log";
 
+// How far back the document-id range scans. Snapshots are written at most once
+// per account per day, so this bounds a read to ~120 documents worst case.
+const SNAPSHOT_LOOKBACK_DAYS = 120;
+
 let firestoreDb = null;
 
 async function getFirestore() {
@@ -43,6 +47,47 @@ async function getFirestore() {
 let memorySnapshots = [];
 let memoryPostLogs = {};
 
+// ─── Firestore-safe shaping ────────────────────────────────────
+
+/**
+ * Rank a { name: count } breakdown into a Firestore-storable array of maps.
+ * @param {object} breakdown
+ * @param {number} limit
+ * @returns {Array<{name: string, count: number}>}
+ */
+export function rankBreakdown(breakdown, limit = 10) {
+  return Object.entries(breakdown || {})
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([name, count]) => ({ name, count: Number(count) || 0 }));
+}
+
+/**
+ * Make a value safe to write to Firestore.
+ *
+ * Firestore rejects `undefined` and cannot store an array inside an array.
+ * A single bad leaf fails the entire document write, so normalize defensively:
+ * a nested array is wrapped as { values: [...] } rather than dropped.
+ */
+export function toFirestoreSafe(value) {
+  if (value === undefined) return null;
+  if (value === null || typeof value !== "object") return value;
+  if (value instanceof Date) return value.toISOString();
+
+  if (Array.isArray(value)) {
+    return value.map((item) =>
+      Array.isArray(item) ? { values: item.map(toFirestoreSafe) } : toFirestoreSafe(item)
+    );
+  }
+
+  const out = {};
+  for (const [key, val] of Object.entries(value)) {
+    if (val === undefined) continue;
+    out[key] = toFirestoreSafe(val);
+  }
+  return out;
+}
+
 // ─── Snapshot CRUD ─────────────────────────────────────────────
 
 /**
@@ -62,7 +107,10 @@ export async function saveAnalyticsSnapshot(data, accountId = "skillizee") {
   const db = await getFirestore();
   if (db) {
     try {
-      await db.collection(SNAPSHOTS_COLLECTION).doc(snapshot.id).set(snapshot, { merge: true });
+      await db
+        .collection(SNAPSHOTS_COLLECTION)
+        .doc(snapshot.id)
+        .set(toFirestoreSafe(snapshot), { merge: true });
       console.log(`[Analytics Store] [${accountId}] Snapshot saved: ${snapshot.id}`);
       return snapshot;
     } catch (err) {
@@ -91,15 +139,36 @@ export async function getRecentSnapshots(count = 8, accountId = "skillizee") {
   const db = await getFirestore();
   if (db) {
     try {
+      // Snapshot ids are `snap_<accountId>_<YYYY-MM-DD>`, so both the account
+      // filter and the date ordering can ride on the document id.
+      //
+      // The original query — .where("accountId") + .orderBy("timestamp") —
+      // needed a composite index that was never created, so every read threw
+      // FAILED_PRECONDITION, computeTrends() always saw zero snapshots, and the
+      // calendar prompt permanently reported "No historical trends available".
+      //
+      // Ordering is ASCENDING deliberately: Firestore auto-creates the __name__
+      // index ascending only, so orderBy(documentId, "desc") demands an index of
+      // its own. The range is bounded by date and reversed in memory instead.
+      const { FieldPath } = await import("firebase-admin/firestore");
+      const prefix = `snap_${accountId}_`;
+      const since = new Date(Date.now() - SNAPSHOT_LOOKBACK_DAYS * 86400000)
+        .toISOString()
+        .slice(0, 10);
+
       const snap = await db
         .collection(SNAPSHOTS_COLLECTION)
-        .where("accountId", "==", accountId)
-        .orderBy("timestamp", "desc")
-        .limit(count)
+        .orderBy(FieldPath.documentId())
+        .startAt(`${prefix}${since}`)
+        .endAt(`${prefix}\uf8ff`)
         .get();
+
       const results = [];
       snap.forEach((doc) => results.push(doc.data()));
-      return results;
+
+      return results
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+        .slice(0, count);
     } catch (err) {
       console.error(`[Analytics Store] [${accountId}] Firestore read failed:`, err.message);
     }
@@ -154,16 +223,28 @@ export async function getPostPerformanceHistory(mediaId, accountId = "skillizee"
   const db = await getFirestore();
   if (db) {
     try {
+      // Same document-id range as getRecentSnapshots: ids are
+      // `<accountId>_<mediaId>_<YYYY-MM-DD>`, so both filters and the ordering
+      // ride on the ascending __name__ index and need no composite index.
+      const { FieldPath } = await import("firebase-admin/firestore");
+      const prefix = `${accountId}_${mediaId}_`;
+      const since = new Date(Date.now() - SNAPSHOT_LOOKBACK_DAYS * 86400000)
+        .toISOString()
+        .slice(0, 10);
+
       const snap = await db
         .collection(POST_PERFORMANCE_COLLECTION)
-        .where("mediaId", "==", mediaId)
-        .where("accountId", "==", accountId)
-        .orderBy("timestamp", "desc")
-        .limit(30)
+        .orderBy(FieldPath.documentId())
+        .startAt(`${prefix}${since}`)
+        .endAt(`${prefix}\uf8ff`)
         .get();
+
       const results = [];
       snap.forEach((doc) => results.push(doc.data()));
-      return results;
+
+      return results
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+        .slice(0, 30);
     } catch (err) {
       console.error("[Analytics Store] Post history read failed:", err.message);
     }
@@ -348,12 +429,12 @@ export function buildSnapshotFromInsights(accountInsights, postsWithInsights, de
     },
     audienceDemographics: demographics?.available
       ? {
-          topCities: Object.entries(demographics.city || {})
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 10),
-          topCountries: Object.entries(demographics.country || {})
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 10),
+          // Arrays of objects, NOT Object.entries() pairs. Firestore has no
+          // nested-array type, so an array of [name, count] tuples is rejected
+          // outright: "Property audienceDemographics contains an invalid
+          // nested entity" — which failed the whole snapshot write.
+          topCities: rankBreakdown(demographics.city, 10),
+          topCountries: rankBreakdown(demographics.country, 10),
           genderAge: demographics.genderAge || {},
         }
       : null,

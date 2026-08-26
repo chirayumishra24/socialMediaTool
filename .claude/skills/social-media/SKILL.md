@@ -199,6 +199,65 @@ Recovery path when Meta cannot resolve the account: post
 returns an empty value without recording why is how a generic strategy gets
 presented as a data-driven one.
 
+## Firestore Constraints
+
+Three rules, each learned from a write or read that failed in production while
+the app carried on as if nothing had happened.
+
+**No `undefined`, and no array inside an array.** Firestore has no nested-array
+type, so `Object.entries(obj)` — an array of `[key, value]` pairs — is rejected
+with `INVALID_ARGUMENT: … contains an invalid nested entity`, and **the whole
+document write fails**, not just that field. Store ranked breakdowns as arrays
+of maps (`rankBreakdown()` → `[{ name, count }]`) and pass anything
+hand-assembled through `toFirestoreSafe()`.
+
+**A `where` plus an `orderBy` on a different field needs a composite index.**
+`.where("accountId", "==", id).orderBy("timestamp", "desc")` throws
+`FAILED_PRECONDITION` until someone visits the console. Instead, encode the
+filter into the document id and range-scan it: ids are
+`snap_<accountId>_<YYYY-MM-DD>` and `<accountId>_<mediaId>_<YYYY-MM-DD>`.
+
+**Order by `__name__` ascending only.** Firestore auto-creates the document-id
+index ascending; `orderBy(FieldPath.documentId(), "desc")` demands an index of
+its own and fails exactly like the composite query it was meant to replace. Scan
+a date-bounded range ascending (`SNAPSHOT_LOOKBACK_DAYS`) and reverse in memory.
+
+These two failures are why week-over-week trends never worked: the save threw on
+the demographics field, the read threw on the missing index, `computeTrends()`
+always saw zero snapshots, and the calendar prompt permanently said "No
+historical trends available". Both are silent — the `.catch()` logs and returns
+an empty value. **Check the server log for `Firestore save failed` /
+`Firestore read failed` before trusting any stored history.**
+
+## Publishing Media
+
+Instagram publishing is **pull-based**: `POST /{ig-id}/media` takes an
+`image_url` and Meta's servers download it. Nothing is uploaded to Meta
+directly. Three consequences:
+
+1. **A browser `blob:` URL can never be published.** `URL.createObjectURL(file)`
+   produces a handle valid only inside that tab. Same for `data:` URIs and
+   anything on `localhost` or a private IP. `validateMediaUrl()` in
+   `publisher.js` rejects all of these up front — before this existed, they
+   reached Meta and came back as an opaque 500.
+2. **A picked file must be hosted first.** `POST /api/media/upload` puts it in
+   Firebase Storage (`social-media/<accountId>/…`), calls `makePublic()`, and
+   returns a `storage.googleapis.com` URL. That URL is what goes to
+   `/api/meta/publish`.
+3. **Instagram accepts JPEG only.** PNG and WebP are rejected at container
+   creation, so `uploadPublicMedia()` converts with `sharp` (and caps width at
+   1440). Feed aspect ratio must land between 0.8 and 1.91; outside that range
+   the upload returns `aspectWarning` rather than blocking, since a
+   Facebook-only post is not subject to the rule.
+
+Facebook is more forgiving — `publishToFacebook` posts a message with an
+optional image — which is why an Instagram-only failure is the common symptom.
+
+`/api/meta/publish` returns `errors: [{ platform, error }]` on partial or total
+failure. Show that array, not the status code: the per-platform reason is what
+tells you whether Meta could not fetch the media, the token expired, or the
+aspect ratio was refused.
+
 ## Format Playbook
 
 What the platform actually supports, and what each format is optimized for.

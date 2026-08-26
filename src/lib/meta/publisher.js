@@ -179,6 +179,50 @@ export async function publishToFacebook({ message, link, imageUrl, accountId = "
 /** Platforms this publisher can actually post to. */
 export const SUPPORTED_PLATFORMS = ["instagram", "facebook"];
 
+// Hosts Meta's servers cannot reach from the public internet.
+const UNREACHABLE_HOSTS = /^(localhost|127\.|0\.0\.0\.0|\[::1\]|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/i;
+
+/**
+ * Check that a media URL is one Meta can actually download.
+ *
+ * Instagram publishing is not an upload: `POST /{ig-id}/media` takes an
+ * `image_url`, and Meta's own servers fetch it. So the URL has to be publicly
+ * reachable over http(s) — a `blob:` handle from URL.createObjectURL, a
+ * `data:` URI, or anything on localhost exists only in the browser or on this
+ * machine, and the container creation fails with an opaque Graph API error.
+ *
+ * @param {string} mediaUrl
+ * @returns {string|null} — error message, or null when the URL is fetchable
+ */
+export function validateMediaUrl(mediaUrl) {
+  if (!mediaUrl) return null;
+
+  if (mediaUrl.startsWith("blob:")) {
+    return "That image only exists inside your browser tab (blob: URL). Instagram downloads the file from a public web address, so upload it first or paste a public https:// image URL.";
+  }
+
+  if (mediaUrl.startsWith("data:")) {
+    return "Inline image data (data: URI) cannot be published. Instagram downloads the file from a public web address — upload it first or paste a public https:// image URL.";
+  }
+
+  let parsed;
+  try {
+    parsed = new URL(mediaUrl);
+  } catch {
+    return `Media URL is not a valid URL: ${mediaUrl}`;
+  }
+
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    return `Media URL must be http or https, got "${parsed.protocol}".`;
+  }
+
+  if (UNREACHABLE_HOSTS.test(parsed.hostname)) {
+    return `Meta's servers cannot reach "${parsed.hostname}" — a local address is not publicly downloadable. Host the image somewhere public first.`;
+  }
+
+  return null;
+}
+
 /**
  * Validate a publish/schedule payload against the rules the publisher enforces
  * at post time. Shared by /api/meta/publish and /api/meta/schedule so a post
@@ -204,6 +248,9 @@ export function validatePublishPayload({ caption, platforms, mediaUrl }) {
   if (platforms.includes("instagram") && !mediaUrl) {
     return "Media URL is required to publish to Instagram";
   }
+
+  const unreachable = validateMediaUrl(mediaUrl);
+  if (unreachable) return unreachable;
 
   return null;
 }

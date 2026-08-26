@@ -7,6 +7,16 @@ import { useContentHistory, usePerformanceInsights, useResearchHistory, useStats
 import { useAccount } from "@/lib/AccountContext";
 import MetaDashboard from "./MetaDashboard";
 
+// Breakdown rows are stored as [{ name, count }] — Firestore cannot hold an
+// array of [name, count] tuples. Accept either so older snapshots still render.
+function toBreakdownRows(list) {
+  return (list || []).map((row) =>
+    Array.isArray(row)
+      ? { name: row[0], count: Number(row[1]) || 0 }
+      : { name: row?.name ?? "", count: Number(row?.count) || 0 }
+  );
+}
+
 export default function Analytics() {
   const { activeAccount } = useAccount();
   const [activeTab, setActiveTab] = useState("pipeline"); // pipeline, meta, deep
@@ -491,8 +501,8 @@ function DeepInsightsPanel({ data, loading }) {
               <MapPin className="w-4 h-4 text-primary" /> Top Cities
             </h4>
             <div className="space-y-2.5">
-              {(snapshot.audienceDemographics.topCities || []).slice(0, 8).map(([city, count]) => {
-                const maxCount = snapshot.audienceDemographics.topCities?.[0]?.[1] || 1;
+              {toBreakdownRows(snapshot.audienceDemographics.topCities).slice(0, 8).map(({ name: city, count }, i, rows) => {
+                const maxCount = rows[0]?.count || 1;
                 return (
                   <div key={city} className="flex items-center gap-3">
                     <span className="text-xs font-bold text-txt w-32 truncate">{city}</span>
@@ -515,8 +525,8 @@ function DeepInsightsPanel({ data, loading }) {
               <Globe className="w-4 h-4 text-primary" /> Top Countries
             </h4>
             <div className="space-y-2.5">
-              {(snapshot.audienceDemographics.topCountries || []).slice(0, 8).map(([country, count]) => {
-                const maxCount = snapshot.audienceDemographics.topCountries?.[0]?.[1] || 1;
+              {toBreakdownRows(snapshot.audienceDemographics.topCountries).slice(0, 8).map(({ name: country, count }, i, rows) => {
+                const maxCount = rows[0]?.count || 1;
                 return (
                   <div key={country} className="flex items-center gap-3">
                     <span className="text-xs font-bold text-txt w-32 truncate">{country}</span>
