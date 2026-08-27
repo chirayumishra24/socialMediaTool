@@ -21,6 +21,24 @@ export async function GET(req) {
     const accountId = resolveAccountId(searchParams.get("accountId"));
 
     if (runCheck) {
+      // This publishes to live accounts, so it is gated the same way as the
+      // cron route. The scheduled sweep proper lives at /api/cron/publish-due.
+      const secret = process.env.CRON_SECRET;
+      if (secret) {
+        const presented =
+          req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ||
+          searchParams.get("secret") ||
+          "";
+        if (presented !== secret) {
+          return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+        }
+      } else if (process.env.NODE_ENV === "production") {
+        return NextResponse.json(
+          { ok: false, error: "CRON_SECRET is not configured; refusing to publish unauthenticated." },
+          { status: 503 }
+        );
+      }
+
       console.log("[Scheduler API] Running check for pending scheduled posts...");
       const executed = await checkAndPublishPending();
       return NextResponse.json({ ok: true, executedCount: executed.length, executed });

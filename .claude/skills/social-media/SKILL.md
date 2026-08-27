@@ -229,6 +229,46 @@ historical trends available". Both are silent — the `.catch()` logs and return
 an empty value. **Check the server log for `Firestore save failed` /
 `Firestore read failed` before trusting any stored history.**
 
+## Scheduling vs Publishing
+
+These are two completely different code paths, and confusing them hides the most
+common failure in this app.
+
+**Publishing is synchronous.** `/api/meta/publish` calls Meta during the
+request. It either works or returns an error you can see.
+
+**Scheduling only writes a row.** `/api/meta/schedule` validates the payload and
+saves it to `scheduled_posts` with `status: "scheduled"`. Nothing about that
+request contacts Meta. The post is published later, by
+`checkAndPublishPending()` — and *only* when something calls it.
+
+That sweep runs from **`GET /api/cron/publish-due`**, driven by the `crons`
+entry in `vercel.json`. Without a working trigger the queue silently
+accumulates: rows sit at `status: "scheduled"` with `error: null` and
+`results: null` forever, which is indistinguishable from the app ignoring them.
+If a user reports "instant posting works but scheduling does not", check for
+overdue rows still in `scheduled` before looking anywhere else:
+
+```bash
+curl "$APP/api/meta/schedule?accountId=skillizee"
+```
+
+**The trigger is gated.** It publishes to live accounts, so both
+`/api/cron/publish-due` and the legacy `/api/meta/schedule?check=true` require
+`CRON_SECRET` (Bearer header or `?secret=`). Vercel Cron sends the header
+automatically once the variable is set. In production, a missing `CRON_SECRET`
+returns 503 rather than publishing unauthenticated; in development it runs with
+a warning.
+
+**Vercel cron frequency depends on the plan.** Hobby allows daily schedules
+only; `*/5 * * * *` needs Pro. On Hobby, either upgrade or point an external
+pinger (cron-job.org, GitHub Actions) at `/api/cron/publish-due` with the
+secret.
+
+`executeScheduledPost` re-validates the media URL before calling Meta, because
+rows queued before that validation existed still hold `blob:` handles. Those are
+marked `failed` with the reason rather than producing an opaque Graph error.
+
 ## Publishing Media
 
 Instagram publishing is **pull-based**: `POST /{ig-id}/media` takes an

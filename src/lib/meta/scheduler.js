@@ -5,7 +5,7 @@
  * Provides functions to schedule, retrieve, cancel, and publish queued posts.
  */
 
-import { publishToInstagram, publishToFacebook } from "./publisher";
+import { publishToInstagram, publishToFacebook, validateMediaUrl } from "./publisher";
 import { saveTokenData, getTokenData } from "./meta-auth";
 
 const SCHEDULED_COLLECTION = "scheduled_posts";
@@ -192,6 +192,15 @@ export async function executeScheduledPost(id) {
     }
     post = updated;
   };
+
+  // Fail fast on a media URL Meta can never fetch. Older queue entries were
+  // written before /api/meta/schedule validated this, so they hold `blob:`
+  // handles that would otherwise come back as an opaque Graph API error.
+  const badMedia = validateMediaUrl(post.mediaUrl);
+  if (badMedia) {
+    await updateStatus("failed", { error: badMedia, results: null });
+    return post;
+  }
 
   await updateStatus("publishing");
 
