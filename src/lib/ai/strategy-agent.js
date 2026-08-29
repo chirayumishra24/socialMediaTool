@@ -99,6 +99,11 @@ Based on the REAL data above (not generic advice), produce a comprehensive Insta
 
 Every recommendation MUST reference specific data points from the scraped profile above.
 
+WRITING QUALITY RULES:
+- Avoid AI clichés (no "delve", "landscape", "testament to", "unleash", "elevate", "synergy", "revolutionize").
+- Write direct, human, crisp copy with zero fluff.
+- All viral hooks and post titles must be authentic and punchy.
+
 Return your response as a JSON object with EXACTLY this structure:
 
 {

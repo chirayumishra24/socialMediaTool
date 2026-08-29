@@ -427,6 +427,12 @@ Using ONLY the real data above, generate a content calendar with EXACTLY ${total
 
 Every recommendation MUST reference specific data points from the metrics above.
 
+WRITING QUALITY & ANTI-AI RULES:
+- Avoid AI buzzwords in captions and hooks (no "delve", "landscape", "testament to", "unleash", "elevate", "game-changer", "empower", "spearhead").
+- Write natural, engaging, human hooks and captions.
+- Limit hashtags to 2-4 hyper-relevant tags per post (no hashtag stuffing).
+- Respect medium constraints: carousels have max 25 words/slide, reels focus on 0-2s visual/audio hooks.
+
 For EACH calendar entry you MUST include a "description" field:
 - For Carousel: a slide-by-slide breakdown (Slide 1: ..., Slide 2: ..., etc.)
 - For Reel: the topic angle, key talking points, and visual suggestions

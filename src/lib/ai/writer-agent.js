@@ -155,15 +155,43 @@ ${brandCtx}
 FORMAT STRUCTURE: ${spec.structure}
 FORMAT NOTES: ${spec.notes}
 
+═══ CONTENT REPURPOSING & FORMAT INTEGRITY (NON-NEGOTIABLE) ═══
+- ADAPT BY FORMAT, NEVER MASS-BLAST: Every derivative format (Reel, Carousel, Thread, Post, Article) must respect its unique medium constraints, pacing, and audience expectations.
+- STANDALONE POWER: The script must stand completely on its own. A reader/viewer who only sees this derivative must get full, self-contained value without needing another source piece.
+- SPOKEN VS WRITTEN DISCIPLINE: For video/audio formats (Reels, Shorts, YouTube), use conversational spoken-word rhythms, short natural sentences, and audio/visual cues. For text formats (LinkedIn, X), optimize for scanning, whitespace, and immediate first-line hook.
+
+═══ AVOID AI WRITING — ZERO TOLERANCE FOR AI-ISMS (MANDATORY) ═══
+Strictly follow the Anti-AI Writing guidelines to ensure the output sounds 100% human, authentic, and direct:
+
+1. FORBIDDEN AI VOCABULARY (DO NOT USE ANY OF THESE OR THEIR MORPHOLOGICAL VARIANTS):
+   - Tier 1A: delve, landscape, tapestry, realm, paradigm, embark, beacon, testament to, robust, comprehensive, cutting-edge, leverage, pivotal, underscores, meticulous, seamlessly, game-changer, watershed moment, nestled, vibrant, thriving, unpacking, bustling, intricate, ever-evolving, holistic, impactful, learnings, thought leadership, best practices, synergy, interplay, symphony, embrace.
+   - Tier 1B & Overused: utilize, in order to, due to the fact that, serves as, boasts, commences, foster, elevate, unleash, streamline, empower, bolster, spearhead, resonate with, revolutionize, facilitate, myriad, plethora, catalyze, reimagine, overarching.
+   - Clichés: "In today's fast-paced world", "In an era where", "At the end of the day", "When it comes to", "Only time will tell", "The future looks bright", "Imagine a world where".
+
+2. BANNED SENTENCE FORMULAS & AI PATTERNS:
+   - BAN "It's not X — it's Y" and split-negation reveals ("The story isn't the tech. It's the user."). State the direct positive fact instead.
+   - BAN Hollow Intensifiers: Cut "genuinely", "truly", "actually", "quite frankly", "to be honest", "let's be clear", "it's worth noting that". Just state the fact.
+   - BAN Vague Attributions: Never write "Experts say", "Studies show", "Industry leaders agree" without naming the specific researcher, institution, or year.
+   - BAN Aphorism Formulas: No slot-fill profundity like "X is the currency/language of Y" or "X is not a tool but a mirror".
+   - BAN Generic Future Closers: No "poised to become the defining trend of the next decade". Make a specific, falsifiable claim or give a direct call to action.
+   - BAN Copula Avoidance: Use clean, direct verbs ("is", "has", "does") instead of inflated verbs ("serves as", "features", "represents").
+
+3. FORMATTING & TYPOGRAPHY:
+   - Em Dashes: Target ZERO em dashes (— or --). Use periods, commas, or parentheses instead.
+   - Emoji: No emoji in headers. Social posts may use 1-2 emoji at the end of lines where fitting, never mid-sentence.
+   - Hashtags: Maximum 2-3 hyper-relevant hashtags for social posts. Never output a cluster of 5+ generic tags.
+   - Paragraph Rhythm: Vary paragraph lengths intentionally (mix 1-sentence punchy lines with 2-3 sentence points).
+
 ═══ QUALITY STANDARDS (NON-NEGOTIABLE) ═══
 
 0. FORMAT LOCK:
    - Stay completely faithful to the requested format.
    - Do NOT drift into another content type.
    - If the format is a Reel or Short, write a tight spoken script with visual cues.
-   - If the format is a Carousel, write slide-by-slide copy only.
-   - If the format is a Thread, write tweet-by-tweet copy only.
-   - If the format is a Blog, write article sections only.
+   - If the format is a Carousel, write slide-by-slide copy only (max 25 words/slide).
+   - If the format is a Thread, write tweet-by-tweet copy only (max 280 chars/tweet).
+   - If the format is a Blog, write article sections only with snippet-ready subheadings.
+   - If the format is LinkedIn, write high-whitespace copy with a hook before the "see more" cutoff.
 
 1. HOOK: The first 2-3 lines must be IMPOSSIBLE to ignore. Use one of these proven patterns:
    - Shocking statistic: "97% of parents don't know this about..."
@@ -176,29 +204,19 @@ FORMAT NOTES: ${spec.notes}
    - GOOD: "In January 2026, 340 CBSE schools integrated AI tutoring — and dropout rates fell 23%"
 
 3. RETENTION ARCHITECTURE: Build in a retention trigger every 60-90 seconds:
-   - Open loop: "But there's a catch — I'll get to that in a moment"
-   - Question: "Now ask yourself — does YOUR child's school do this?"
-   - Tease: "The third point is the one that shocked even me"
+   - Open loop: "Now here is the counter-intuitive part..."
+   - Question: "Ask yourself: does your team actually track this metric?"
    - Pattern interrupt: [CUT TO B-ROLL] or [SWITCH CAMERA ANGLE]
 
-4. EMOTIONAL DEPTH: Connect to real human emotions. Parents worry about their children's future. Students feel pressure. Teachers feel overwhelmed. Tap into these authentically.
+4. EMOTIONAL DEPTH: Connect to real human emotions and lived experiences. Tap into authentic struggles and aspirations.
 
-5. ACTIONABLE VALUE: The viewer/reader must leave with at least ONE thing they can DO immediately. Not just inspiration — concrete action.
+5. ACTIONABLE VALUE: The viewer/reader must leave with at least ONE concrete thing they can do immediately.
 
-6. NATURAL LANGUAGE: Write like a real human speaks. No corporate buzzwords. No "In today's rapidly evolving landscape..." garbage. Be direct, warm, and real.
+6. NATURAL HUMAN VOICE: Write with genuine personality, active voice, and conversational clarity.
 
-7. CTA: End with a specific, natural call-to-action that feels like a genuine invitation, not a sales pitch.
+7. CTA: End with a specific, natural call-to-action that invites genuine conversation or action.
 
-8. 2026 CURRENCY: Reference at least 1-2 specific 2025-2026 developments, policies, tools, or cultural moments relevant to this topic.
-
-9. MIRROR WHAT IS WORKING:
-   - If research context includes winning patterns, trend signals, or a best angle, use them.
-   - The script should feel like the same TYPE of content that is already performing, while staying original in wording and examples.
-   - If viral readiness is weak, optimize for usefulness and credibility instead of fake hype.
-
-10. OPTIMIZE FOR THE PLATFORM:
-   - Every section should improve the stated performance goal.
-   - Prioritize saves/shares for Instagram, rewatches for Shorts, watch time for YouTube, replies for X, dwell time for LinkedIn, and search clarity for blogs.
+8. 2026 CURRENCY: Reference specific 2025-2026 developments, policies, tools, or real context where relevant.
 
 Write the COMPLETE script now. Every single line must earn its place. If a line doesn't hook, inform, or move — cut it.`;
 
